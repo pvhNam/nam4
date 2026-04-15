@@ -11,6 +11,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.DOANMB">
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -20,6 +21,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".CarDetailActivity"
+            android:exported="false" />
+
+        <activity android:name=".LoginActivity" />
+        <activity android:name=".RegisterActivity" />
+
+        <activity android:name=".PostCarActivity" />
+
     </application>
 
 </manifest>

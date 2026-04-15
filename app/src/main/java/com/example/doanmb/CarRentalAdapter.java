@@ -51,4 +51,9 @@ public class CarRentalAdapter extends RecyclerView.Adapter<CarRentalAdapter.CarV
             tvInfo = itemView.findViewById(R.id.tvCarRentalInfo);
         }
     }
+    // Thêm hàm này để cập nhật lại danh sách khi tìm kiếm
+    public void filterList(List<Car> filteredList) {
+        this.carList = filteredList;
+        notifyDataSetChanged();
+    }
 }
