@@ -8,6 +8,9 @@ import android.widget.Spinner;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 public class PostCarActivity extends AppCompatActivity {
 
     private EditText etCarName, etCarPrice, etCarInfo;
@@ -28,18 +31,38 @@ public class PostCarActivity extends AppCompatActivity {
         initViews();
         setupSpinners();
 
+        // Xử lý nút submit lưu dữ liệu lên Firestore
         btnSubmitPost.setOnClickListener(v -> {
             String name = etCarName.getText().toString().trim();
             String price = etCarPrice.getText().toString().trim();
-            String type = spinnerType.getSelectedItem().toString();
+            String info = etCarInfo.getText().toString().trim();
+            String brand = spinnerBrand.getSelectedItem().toString();
+            String type = spinnerType.getSelectedItem().toString().equals("Cần Bán") ? "sale" : "rental";
 
             if (name.isEmpty() || price.isEmpty()) {
                 Toast.makeText(this, "Vui lòng nhập tên xe và giá!", Toast.LENGTH_SHORT).show();
-            } else {
-                // Hiện tại chỉ thông báo giả lập thành công
-                Toast.makeText(this, "Đã gửi yêu cầu đăng tin " + type + " thành công!", Toast.LENGTH_LONG).show();
-                finish(); // Quay lại trang trước
+                return;
             }
+
+            // Lưu lên Firestore thật
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            java.util.Map<String, Object> car = new java.util.HashMap<>();
+            car.put("name", name);
+            car.put("price", price);
+            car.put("info", info.isEmpty() ? brand : info);
+            car.put("type", type);
+            String uid = FirebaseAuth.getInstance().getCurrentUser() != null
+                    ? FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
+            car.put("userId", uid);
+
+            db.collection("cars").add(car)
+                    .addOnSuccessListener(ref -> {
+                        Toast.makeText(this, "Đăng tin thành công!", Toast.LENGTH_SHORT).show();
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
         });
     }
 
