@@ -1,13 +1,12 @@
 package com.example.doanmb;
-
 import java.io.Serializable;
-
 public class Car implements Serializable {
     private String id;        // Document ID trên Firestore
     private String name;
     private String price;
     private String info;
     private String type;      // "sale" hoặc "rental"
+    private String brand;
     private String sellerId;  // UID người đăng
     private int imageResId;
 
@@ -15,6 +14,20 @@ public class Car implements Serializable {
         this.name = name;
         this.price = price;
         this.info = info;
+        this.brand = "";
+        this.imageResId = imageResId;
+    }
+
+    public Car(String name, String price, String info, String type, int imageResId) {
+        this(name, price, info, type, "", imageResId);
+    }
+
+    public Car(String name, String price, String info, String type, String brand, int imageResId) {
+        this.name = name;
+        this.price = price;
+        this.info = info;
+        this.type = type;
+        this.brand = "";
         this.imageResId = imageResId;
     }
 
@@ -24,6 +37,7 @@ public class Car implements Serializable {
     public String getPrice() { return price; }
     public String getInfo() { return info; }
     public String getType() { return type; }
+    public String getBrand() { return brand; }
     public String getSellerId() { return sellerId; }
     public int getImageResId() { return imageResId; }
 

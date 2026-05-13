@@ -193,14 +193,16 @@ public class MainActivity extends AppCompatActivity {
                 homeLayout.setVisibility(View.VISIBLE);
                 fragmentContainer.setVisibility(View.GONE);
                 return true;
+            } else if (itemId == R.id.nav_cataloge) {
+                homeLayout.setVisibility(View.GONE);
+                fragmentContainer.setVisibility(View.VISIBLE);
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new CategoryFragment()).commit();
+                return true;
             } else if (itemId == R.id.nav_manage) {
                 homeLayout.setVisibility(View.GONE);
                 fragmentContainer.setVisibility(View.VISIBLE);
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new ManageFragment()).commit();
                 return true;
-            } else if (itemId == R.id.nav_post) {
-                startActivity(new Intent(MainActivity.this, PostCarActivity.class));
-                return false;
             } else if (itemId == R.id.nav_messages) {
                 homeLayout.setVisibility(View.GONE);
                 fragmentContainer.setVisibility(View.VISIBLE);

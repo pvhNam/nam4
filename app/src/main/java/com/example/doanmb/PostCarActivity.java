@@ -7,6 +7,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -24,6 +25,7 @@ public class PostCarActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_post_car);
 
+        // Hiển thị nút quay lại trên thanh tiêu đề
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Đăng tin mới");
@@ -133,6 +135,17 @@ public class PostCarActivity extends AppCompatActivity {
                     car.put("sellerName", sellerName != null ? sellerName : "");
                     car.put("sellerPhone", sellerPhone != null ? sellerPhone : "");
                     car.put("createdAt", com.google.firebase.Timestamp.now());
+            // Lưu lên Firestore thật
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            java.util.Map<String, Object> car = new java.util.HashMap<>();
+            car.put("name", name);
+            car.put("price", price);
+            car.put("info", info.isEmpty() ? brand : info);
+            car.put("brand", brand);
+            car.put("type", type);
+            String uid = FirebaseAuth.getInstance().getCurrentUser() != null
+                    ? FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
+            car.put("userId", uid);
 
                     FirebaseFirestore.getInstance().collection("cars").add(car)
                             .addOnSuccessListener(ref -> {
