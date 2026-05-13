@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="20dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="4dp">
+
+    <!-- thông tin đơn hàng -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_info_card"
+        android:padding="14dp"
+        android:layout_marginBottom="18dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Thông tin đơn"
+            android:textColor="#1A56DB"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Nội dung thông tin (set từ Java) -->
+        <TextView
+            android:id="@+id/tv_dialog_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#2D3748"
+            android:textSize="13sp"
+            android:lineSpacingExtra="5dp" />
+
+    </LinearLayout>
+
+    <!-- cccd/cmnd-->
+    <!-- Label -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="6dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Số CCCD / CMND"
+            android:textStyle="bold"
+            android:textColor="#2D3748"
+            android:textSize="13sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" *"
+            android:textColor="#E53E3E"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- Input field CCCD -->
+    <EditText
+        android:id="@+id/et_cccd"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:hint="Nhập số CCCD hoặc CMND"
+        android:inputType="number"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="0dp"
+        android:background="@drawable/bg_input_field"
+        android:layout_marginBottom="16dp"
+        android:textColor="#0D1B2A"
+        android:textColorHint="#A0AEC0"
+        android:textSize="14sp"
+        android:maxLines="1"
+        android:imeOptions="actionNext" />
+
+    <!-- ghi chú -->
+    <!-- Label -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="6dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ghi chú"
+            android:textStyle="bold"
+            android:textColor="#2D3748"
+            android:textSize="13sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="  (tuỳ chọn)"
+            android:textColor="#A0AEC0"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+
+    <!-- Textarea ghi chú -->
+    <EditText
+        android:id="@+id/et_note"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:hint="Nhập ghi chú nếu có..."
+        android:inputType="textMultiLine"
+        android:gravity="top|start"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="12dp"
+        android:background="@drawable/bg_input_field"
+        android:layout_marginBottom="14dp"
+        android:textColor="#0D1B2A"
+        android:textColorHint="#A0AEC0"
+        android:textSize="14sp" />
+
+    <!-- ===== HINT: Sau khi xác nhận (ẩn khi mua xe) ===== -->
+    <LinearLayout
+        android:id="@+id/layout_days_hint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_hint_box"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="9dp"
+        android:layout_marginBottom="4dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚡ "
+            android:textSize="13sp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Sau khi xác nhận, chủ xe sẽ liên hệ với bạn trong 30 phút."
+            android:textColor="#6B7A99"
+            android:textSize="12sp"
+            android:lineSpacingExtra="2dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

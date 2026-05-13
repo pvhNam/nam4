@@ -51,18 +51,17 @@ public class RegisterActivity extends AppCompatActivity {
                 return;
             }
 
-            // Dùng phone + "@doanmb.com" làm email giả để đăng ký
             String fakeEmail = phone + "@doanmb.com";
 
             mAuth.createUserWithEmailAndPassword(fakeEmail, password)
                     .addOnSuccessListener(authResult -> {
                         String uid = authResult.getUser().getUid();
 
-                        // Lưu thông tin user vào Firestore
                         Map<String, Object> user = new HashMap<>();
                         user.put("name", name);
                         user.put("phone", phone);
                         user.put("uid", uid);
+                        user.put("role", "customer");
 
                         db.collection("users").document(uid).set(user)
                                 .addOnSuccessListener(unused -> {
