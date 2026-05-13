@@ -3,102 +3,137 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FAFAFA"
-    android:padding="24dp">
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:paddingBottom="40dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
             android:text="ĐĂNG TIN MỚI"
             android:textColor="#333333"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="20dp"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Tên xe (Ví dụ: Toyota Vios 2020)"
-            android:textStyle="bold" />
+        <!-- TÊN XE -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Tên xe *" android:textStyle="bold" android:textColor="#333"/>
         <EditText
             android:id="@+id/et_car_name"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_search"
-            android:padding="12dp"
-            android:inputType="textCapWords" />
+            android:layout_width="match_parent" android:layout_height="50dp"
+            android:layout_marginTop="6dp" android:layout_marginBottom="14dp"
+            android:background="@drawable/bg_search" android:padding="12dp"
+            android:hint="Ví dụ: Toyota Vios 2020"
+            android:inputType="textCapWords"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Hãng xe"
-            android:textStyle="bold" />
-        <Spinner
-            android:id="@+id/spinner_brand"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_search" />
+        <!-- HÃNG XE -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Hãng xe *" android:textStyle="bold" android:textColor="#333"/>
+        <Spinner android:id="@+id/spinner_brand"
+            android:layout_width="match_parent" android:layout_height="50dp"
+            android:layout_marginTop="6dp" android:layout_marginBottom="14dp"
+            android:background="@drawable/bg_search"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Loại hình"
-            android:textStyle="bold" />
-        <Spinner
-            android:id="@+id/spinner_type"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_search" />
+        <!-- LOẠI HÌNH (BÁN / THUÊ) -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Loại hình *" android:textStyle="bold" android:textColor="#333"/>
+        <Spinner android:id="@+id/spinner_type"
+            android:layout_width="match_parent" android:layout_height="50dp"
+            android:layout_marginTop="6dp" android:layout_marginBottom="14dp"
+            android:background="@drawable/bg_search"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Mức giá (VNĐ)"
-            android:textStyle="bold" />
+        <!-- LOẠI NHIÊN LIỆU -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Nhiên liệu *" android:textStyle="bold" android:textColor="#333"/>
+        <Spinner android:id="@+id/spinner_fuel"
+            android:layout_width="match_parent" android:layout_height="50dp"
+            android:layout_marginTop="6dp" android:layout_marginBottom="14dp"
+            android:background="@drawable/bg_search"/>
+
+        <!-- TÌNH TRẠNG XE (CŨ / MỚI) -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Tình trạng xe *" android:textStyle="bold" android:textColor="#333"/>
+        <Spinner android:id="@+id/spinner_condition"
+            android:layout_width="match_parent" android:layout_height="50dp"
+            android:layout_marginTop="6dp" android:layout_marginBottom="14dp"
+            android:background="@drawable/bg_search"/>
+
+        <!-- HỘP SỐ -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Hộp số" android:textStyle="bold" android:textColor="#333"/>
+        <Spinner android:id="@+id/spinner_transmission"
+            android:layout_width="match_parent" android:layout_height="50dp"
+            android:layout_marginTop="6dp" android:layout_marginBottom="14dp"
+            android:background="@drawable/bg_search"/>
+
+        <!-- NĂM SẢN XUẤT -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Năm sản xuất" android:textStyle="bold" android:textColor="#333"/>
+        <EditText
+            android:id="@+id/et_car_year"
+            android:layout_width="match_parent" android:layout_height="50dp"
+            android:layout_marginTop="6dp" android:layout_marginBottom="14dp"
+            android:background="@drawable/bg_search" android:padding="12dp"
+            android:hint="Ví dụ: 2020"
+            android:inputType="number"/>
+
+        <!-- SỐ KM ĐÃ ĐI -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Số km đã đi" android:textStyle="bold" android:textColor="#333"/>
+        <EditText
+            android:id="@+id/et_car_km"
+            android:layout_width="match_parent" android:layout_height="50dp"
+            android:layout_marginTop="6dp" android:layout_marginBottom="14dp"
+            android:background="@drawable/bg_search" android:padding="12dp"
+            android:hint="Ví dụ: 50000 (để trống nếu xe mới)"
+            android:inputType="number"/>
+
+        <!-- KHU VỰC -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Khu vực" android:textStyle="bold" android:textColor="#333"/>
+        <EditText
+            android:id="@+id/et_car_location"
+            android:layout_width="match_parent" android:layout_height="50dp"
+            android:layout_marginTop="6dp" android:layout_marginBottom="14dp"
+            android:background="@drawable/bg_search" android:padding="12dp"
+            android:hint="Ví dụ: Quận 1, TP.HCM"/>
+
+        <!-- GIÁ -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Mức giá (VNĐ) *" android:textStyle="bold" android:textColor="#333"/>
         <EditText
             android:id="@+id/et_car_price"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_search"
-            android:inputType="number"
-            android:padding="12dp" />
+            android:layout_width="match_parent" android:layout_height="50dp"
+            android:layout_marginTop="6dp" android:layout_marginBottom="14dp"
+            android:background="@drawable/bg_search" android:padding="12dp"
+            android:hint="Ví dụ: 450000000"
+            android:inputType="number"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Thông tin chi tiết (Khu vực, hộp số...)"
-            android:textStyle="bold" />
+        <!-- MÔ TẢ THÊM -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Mô tả thêm" android:textStyle="bold" android:textColor="#333"/>
         <EditText
             android:id="@+id/et_car_info"
-            android:layout_width="match_parent"
-            android:layout_height="100dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="24dp"
-            android:background="@drawable/bg_search"
-            android:gravity="top"
-            android:inputType="textMultiLine"
-            android:padding="12dp" />
+            android:layout_width="match_parent" android:layout_height="100dp"
+            android:layout_marginTop="6dp" android:layout_marginBottom="24dp"
+            android:background="@drawable/bg_search" android:padding="12dp"
+            android:gravity="top" android:inputType="textMultiLine"
+            android:hint="Mô tả tình trạng xe, trang bị thêm..."/>
 
+        <!-- NÚT ĐĂNG TIN -->
         <Button
             android:id="@+id/btn_submit_post"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_width="match_parent" android:layout_height="52dp"
             android:backgroundTint="#FF9800"
             android:text="GỬI YÊU CẦU ĐĂNG TIN"
             android:textColor="@android:color/white"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textSize="16sp" android:textStyle="bold"/>
+
     </LinearLayout>
 </ScrollView>

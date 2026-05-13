@@ -3,28 +3,121 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center"
     android:background="#FAFAFA">
 
-    <ImageView
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:src="@android:drawable/ic_menu_agenda"
-        app:tint="#1976D2"
-        xmlns:app="http://schemas.android.com/apk/res-auto" />
-
+    <!-- TIÊU ĐỀ -->
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="QUẢN LÝ XE"
-        android:textSize="24sp"
+        android:text="Quản lý tin đăng"
+        android:textSize="20sp"
         android:textStyle="bold"
-        android:layout_marginTop="16dp"/>
+        android:textColor="#333333"
+        android:padding="16dp"
+        android:background="#FFFFFF"/>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Tính năng đang được phát triển..."
-        android:textColor="@android:color/darker_gray"
-        android:layout_marginTop="8dp"/>
+    <!-- 2 NÚT TAB -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:background="#FFFFFF">
+
+        <Button
+            android:id="@+id/btnTabMyPosts"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="Xe đã đăng"
+            android:textSize="14sp"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#1976D2"/>
+
+        <Button
+            android:id="@+id/btnTabRequests"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="Yêu cầu nhận được"
+            android:textSize="14sp"
+            android:textColor="#1976D2"
+            android:backgroundTint="#E3F2FD"/>
+    </LinearLayout>
+
+    <!-- TAB 1: XE ĐÃ ĐĂNG -->
+    <LinearLayout
+        android:id="@+id/layoutMyPosts"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="visible">
+
+        <TextView
+            android:id="@+id/tvMyPostCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tin đã đăng: 0"
+            android:textSize="13sp"
+            android:textColor="#666"
+            android:paddingStart="16dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="6dp"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvMyPosts"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:paddingBottom="16dp"/>
+
+        <TextView
+            android:id="@+id/tvEmptyPosts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Bạn chưa đăng tin nào"
+            android:textColor="#999"
+            android:textSize="15sp"
+            android:gravity="center"
+            android:padding="40dp"
+            android:visibility="gone"/>
+    </LinearLayout>
+
+    <!-- TAB 2: YÊU CẦU NHẬN ĐƯỢC -->
+    <LinearLayout
+        android:id="@+id/layoutRequests"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvRequestCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Yêu cầu: 0"
+            android:textSize="13sp"
+            android:textColor="#666"
+            android:paddingStart="16dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="6dp"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvRequests"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:paddingBottom="16dp"/>
+
+        <TextView
+            android:id="@+id/tvEmptyRequests"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Chưa có yêu cầu nào"
+            android:textColor="#999"
+            android:textSize="15sp"
+            android:gravity="center"
+            android:padding="40dp"
+            android:visibility="gone"/>
+    </LinearLayout>
+
 </LinearLayout>

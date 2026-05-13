@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="3dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="14dp">
+
+        <!-- LOẠI ĐƠN + TRẠNG THÁI -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:id="@+id/tvOrderType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mua xe"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:background="#4CAF50"
+                android:paddingStart="8dp" android:paddingEnd="8dp"
+                android:paddingTop="3dp" android:paddingBottom="3dp"
+                android:layout_marginEnd="10dp"/>
+
+            <!-- TRẠNG THÁI LỚN NỔI BẬT -->
+            <TextView
+                android:id="@+id/tvOrderStatus"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="⏳ Chờ xác nhận"
+                android:textColor="#FF9800"
+                android:textSize="14sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+
+        <!-- TÊN XE -->
+        <TextView
+            android:id="@+id/tvOrderCarName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Toyota Vios 2020"
+            android:textColor="#222"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp"/>
+
+        <!-- GIÁ XE -->
+        <TextView
+            android:id="@+id/tvOrderCarPrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="450.000.000 VNĐ"
+            android:textColor="#E53935"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- ĐƯỜNG KẺ -->
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:background="#EEEEEE" android:layout_marginBottom="8dp"/>
+
+        <!-- NGÀY GỬI -->
+        <TextView
+            android:id="@+id/tvOrderDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📅  Ngày gửi: 13/05/2026"
+            android:textColor="#777"
+            android:textSize="13sp"
+            android:layout_marginBottom="4dp"/>
+
+        <!-- GHI CHÚ -->
+        <TextView
+            android:id="@+id/tvOrderNote"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="💬  Ghi chú: ..."
+            android:textColor="#777"
+            android:textSize="13sp"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone"/>
+
+        <!-- THÔNG BÁO KẾT QUẢ -->
+        <LinearLayout
+            android:id="@+id/layoutStatusMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#F5F5F5"
+            android:padding="10dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvStatusMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Người bán đã xác nhận yêu cầu của bạn!"
+                android:textColor="#333"
+                android:textSize="13sp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

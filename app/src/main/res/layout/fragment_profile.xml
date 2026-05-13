@@ -3,40 +3,52 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Chưa đăng nhập -->
+    <!-- CHƯA ĐĂNG NHẬP -->
     <LinearLayout
         android:id="@+id/layout_not_logged_in"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:orientation="vertical"
+        android:gravity="center"
         android:visibility="visible">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Chào mừng bạn đến với app xe cũ"
-            android:textSize="18sp"
+            android:text="🚗"
+            android:textSize="48sp"
             android:layout_gravity="center"
-            android:layout_marginBottom="20dp" />
+            android:layout_marginBottom="12dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Đăng nhập để xem tài khoản"
+            android:textSize="16sp"
+            android:textColor="#555"
+            android:layout_gravity="center"
+            android:layout_marginBottom="24dp"/>
 
         <Button
             android:id="@+id/btn_login"
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
+            android:layout_width="220dp"
+            android:layout_height="48dp"
             android:text="Đăng nhập"
             android:backgroundTint="#1976D2"
-            android:layout_marginBottom="10dp" />
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="10dp"/>
 
         <Button
             android:id="@+id/btn_register"
-            android:layout_width="200dp"
-            android:layout_height="wrap_content"
+            android:layout_width="220dp"
+            android:layout_height="48dp"
             android:text="Đăng ký"
-            android:backgroundTint="@android:color/darker_gray" />
+            android:backgroundTint="#90A4AE"
+            android:textColor="#FFFFFF"/>
     </LinearLayout>
 
-    <!-- Đã đăng nhập -->
+    <!-- ĐÃ ĐĂNG NHẬP -->
     <LinearLayout
         android:id="@+id/layout_logged_in"
         android:layout_width="match_parent"
@@ -44,14 +56,14 @@
         android:orientation="vertical"
         android:visibility="gone">
 
-        <!-- Thông tin tài khoản -->
+        <!-- THÔNG TIN TÀI KHOẢN -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center_horizontal"
             android:paddingTop="20dp"
-            android:paddingBottom="12dp"
+            android:paddingBottom="14dp"
             android:background="#F5F5F5">
 
             <ImageView
@@ -60,7 +72,7 @@
                 android:layout_height="80dp"
                 android:src="@android:drawable/ic_menu_gallery"
                 android:background="@android:color/darker_gray"
-                android:scaleType="centerCrop" />
+                android:scaleType="centerCrop"/>
 
             <TextView
                 android:id="@+id/tv_profile_name"
@@ -68,14 +80,16 @@
                 android:layout_height="wrap_content"
                 android:textStyle="bold"
                 android:textSize="20sp"
-                android:layout_marginTop="8dp" />
+                android:textColor="#222"
+                android:layout_marginTop="8dp"/>
 
             <TextView
                 android:id="@+id/tv_profile_phone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@android:color/darker_gray"
-                android:textSize="14sp" />
+                android:textColor="#777"
+                android:textSize="14sp"
+                android:layout_marginTop="2dp"/>
 
             <Button
                 android:id="@+id/btn_logout"
@@ -84,77 +98,149 @@
                 android:text="Đăng xuất"
                 android:textSize="13sp"
                 android:backgroundTint="#E53935"
+                android:textColor="#FFFFFF"
                 android:layout_marginTop="10dp"
-                android:paddingHorizontal="20dp" />
+                android:paddingHorizontal="20dp"/>
         </LinearLayout>
 
-        <!-- Bộ lọc -->
+        <!-- 2 NÚT TAB -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="46dp"
             android:orientation="horizontal"
-            android:padding="8dp"
-            android:background="@android:color/white">
+            android:background="#FFFFFF">
 
             <Button
-                android:id="@+id/btn_filter_all"
+                android:id="@+id/btnTabMyCars"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="Tất cả"
+                android:text="Xe đã đăng"
                 android:textSize="13sp"
-                android:backgroundTint="#1976D2"
-                android:layout_marginEnd="4dp" />
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#1976D2"/>
 
             <Button
-                android:id="@+id/btn_filter_sale"
+                android:id="@+id/btnTabMyOrders"
                 android:layout_width="0dp"
-                android:layout_height="36dp"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="Cần bán"
+                android:text="Lịch sử đơn"
                 android:textSize="13sp"
-                android:backgroundTint="#90A4AE"
-                android:layout_marginEnd="4dp" />
-
-            <Button
-                android:id="@+id/btn_filter_rental"
-                android:layout_width="0dp"
-                android:layout_height="36dp"
-                android:layout_weight="1"
-                android:text="Cho thuê"
-                android:textSize="13sp"
-                android:backgroundTint="#90A4AE" />
+                android:textColor="#1976D2"
+                android:backgroundTint="#E3F2FD"/>
         </LinearLayout>
 
-        <!-- Tin đang xem -->
-        <TextView
-            android:id="@+id/tv_car_count"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Tin đã đăng: 0"
-            android:textSize="13sp"
-            android:textColor="@android:color/darker_gray"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp" />
-
-        <!-- Danh sách xe -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_my_cars"
+        <!-- TAB 1: XE ĐÃ ĐĂNG -->
+        <LinearLayout
+            android:id="@+id/layoutTabMyCars"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:paddingTop="4dp" />
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="visible">
 
-        <!-- Trống -->
-        <TextView
-            android:id="@+id/tv_empty_cars"
+            <!-- Bộ lọc -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="8dp"
+                android:background="#FFFFFF">
+
+                <Button
+                    android:id="@+id/btn_filter_all"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:text="Tất cả"
+                    android:textSize="12sp"
+                    android:backgroundTint="#1976D2"
+                    android:textColor="#FFFFFF"
+                    android:layout_marginEnd="4dp"/>
+
+                <Button
+                    android:id="@+id/btn_filter_sale"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:text="Cần bán"
+                    android:textSize="12sp"
+                    android:backgroundTint="#90A4AE"
+                    android:textColor="#FFFFFF"
+                    android:layout_marginEnd="4dp"/>
+
+                <Button
+                    android:id="@+id/btn_filter_rental"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:text="Cho thuê"
+                    android:textSize="12sp"
+                    android:backgroundTint="#90A4AE"
+                    android:textColor="#FFFFFF"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_car_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tin đã đăng: 0"
+                android:textSize="13sp"
+                android:textColor="#777"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_my_cars"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/tv_empty_cars"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Bạn chưa đăng tin nào"
+                android:gravity="center"
+                android:textColor="#999"
+                android:paddingVertical="40dp"
+                android:visibility="gone"/>
+        </LinearLayout>
+
+        <!-- TAB 2: LỊCH SỬ ĐƠN -->
+        <LinearLayout
+            android:id="@+id/layoutTabMyOrders"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Bạn chưa đăng tin nào"
-            android:gravity="center"
-            android:textColor="@android:color/darker_gray"
-            android:paddingVertical="40dp"
-            android:visibility="gone" />
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvOrderCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Đơn của tôi: 0"
+                android:textSize="13sp"
+                android:textColor="#777"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvMyOrders"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/tvEmptyOrders"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Bạn chưa có đơn nào"
+                android:gravity="center"
+                android:textColor="#999"
+                android:paddingVertical="40dp"
+                android:visibility="gone"/>
+        </LinearLayout>
 
     </LinearLayout>
 
