@@ -50,6 +50,7 @@ public class PostCarActivity extends AppCompatActivity {
             car.put("name", name);
             car.put("price", price);
             car.put("info", info.isEmpty() ? brand : info);
+            car.put("brand", brand);
             car.put("type", type);
             String uid = FirebaseAuth.getInstance().getCurrentUser() != null
                     ? FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
