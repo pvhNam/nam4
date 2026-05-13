@@ -8,6 +8,7 @@ public class Car implements Serializable {
     private String price;
     private String info;
     private String type;      // "sale" hoặc "rental"
+    private String brand;
     private String sellerId;  // UID người đăng
     private int imageResId;
 
@@ -15,6 +16,7 @@ public class Car implements Serializable {
         this.name = name;
         this.price = price;
         this.info = info;
+        this.brand = "";
         this.imageResId = imageResId;
     }
 
@@ -30,5 +32,6 @@ public class Car implements Serializable {
     // Setters
     public void setId(String id) { this.id = id; }
     public void setType(String type) { this.type = type; }
+    public String getBrand() { return brand; }
     public void setSellerId(String sellerId) { this.sellerId = sellerId; }
 }
