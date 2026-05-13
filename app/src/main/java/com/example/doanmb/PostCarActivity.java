@@ -135,14 +135,6 @@ public class PostCarActivity extends AppCompatActivity {
                     car.put("sellerName", sellerName != null ? sellerName : "");
                     car.put("sellerPhone", sellerPhone != null ? sellerPhone : "");
                     car.put("createdAt", com.google.firebase.Timestamp.now());
-            // Lưu lên Firestore thật
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-            java.util.Map<String, Object> car = new java.util.HashMap<>();
-            car.put("name", name);
-            car.put("price", price);
-            car.put("info", info.isEmpty() ? brand : info);
-            car.put("brand", brand);
-            car.put("type", type);
             String uid = FirebaseAuth.getInstance().getCurrentUser() != null
                     ? FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
             car.put("userId", uid);
