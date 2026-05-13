@@ -190,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
             } else if (itemId == R.id.nav_manage) {
                 homeLayout.setVisibility(View.GONE);
                 fragmentContainer.setVisibility(View.VISIBLE);
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new ManageFragment()).commit();
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new CategoryFragment()).commit();
                 return true;
             } else if (itemId == R.id.nav_post) {
                 startActivity(new Intent(MainActivity.this, PostCarActivity.class));
