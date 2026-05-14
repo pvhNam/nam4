@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -37,26 +36,18 @@ public class MainActivity extends AppCompatActivity {
     private List<Car> rentalCarList = new ArrayList<>();
 
     private FirebaseFirestore db;
-    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mAuth = FirebaseAuth.getInstance();
-        if (mAuth.getCurrentUser() == null) {
-            startActivity(new Intent(this, LoginActivity.class));
-            finish();
-            return;
-        }
-
         db = FirebaseFirestore.getInstance();
 
         initViews();
         setupRecyclerViews();
         loadCategories();
-        loadCarsFromFirestore(); // Load từ Firebase
+        loadCarsFromFirestore();
         setupSearch();
         setupBottomNavigation();
     }
@@ -76,16 +67,20 @@ public class MainActivity extends AppCompatActivity {
         rvFeaturedSales.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         rvRentalCars.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
-        // Khởi tạo adapter rỗng trước
-        carSaleAdapter = new CarSaleAdapter(saleCarList, car -> {
-            Intent intent = new Intent(MainActivity.this, CarDetailActivity.class);
-            intent.putExtra("CAR_DATA", car);
-            startActivity(intent);
-        });
+        carSaleAdapter = new CarSaleAdapter(saleCarList, car -> openCarDetail(car));
         rvFeaturedSales.setAdapter(carSaleAdapter);
 
-        carRentalAdapter = new CarRentalAdapter(rentalCarList);
+        carRentalAdapter = new CarRentalAdapter(rentalCarList, car -> openCarDetail(car));
         rvRentalCars.setAdapter(carRentalAdapter);
+    }
+
+    private void openCarDetail(Car car) {
+        Intent intent = new Intent(MainActivity.this, CarDetailActivity.class);
+        intent.putExtra("CAR_DATA", car);
+        intent.putExtra("CAR_ID", car.getId());
+        intent.putExtra("SELLER_ID", car.getSellerId());
+        intent.putExtra("CAR_TYPE", car.getType());
+        startActivity(intent);
     }
 
     private void loadCategories() {
@@ -101,8 +96,6 @@ public class MainActivity extends AppCompatActivity {
     private void loadCarsFromFirestore() {
         db.collection("cars").get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    android.util.Log.d("DEBUG", "Tổng docs: " + queryDocumentSnapshots.size());
-
                     saleCarList.clear();
                     rentalCarList.clear();
 
@@ -111,17 +104,30 @@ public class MainActivity extends AppCompatActivity {
                         String price = doc.getString("price");
                         String info = doc.getString("info");
                         String type = doc.getString("type");
-
-                        android.util.Log.d("DEBUG", "Xe: " + name + " | type: " + type);
+                        String sellerId = doc.getString("sellerId");
+                        String status = doc.getString("status");
 
                         if (name == null) continue;
-                        int imageResId = android.R.drawable.ic_menu_gallery;
-                        String normalizedType = type != null ? type.toLowerCase().trim() : "";
-                        Car car = new Car(name, price, info, normalizedType, imageResId);
+                        // Ẩn xe đã bán
+                        if ("sold".equals(status)) continue;
 
-                        if (normalizedType.equals("sale") || normalizedType.contains("bán") || normalizedType.contains("ban")) {
+                        Car car = new Car(name, price != null ? price : "", info != null ? info : "", android.R.drawable.ic_menu_gallery);
+                        car.setId(doc.getId());
+                        car.setType(type != null ? type : "");
+                        car.setSellerId(sellerId != null ? sellerId : "");
+
+                        // Badge đang có người đặt
+                        if ("holding".equals(status)) {
+                            car = new Car("⏳ " + name, price != null ? price : "", "Đang có người đặt • " + (info != null ? info : ""), android.R.drawable.ic_menu_gallery);
+                            car.setId(doc.getId());
+                            car.setType(type != null ? type : "");
+                            car.setSellerId(sellerId != null ? sellerId : "");
+                        }
+
+                        String normalizedType = type != null ? type.toLowerCase().trim() : "";
+                        if (normalizedType.equals("sale")) {
                             saleCarList.add(car);
-                        } else if (normalizedType.equals("rental") || normalizedType.contains("thuê") || normalizedType.contains("thue")) {
+                        } else if (normalizedType.equals("rental")) {
                             rentalCarList.add(car);
                         }
                     }
@@ -130,16 +136,18 @@ public class MainActivity extends AppCompatActivity {
                     carRentalAdapter.filterList(rentalCarList);
                     setupAutoComplete();
                 })
-                .addOnFailureListener(e -> {
-                    android.util.Log.e("DEBUG", "LỖI: " + e.getMessage());
-                    loadDummyData();
-                });
+                .addOnFailureListener(e -> loadDummyData());
     }
 
     private void loadDummyData() {
-        saleCarList.add(new Car("Toyota Vios 2020", "450.000.000 VNĐ", "TP.HCM • 2020 • Tự động", android.R.drawable.ic_menu_gallery));
-        saleCarList.add(new Car("Kia Morning 2021", "320.000.000 VNĐ", "Hà Nội • 2021 • Số sàn", android.R.drawable.ic_menu_gallery));
-        rentalCarList.add(new Car("Hyundai Accent 2022", "800.000đ / ngày", "Quận 1, TP.HCM • Tự động", android.R.drawable.ic_menu_gallery));
+        Car c1 = new Car("Toyota Vios 2020", "450.000.000 VNĐ", "TP.HCM • 2020 • Tự động", android.R.drawable.ic_menu_gallery);
+        c1.setType("sale");
+        saleCarList.add(c1);
+
+        Car c2 = new Car("Hyundai Accent 2022", "800.000đ / ngày", "Quận 1, TP.HCM • Tự động", android.R.drawable.ic_menu_gallery);
+        c2.setType("rental");
+        rentalCarList.add(c2);
+
         carSaleAdapter.filterList(saleCarList);
         carRentalAdapter.filterList(rentalCarList);
     }
@@ -157,9 +165,7 @@ public class MainActivity extends AppCompatActivity {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
             @Override
-            public void afterTextChanged(Editable s) {
-                filter(s.toString());
-            }
+            public void afterTextChanged(Editable s) { filter(s.toString()); }
         });
     }
 
@@ -187,14 +193,16 @@ public class MainActivity extends AppCompatActivity {
                 homeLayout.setVisibility(View.VISIBLE);
                 fragmentContainer.setVisibility(View.GONE);
                 return true;
+            } else if (itemId == R.id.nav_cataloge) {
+                homeLayout.setVisibility(View.GONE);
+                fragmentContainer.setVisibility(View.VISIBLE);
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new CategoryFragment()).commit();
+                return true;
             } else if (itemId == R.id.nav_manage) {
                 homeLayout.setVisibility(View.GONE);
                 fragmentContainer.setVisibility(View.VISIBLE);
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new ManageFragment()).commit();
                 return true;
-            } else if (itemId == R.id.nav_post) {
-                startActivity(new Intent(MainActivity.this, PostCarActivity.class));
-                return false;
             } else if (itemId == R.id.nav_messages) {
                 homeLayout.setVisibility(View.GONE);
                 fragmentContainer.setVisibility(View.VISIBLE);

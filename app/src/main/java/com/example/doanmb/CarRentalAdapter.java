@@ -12,9 +12,15 @@ import java.util.List;
 public class CarRentalAdapter extends RecyclerView.Adapter<CarRentalAdapter.CarViewHolder> {
 
     private List<Car> carList;
+    private OnItemClickListener listener;
 
-    public CarRentalAdapter(List<Car> carList) {
+    public interface OnItemClickListener {
+        void onItemClick(Car car);
+    }
+
+    public CarRentalAdapter(List<Car> carList, OnItemClickListener listener) {
         this.carList = carList;
+        this.listener = listener;
     }
 
     @NonNull
@@ -31,12 +37,14 @@ public class CarRentalAdapter extends RecyclerView.Adapter<CarRentalAdapter.CarV
         holder.tvPrice.setText(car.getPrice());
         holder.tvInfo.setText(car.getInfo());
         holder.ivImage.setImageResource(car.getImageResId());
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onItemClick(car);
+        });
     }
 
     @Override
-    public int getItemCount() {
-        return carList.size();
-    }
+    public int getItemCount() { return carList.size(); }
 
     public static class CarViewHolder extends RecyclerView.ViewHolder {
         ImageView ivImage;
@@ -44,14 +52,13 @@ public class CarRentalAdapter extends RecyclerView.Adapter<CarRentalAdapter.CarV
 
         public CarViewHolder(@NonNull View itemView) {
             super(itemView);
-            // Các ID này phải khớp với id trong file item_car_rental.xml
             ivImage = itemView.findViewById(R.id.ivCarRental);
             tvName = itemView.findViewById(R.id.tvCarRentalName);
             tvPrice = itemView.findViewById(R.id.tvCarRentalPrice);
             tvInfo = itemView.findViewById(R.id.tvCarRentalInfo);
         }
     }
-    // Thêm hàm này để cập nhật lại danh sách khi tìm kiếm
+
     public void filterList(List<Car> filteredList) {
         this.carList = filteredList;
         notifyDataSetChanged();
