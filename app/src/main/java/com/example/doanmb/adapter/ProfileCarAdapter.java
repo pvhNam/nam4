@@ -1,4 +1,4 @@
-package com.example.doanmb;
+package com.example.doanmb.adapter;
 
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -8,6 +8,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.doanmb.R;
+import com.example.doanmb.model.Car;
+
 import java.text.Normalizer;
 import java.util.List;
 import java.util.Locale;

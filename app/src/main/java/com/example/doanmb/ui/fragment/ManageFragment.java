@@ -1,4 +1,4 @@
-package com.example.doanmb;
+package com.example.doanmb.ui.fragment;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -13,12 +13,16 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.doanmb.R;
+import com.example.doanmb.adapter.ProfileCarAdapter;
+import com.example.doanmb.adapter.RequestAdapter;
+import com.example.doanmb.model.Car;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

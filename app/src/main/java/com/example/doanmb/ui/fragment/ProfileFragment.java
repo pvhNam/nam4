@@ -1,4 +1,4 @@
-package com.example.doanmb;
+package com.example.doanmb.ui.fragment;
 
 import android.content.Intent;
 import android.graphics.Color;
@@ -14,6 +14,13 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.doanmb.R;
+import com.example.doanmb.adapter.OrderHistoryAdapter;
+import com.example.doanmb.adapter.ProfileCarAdapter;
+import com.example.doanmb.model.Car;
+import com.example.doanmb.ui.activity.LoginActivity;
+import com.example.doanmb.ui.activity.RegisterActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;

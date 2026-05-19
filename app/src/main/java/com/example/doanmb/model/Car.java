@@ -1,4 +1,4 @@
-package com.example.doanmb;
+package com.example.doanmb.model;
 import java.io.Serializable;
 public class Car implements Serializable {
     private String id;        // Document ID trên Firestore

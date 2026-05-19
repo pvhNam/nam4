@@ -1,4 +1,4 @@
-package com.example.doanmb;
+package com.example.doanmb.adapter;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -7,6 +7,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.doanmb.R;
 import com.google.firebase.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;

@@ -1,4 +1,4 @@
-package com.example.doanmb;
+package com.example.doanmb.ui.fragment;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -7,6 +7,8 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
+import com.example.doanmb.R;
 
 public class MessagesFragment extends Fragment {
     @Nullable

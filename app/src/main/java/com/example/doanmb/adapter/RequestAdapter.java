@@ -1,4 +1,4 @@
-package com.example.doanmb;
+package com.example.doanmb.adapter;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,6 +8,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.doanmb.R;
+
 import java.util.List;
 import java.util.Map;
 

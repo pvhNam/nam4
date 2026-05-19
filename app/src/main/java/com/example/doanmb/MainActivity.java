@@ -13,6 +13,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.doanmb.ui.activity.CarDetailActivity;
+import com.example.doanmb.ui.fragment.CategoryFragment;
+import com.example.doanmb.ui.fragment.ManageFragment;
+import com.example.doanmb.ui.fragment.MessagesFragment;
+import com.example.doanmb.ui.fragment.ProfileFragment;
+import com.example.doanmb.adapter.CarRentalAdapter;
+import com.example.doanmb.adapter.CarSaleAdapter;
+import com.example.doanmb.adapter.CategoryAdapter;
+import com.example.doanmb.model.Car;
+import com.example.doanmb.model.Category;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
