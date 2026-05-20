@@ -27,7 +27,7 @@
         android:id="@+id/et_email"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:hint="Email"
+        android:hint="Email hoặc số điện thoại"
         android:inputType="textEmailAddress"
         android:padding="12dp"
         android:background="@drawable/bg_search"
