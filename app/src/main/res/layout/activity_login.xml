@@ -55,22 +55,27 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:layout_marginTop="24dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Chưa có tài khoản? "/>
         <TextView
             android:id="@+id/tv_go_to_register"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Chưa có tài khoản? Đăng ký ngay"
+            android:text="Đăng ký ngay"
             android:textColor="#1976D2"
             android:textStyle="bold"/>
-        <TextView
-            android:id="@+id/tv_forgot_password"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Quên mật khẩu"
-            android:textColor="#1976D2"
-            android:textStyle="bold"/>
+
     </LinearLayout>
+    <TextView
+        android:id="@+id/tv_forgot_password"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Quên mật khẩu"
+        android:textColor="#1976D2"
+        android:textStyle="bold"/>
 
 </LinearLayout>
