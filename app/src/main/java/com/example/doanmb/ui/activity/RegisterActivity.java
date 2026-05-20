@@ -1,5 +1,6 @@
 package com.example.doanmb.ui.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Patterns;
 import android.widget.Button;
@@ -42,7 +43,7 @@ public class RegisterActivity extends AppCompatActivity {
         tvBackToLogin = findViewById(R.id.tv_back_to_login);
 
         btnRegister.setOnClickListener(v -> registerUser());
-        tvBackToLogin.setOnClickListener(v -> finish());
+        tvBackToLogin.setOnClickListener(v -> startActivity(new Intent(this, LoginActivity.class)));
     }
 
     private void registerUser() {
