@@ -18,7 +18,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private EditText etEmail, etPassword;
     private Button btnDoLogin;
-    private TextView tvGoToRegister;
+    private TextView tvGoToRegister,tvforgot;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
 
@@ -39,12 +39,17 @@ public class LoginActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.et_password);
         btnDoLogin = findViewById(R.id.btn_do_login);
         tvGoToRegister = findViewById(R.id.tv_go_to_register);
+        tvforgot = findViewById(R.id.tv_forgot_password);
 
         btnDoLogin.setOnClickListener(v -> loginUser());
 
         tvGoToRegister.setOnClickListener(v -> {
             startActivity(new Intent(this, RegisterActivity.class));
             finish();
+        });
+
+        tvforgot.setOnClickListener(v -> {
+            startActivity(new Intent(this, ForgotPassActivity.class));
         });
     }
 
