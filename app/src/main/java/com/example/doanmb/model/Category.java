@@ -1,4 +1,4 @@
-package com.example.doanmb;
+package com.example.doanmb.model;
 
 public class Category {
     private String name;

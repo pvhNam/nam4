@@ -1,13 +1,16 @@
-package com.example.doanmb;
+package com.example.doanmb.adapter;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.doanmb.R;
+import com.example.doanmb.model.Car;
+
 import java.util.List;
 
 public class CarRentalAdapter extends RecyclerView.Adapter<CarRentalAdapter.CarViewHolder> {
@@ -19,21 +22,15 @@ public class CarRentalAdapter extends RecyclerView.Adapter<CarRentalAdapter.CarV
         void onItemClick(Car car);
     }
 
-    public CarRentalAdapter(List<Car> carList) {
-        this.carList = carList;
-        this.listener = null;
-    }
-
     public CarRentalAdapter(List<Car> carList, OnItemClickListener listener) {
-        this.carList  = carList;
+        this.carList = carList;
         this.listener = listener;
     }
 
     @NonNull
     @Override
     public CarViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_car_rental, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_car_rental, parent, false);
         return new CarViewHolder(view);
     }
 
@@ -43,39 +40,31 @@ public class CarRentalAdapter extends RecyclerView.Adapter<CarRentalAdapter.CarV
         holder.tvName.setText(car.getName());
         holder.tvPrice.setText(car.getPrice());
         holder.tvInfo.setText(car.getInfo());
-        holder.ivImage.setImageResource(android.R.drawable.ic_menu_gallery);
+        holder.ivImage.setImageResource(car.getImageResId());
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onItemClick(car);
         });
-
-        if (holder.btnRentNow != null) {
-            holder.btnRentNow.setOnClickListener(v -> {
-                if (listener != null) listener.onItemClick(car);
-            });
-        }
     }
 
     @Override
     public int getItemCount() { return carList.size(); }
 
-    public void filterList(List<Car> filteredList) {
-        this.carList = filteredList;
-        notifyDataSetChanged();
-    }
-
     public static class CarViewHolder extends RecyclerView.ViewHolder {
         ImageView ivImage;
         TextView tvName, tvPrice, tvInfo;
-        Button btnRentNow;
 
         public CarViewHolder(@NonNull View itemView) {
             super(itemView);
-            ivImage    = itemView.findViewById(R.id.ivCarRental);
-            tvName     = itemView.findViewById(R.id.tvCarRentalName);
-            tvPrice    = itemView.findViewById(R.id.tvCarRentalPrice);
-            tvInfo     = itemView.findViewById(R.id.tvCarRentalInfo);
-            btnRentNow = itemView.findViewById(R.id.btnRentNow);
+            ivImage = itemView.findViewById(R.id.ivCarRental);
+            tvName = itemView.findViewById(R.id.tvCarRentalName);
+            tvPrice = itemView.findViewById(R.id.tvCarRentalPrice);
+            tvInfo = itemView.findViewById(R.id.tvCarRentalInfo);
         }
+    }
+
+    public void filterList(List<Car> filteredList) {
+        this.carList = filteredList;
+        notifyDataSetChanged();
     }
 }

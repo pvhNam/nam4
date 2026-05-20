@@ -24,13 +24,13 @@
         </activity>
 
         <activity
-            android:name=".CarDetailActivity"
+            android:name=".ui.activity.CarDetailActivity"
             android:exported="false" />
 
-        <activity android:name=".LoginActivity" />
-        <activity android:name=".RegisterActivity" />
+        <activity android:name=".ui.activity.LoginActivity" />
+        <activity android:name=".ui.activity.RegisterActivity" />
 
-        <activity android:name=".PostCarActivity" />
+        <activity android:name=".ui.activity.PostCarActivity" />
 
     </application>
 
