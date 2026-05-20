@@ -42,6 +42,16 @@
             android:padding="12dp" />
 
         <EditText
+            android:id="@+id/et_register_email"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_search"
+            android:hint="Email"
+            android:inputType="textEmailAddress"
+            android:padding="12dp" />
+
+        <EditText
             android:id="@+id/et_register_password"
             android:layout_width="match_parent"
             android:layout_height="50dp"
