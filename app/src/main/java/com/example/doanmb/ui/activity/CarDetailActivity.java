@@ -26,7 +26,7 @@ public class CarDetailActivity extends AppCompatActivity {
     private ImageView ivCarDetail;
     private TextView tvCarName, tvCarPrice, tvCarInfo;
     private TextView tvCarTypeBadge, tvCarFuelBadge, tvCarConditionBadge;
-    private TextView tvSellerName, tvSellerPhone;
+    private TextView tvSellerName, tvSellerPhone, tvOwnerNote;
 
     // Form mua xe
     private LinearLayout layoutBuyForm;
@@ -58,21 +58,8 @@ public class CarDetailActivity extends AppCompatActivity {
         sellerId = getIntent().getStringExtra("SELLER_ID");
         carType = getIntent().getStringExtra("CAR_TYPE");
 
-        // Ẩn badge fuel và condition trước, chờ Firestore trả về đúng dữ liệu
-        tvCarFuelBadge.setVisibility(View.GONE);
-        tvCarConditionBadge.setVisibility(View.GONE);
-
         if (car != null) {
-            // Load ảnh từ URL Cloudinary
-            String imageUrl = car.getImageUrl();
-            if (imageUrl != null && !imageUrl.isEmpty()) {
-                Glide.with(this)
-                        .load(imageUrl)
-                        .placeholder(android.R.drawable.ic_menu_gallery)
-                        .into(ivCarDetail);
-            } else {
-                ivCarDetail.setImageResource(android.R.drawable.ic_menu_gallery);
-            }
+            ivCarDetail.setImageResource(car.getImageResId());
             tvCarName.setText(car.getName());
             tvCarPrice.setText(car.getPrice());
             tvCarInfo.setText(car.getInfo());
@@ -112,6 +99,7 @@ public class CarDetailActivity extends AppCompatActivity {
         tvCarConditionBadge = findViewById(R.id.tvCarConditionBadge);
         tvSellerName = findViewById(R.id.tvSellerName);
         tvSellerPhone = findViewById(R.id.tvSellerPhone);
+        tvOwnerNote = findViewById(R.id.tvOwnerNote);
 
         layoutBuyForm = findViewById(R.id.layoutBuyForm);
         etBuyerNote = findViewById(R.id.etBuyerNote);
@@ -139,32 +127,13 @@ public class CarDetailActivity extends AppCompatActivity {
                     String type = doc.getString("type");
                     String sPhone = doc.getString("sellerPhone");
                     String sName = doc.getString("sellerName");
-                    String imageUrl = doc.getString("imageUrl");
 
-                    // Load ảnh từ Firestore (chính xác nhất)
-                    if (imageUrl != null && !imageUrl.isEmpty()) {
-                        Glide.with(CarDetailActivity.this)
-                                .load(imageUrl)
-                                .placeholder(android.R.drawable.ic_menu_gallery)
-                                .into(ivCarDetail);
-                    }
-
-                    // Badge nhiên liệu (cam)
-                    if (fuel != null && !fuel.isEmpty()) {
-                        tvCarFuelBadge.setText(fuel);
-                        tvCarFuelBadge.setVisibility(View.VISIBLE);
-                    }
-
-                    // Badge tình trạng xe (xám)
-                    if (condition != null && !condition.isEmpty()) {
-                        if (condition.contains("mới 100") || condition.equalsIgnoreCase("Xe mới 100%")) {
-                            tvCarConditionBadge.setText("Xe mới");
-                        } else if (condition.contains("đăng ký") || condition.equalsIgnoreCase("Xe mới đăng ký")) {
-                            tvCarConditionBadge.setText("Mới ĐK");
-                        } else {
-                            tvCarConditionBadge.setText("Xe cũ");
-                        }
-                        tvCarConditionBadge.setVisibility(View.VISIBLE);
+                    // Cập nhật badge
+                    if (fuel != null) tvCarFuelBadge.setText(fuel);
+                    if (condition != null) {
+                        if (condition.contains("mới 100")) tvCarConditionBadge.setText("Xe mới");
+                        else if (condition.contains("đăng ký")) tvCarConditionBadge.setText("Mới ĐK");
+                        else tvCarConditionBadge.setText("Xe cũ");
                     }
 
                     // Nếu document có sẵn sellerName/Phone thì dùng luôn
@@ -192,6 +161,23 @@ public class CarDetailActivity extends AppCompatActivity {
     }
 
     private void setupByType(String type) {
+        // Kiểm tra nếu xe là của chính người dùng đang đăng nhập
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        boolean isOwner = currentUser != null && currentUser.getUid().equals(sellerId);
+
+        if (isOwner) {
+            // Chủ xe xem xe của mình → ẩn form, hiện thông báo
+            layoutBuyForm.setVisibility(View.GONE);
+            layoutRentForm.setVisibility(View.GONE);
+            tvCarTypeBadge.setText("rental".equals(type) ? "Cho Thuê" : "Cần Bán");
+            tvCarTypeBadge.setBackgroundColor("rental".equals(type) ? 0xFF1976D2 : 0xFF4CAF50);
+
+            // Hiện thông báo "Đây là xe của bạn"
+            TextView tvOwnerNote = findViewById(R.id.tvOwnerNote);
+            if (tvOwnerNote != null) tvOwnerNote.setVisibility(View.VISIBLE);
+            return;
+        }
+
         if ("rental".equals(type)) {
             tvCarTypeBadge.setText("Cho Thuê");
             tvCarTypeBadge.setBackgroundColor(0xFF1976D2);
@@ -199,9 +185,8 @@ public class CarDetailActivity extends AppCompatActivity {
             layoutRentForm.setVisibility(View.VISIBLE);
 
             // Tự điền sẵn tên + SĐT người dùng đang đăng nhập
-            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-            if (user != null) {
-                db.collection("users").document(user.getUid()).get()
+            if (currentUser != null) {
+                db.collection("users").document(currentUser.getUid()).get()
                         .addOnSuccessListener(doc -> {
                             if (doc.exists()) {
                                 String name = doc.getString("name");
@@ -255,7 +240,6 @@ public class CarDetailActivity extends AppCompatActivity {
         order.put("note", etBuyerNote.getText().toString().trim());
         order.put("status", "pending");
         order.put("createdAt", com.google.firebase.Timestamp.now());
-        order.put("sellerId", sellerId != null ? sellerId : "");
 
         db.collection("orders").add(order)
                 .addOnSuccessListener(ref -> {
@@ -298,7 +282,6 @@ public class CarDetailActivity extends AppCompatActivity {
 
         Map<String, Object> order = new HashMap<>();
         order.put("buyerId", user.getUid());
-        order.put("sellerId", sellerId != null ? sellerId : ""); // ← thêm dòng này
         order.put("carId", carId != null ? carId : "");
         order.put("carName", car != null ? car.getName() : "");
         order.put("carPrice", car != null ? car.getPrice() : "");
