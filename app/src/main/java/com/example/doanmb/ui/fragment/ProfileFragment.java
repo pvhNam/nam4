@@ -2,31 +2,39 @@ package com.example.doanmb.ui.fragment;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.doanmb.R;
 import com.example.doanmb.adapter.OrderHistoryAdapter;
 import com.example.doanmb.adapter.ProfileCarAdapter;
 import com.example.doanmb.model.Car;
 import com.example.doanmb.ui.activity.LoginActivity;
 import com.example.doanmb.ui.activity.RegisterActivity;
+import com.example.doanmb.util.CloudinaryHelper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +45,13 @@ public class ProfileFragment extends Fragment {
     private LinearLayout layoutTabMyCars, layoutTabMyOrders;
     private Button btnLogin, btnRegister, btnLogout;
     private TextView tvProfileName, tvProfilePhone;
+    private ImageView ivAvatar;
+
+    // Launcher chọn ảnh từ thư viện
+    private final ActivityResultLauncher<String> pickImageLauncher =
+            registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+                if (uri != null) uploadAvatar(uri);
+            });
 
     // Tab 1: Xe đã đăng
     private Button btnFilterAll, btnFilterSale, btnFilterRental;
@@ -53,7 +68,6 @@ public class ProfileFragment extends Fragment {
     private List<Map<String, Object>> orderList = new ArrayList<>();
 
     private FirebaseFirestore db;
-    private ListenerRegistration ordersListener; // lưu lại để hủy khi fragment destroy
 
     @Nullable
     @Override
@@ -73,6 +87,11 @@ public class ProfileFragment extends Fragment {
         btnLogout = view.findViewById(R.id.btn_logout);
         tvProfileName = view.findViewById(R.id.tv_profile_name);
         tvProfilePhone = view.findViewById(R.id.tv_profile_phone);
+        ivAvatar = view.findViewById(R.id.iv_avatar);
+
+        // Nút camera nhỏ ở góc avatar → mở gallery
+        ImageView ivChangeAvatar = view.findViewById(R.id.iv_change_avatar);
+        ivChangeAvatar.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
         btnTabMyCars = view.findViewById(R.id.btnTabMyCars);
         btnTabMyOrders = view.findViewById(R.id.btnTabMyOrders);
         layoutTabMyCars = view.findViewById(R.id.layoutTabMyCars);
@@ -155,10 +174,56 @@ public class ProfileFragment extends Fragment {
                     if (doc.exists()) {
                         String name = doc.getString("name");
                         String phone = doc.getString("phone");
+                        String avatarUrl = doc.getString("avatarUrl");
                         if (tvProfileName != null) tvProfileName.setText(name != null ? name : "");
                         if (tvProfilePhone != null) tvProfilePhone.setText(phone != null ? "📞 " + phone : "");
+
+                        // Load ảnh đại diện nếu có
+                        if (avatarUrl != null && !avatarUrl.isEmpty() && ivAvatar != null) {
+                            Glide.with(this)
+                                    .load(avatarUrl)
+                                    .circleCrop()
+                                    .placeholder(android.R.drawable.ic_menu_gallery)
+                                    .into(ivAvatar);
+                        }
                     }
                 });
+    }
+
+    // Upload ảnh đại diện lên Cloudinary rồi lưu URL vào Firestore
+    private void uploadAvatar(Uri uri) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        Toast.makeText(getContext(), "Đang tải ảnh lên...", Toast.LENGTH_SHORT).show();
+
+        CloudinaryHelper.uploadImage(requireContext(), uri, new CloudinaryHelper.OnUploadCallback() {
+            @Override
+            public void onSuccess(String imageUrl) {
+                if (!isAdded() || getActivity() == null) return;
+
+                // Lưu URL vào Firestore
+                Map<String, Object> update = new HashMap<>();
+                update.put("avatarUrl", imageUrl);
+                db.collection("users").document(user.getUid())
+                        .update(update)
+                        .addOnSuccessListener(unused -> {
+                            if (!isAdded()) return;
+                            // Hiển thị ảnh mới ngay lập tức
+                            Glide.with(ProfileFragment.this)
+                                    .load(imageUrl)
+                                    .circleCrop()
+                                    .into(ivAvatar);
+                            Toast.makeText(getContext(), "✅ Cập nhật ảnh đại diện thành công!", Toast.LENGTH_SHORT).show();
+                        });
+            }
+
+            @Override
+            public void onFailure(String error) {
+                if (!isAdded()) return;
+                Toast.makeText(getContext(), "Lỗi: " + error, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void loadMyCars(String userId) {
@@ -182,19 +247,8 @@ public class ProfileFragment extends Fragment {
     }
 
     private void loadMyOrders(String userId) {
-        // Hủy listener cũ nếu có (tránh duplicate khi gọi lại)
-        if (ordersListener != null) {
-            ordersListener.remove();
-        }
-
-        // addSnapshotListener: tự động cập nhật khi có thay đổi, không cần tắt mở app
-        ordersListener = db.collection("orders")
-                .whereEqualTo("buyerId", userId)
-                .addSnapshotListener((snapshots, error) -> {
-                    if (error != null || snapshots == null) return;
-                    // Fragment có thể đã bị detach
-                    if (!isAdded() || getActivity() == null) return;
-
+        db.collection("orders").whereEqualTo("buyerId", userId).get()
+                .addOnSuccessListener(snapshots -> {
                     orderList.clear();
                     for (QueryDocumentSnapshot doc : snapshots) {
                         orderList.add(doc.getData());
@@ -204,16 +258,6 @@ public class ProfileFragment extends Fragment {
                     tvEmptyOrders.setVisibility(orderList.isEmpty() ? View.VISIBLE : View.GONE);
                     rvMyOrders.setVisibility(orderList.isEmpty() ? View.GONE : View.VISIBLE);
                 });
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        // Quan trọng: hủy listener khi fragment bị destroy, tránh memory leak
-        if (ordersListener != null) {
-            ordersListener.remove();
-            ordersListener = null;
-        }
     }
 
     private void applyFilter(String filter) {

@@ -66,13 +66,31 @@
             android:paddingBottom="14dp"
             android:background="#F5F5F5">
 
-            <ImageView
-                android:id="@+id/iv_avatar"
+            <!-- AVATAR + NÚT CHỌN ẢNH -->
+            <FrameLayout
                 android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:src="@android:drawable/ic_menu_gallery"
-                android:background="@android:color/darker_gray"
-                android:scaleType="centerCrop"/>
+                android:layout_height="80dp">
+
+                <ImageView
+                    android:id="@+id/iv_avatar"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:src="@android:drawable/ic_menu_gallery"
+                    android:background="@android:color/darker_gray"
+                    android:scaleType="centerCrop"/>
+
+                <!-- Overlay camera icon ở góc dưới phải -->
+                <ImageView
+                    android:id="@+id/iv_change_avatar"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="bottom|end"
+                    android:src="@android:drawable/ic_menu_camera"
+                    android:background="#1976D2"
+                    android:padding="4dp"
+                    android:clickable="true"
+                    android:focusable="true"/>
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/tv_profile_name"
