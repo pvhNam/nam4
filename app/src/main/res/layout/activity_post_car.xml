@@ -135,5 +135,36 @@
             android:textColor="@android:color/white"
             android:textSize="16sp" android:textStyle="bold"/>
 
+        <!-- ẢNH XE -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Ảnh xe" android:textStyle="bold" android:textColor="#333"/>
+
+        <Button
+            android:id="@+id/btn_pick_image"
+            android:layout_width="match_parent" android:layout_height="48dp"
+            android:layout_marginTop="6dp" android:layout_marginBottom="8dp"
+            android:backgroundTint="#90A4AE"
+            android:text="📷  Chọn ảnh từ thư viện"
+            android:textColor="#FFFFFF"/>
+
+        <ImageView
+            android:id="@+id/iv_car_preview"
+            android:layout_width="match_parent" android:layout_height="180dp"
+            android:layout_marginBottom="14dp"
+            android:scaleType="centerCrop"
+            android:background="#EEEEEE"
+            android:visibility="gone"/>
+        <!-- Xóa ảnh -->
+        <Button
+            android:id="@+id/btn_remove_image"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginBottom="14dp"
+            android:backgroundTint="#F44336"
+            android:text="❌  Xóa ảnh"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:visibility="gone"/>
+
     </LinearLayout>
 </ScrollView>
