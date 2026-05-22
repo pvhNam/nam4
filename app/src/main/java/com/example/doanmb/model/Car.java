@@ -1,13 +1,14 @@
 package com.example.doanmb.model;
 import java.io.Serializable;
 public class Car implements Serializable {
-    private String id;        // Document ID trên Firestore
+    private String id;
     private String name;
     private String price;
     private String info;
-    private String type;      // "sale" hoặc "rental"
+    private String type;
     private String brand;
-    private String sellerId;  // UID người đăng
+    private String sellerId;
+    private String imageUrl;
     private int imageResId;
 
     public Car(String name, String price, String info, int imageResId) {
@@ -15,6 +16,7 @@ public class Car implements Serializable {
         this.price = price;
         this.info = info;
         this.brand = "";
+        this.imageUrl = "";
         this.imageResId = imageResId;
     }
 
@@ -27,11 +29,11 @@ public class Car implements Serializable {
         this.price = price;
         this.info = info;
         this.type = type;
-        this.brand = "";
+        this.brand = brand;
+        this.imageUrl = "";
         this.imageResId = imageResId;
     }
 
-    // Getters
     public String getId() { return id; }
     public String getName() { return name; }
     public String getPrice() { return price; }
@@ -39,10 +41,11 @@ public class Car implements Serializable {
     public String getType() { return type; }
     public String getBrand() { return brand; }
     public String getSellerId() { return sellerId; }
+    public String getImageUrl() { return imageUrl; }
     public int getImageResId() { return imageResId; }
 
-    // Setters
     public void setId(String id) { this.id = id; }
     public void setType(String type) { this.type = type; }
     public void setSellerId(String sellerId) { this.sellerId = sellerId; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }
