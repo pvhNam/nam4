@@ -21,6 +21,7 @@ import com.example.doanmb.model.Car;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,6 +49,7 @@ public class ManageFragment extends Fragment {
 
     private FirebaseFirestore db;
     private String currentUserId;
+    private ListenerRegistration requestsListener; // lưu lại để hủy khi fragment destroy
 
     @Nullable
     @Override
@@ -134,6 +136,9 @@ public class ManageFragment extends Fragment {
                 .whereEqualTo("userId", currentUserId)
                 .get()
                 .addOnSuccessListener(snapshots -> {
+                    // PHÒNG HỘ LUỒNG
+                    if (!isAdded() || getActivity() == null) return;
+
                     myCarList.clear();
                     for (QueryDocumentSnapshot doc : snapshots) {
                         String name = doc.getString("name");
@@ -146,8 +151,8 @@ public class ManageFragment extends Fragment {
                         Car car = new Car(name, price != null ? price : "", info != null ? info : "", android.R.drawable.ic_menu_gallery);
                         car.setId(doc.getId());
                         car.setType(type != null ? type : "");
+                        car.setImageUrl(doc.getString("imageUrl") != null ? doc.getString("imageUrl") : "");
 
-                        // Thêm badge trạng thái vào info nếu đang giữ chỗ
                         if ("holding".equals(status)) {
                             car = new Car("⏳ " + name, price != null ? price : "", "Đang có người đặt cọc • " + (info != null ? info : ""), android.R.drawable.ic_menu_gallery);
                             car.setId(doc.getId());
@@ -162,28 +167,37 @@ public class ManageFragment extends Fragment {
                 });
     }
 
-    // Load yêu cầu mua/thuê xe của mình
+    // Load yêu cầu mua/thuê xe của mình — real-time
     private void loadRequests() {
-        db.collection("orders")
-                .whereEqualTo("sellerId", currentUserId)
-                .get()
-                .addOnSuccessListener(snapshots -> {
-                    orderList.clear();
-                    orderIds.clear();
+        // Hủy listener cũ nếu có
+        if (requestsListener != null) {
+            requestsListener.remove();
+        }
 
-                    // Nếu không có field sellerId thì query theo carId
+        // Thử query theo sellerId trước
+        requestsListener = db.collection("orders")
+                .whereEqualTo("sellerId", currentUserId)
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null || snapshots == null) {
+                        loadRequestsByCarId();
+                        return;
+                    }
+                    if (!isAdded() || getActivity() == null) return;
+
                     if (snapshots.isEmpty()) {
+                        // Không có sellerId → fallback query theo carId
                         loadRequestsByCarId();
                         return;
                     }
 
+                    orderList.clear();
+                    orderIds.clear();
                     for (QueryDocumentSnapshot doc : snapshots) {
                         orderList.add(doc.getData());
                         orderIds.add(doc.getId());
                     }
                     updateRequestsUI();
-                })
-                .addOnFailureListener(e -> loadRequestsByCarId());
+                });
     }
 
     // Load yêu cầu dựa trên các carId của mình
@@ -228,47 +242,53 @@ public class ManageFragment extends Fragment {
 
     // Xác nhận yêu cầu → xe chuyển sang "sold/rented", order → confirmed
     private void confirmRequest(String orderId, String carId) {
-        // Cập nhật order
         Map<String, Object> orderUpdate = new HashMap<>();
         orderUpdate.put("status", "confirmed");
         db.collection("orders").document(orderId).update(orderUpdate);
 
-        // Cập nhật trạng thái xe thành "sold" (ẩn khỏi danh sách)
         if (!carId.isEmpty()) {
             Map<String, Object> carUpdate = new HashMap<>();
             carUpdate.put("status", "sold");
             db.collection("cars").document(carId).update(carUpdate)
                     .addOnSuccessListener(v -> {
-                        Toast.makeText(getContext(), "✅ Đã xác nhận! Xe sẽ được ẩn khỏi danh sách.", Toast.LENGTH_SHORT).show();
-                        loadMyPosts();
-                        loadRequests();
+                        // PHÒNG HỘ CONTEXT
+                        if (getContext() != null) {
+                            Toast.makeText(getContext(), "✅ Đã xác nhận! Xe sẽ được ẩn khỏi danh sách.", Toast.LENGTH_SHORT).show();
+                            loadMyPosts();
+                            loadRequests();
+                        }
                     });
         } else {
-            Toast.makeText(getContext(), "✅ Đã xác nhận yêu cầu!", Toast.LENGTH_SHORT).show();
-            loadRequests();
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "✅ Đã xác nhận yêu cầu!", Toast.LENGTH_SHORT).show();
+                loadRequests();
+            }
         }
     }
 
     // Từ chối yêu cầu → xe về trạng thái bình thường
     private void rejectRequest(String orderId, String carId) {
-        // Cập nhật order
         Map<String, Object> orderUpdate = new HashMap<>();
         orderUpdate.put("status", "rejected");
         db.collection("orders").document(orderId).update(orderUpdate);
 
-        // Đưa xe về trạng thái active
         if (!carId.isEmpty()) {
             Map<String, Object> carUpdate = new HashMap<>();
             carUpdate.put("status", "active");
             db.collection("cars").document(carId).update(carUpdate)
                     .addOnSuccessListener(v -> {
-                        Toast.makeText(getContext(), "Đã từ chối yêu cầu. Xe tiếp tục hiển thị.", Toast.LENGTH_SHORT).show();
-                        loadMyPosts();
-                        loadRequests();
+                        // PHÒNG HỘ CONTEXT
+                        if (getContext() != null) {
+                            Toast.makeText(getContext(), "Đã từ chối yêu cầu. Xe tiếp tục hiển thị.", Toast.LENGTH_SHORT).show();
+                            loadMyPosts();
+                            loadRequests();
+                        }
                     });
         } else {
-            Toast.makeText(getContext(), "Đã từ chối yêu cầu.", Toast.LENGTH_SHORT).show();
-            loadRequests();
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Đã từ chối yêu cầu.", Toast.LENGTH_SHORT).show();
+                loadRequests();
+            }
         }
     }
 
@@ -278,6 +298,16 @@ public class ManageFragment extends Fragment {
         if (currentUserId != null) {
             loadMyPosts();
             loadRequests();
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        // Quan trọng: hủy listener khi fragment bị destroy, tránh memory leak
+        if (requestsListener != null) {
+            requestsListener.remove();
+            requestsListener = null;
         }
     }
 }

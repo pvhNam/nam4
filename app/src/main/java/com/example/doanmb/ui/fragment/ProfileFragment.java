@@ -24,6 +24,7 @@ import com.example.doanmb.ui.activity.RegisterActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +53,7 @@ public class ProfileFragment extends Fragment {
     private List<Map<String, Object>> orderList = new ArrayList<>();
 
     private FirebaseFirestore db;
+    private ListenerRegistration ordersListener; // lưu lại để hủy khi fragment destroy
 
     @Nullable
     @Override
@@ -172,6 +174,7 @@ public class ProfileFragment extends Fragment {
                         Car car = new Car(name, price != null ? price : "", info != null ? info : "", android.R.drawable.ic_menu_gallery);
                         car.setId(doc.getId());
                         car.setType(type != null ? type : "");
+                        car.setImageUrl(doc.getString("imageUrl") != null ? doc.getString("imageUrl") : "");
                         allCars.add(car);
                     }
                     applyFilter(currentFilter);
@@ -179,8 +182,19 @@ public class ProfileFragment extends Fragment {
     }
 
     private void loadMyOrders(String userId) {
-        db.collection("orders").whereEqualTo("buyerId", userId).get()
-                .addOnSuccessListener(snapshots -> {
+        // Hủy listener cũ nếu có (tránh duplicate khi gọi lại)
+        if (ordersListener != null) {
+            ordersListener.remove();
+        }
+
+        // addSnapshotListener: tự động cập nhật khi có thay đổi, không cần tắt mở app
+        ordersListener = db.collection("orders")
+                .whereEqualTo("buyerId", userId)
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null || snapshots == null) return;
+                    // Fragment có thể đã bị detach
+                    if (!isAdded() || getActivity() == null) return;
+
                     orderList.clear();
                     for (QueryDocumentSnapshot doc : snapshots) {
                         orderList.add(doc.getData());
@@ -190,6 +204,16 @@ public class ProfileFragment extends Fragment {
                     tvEmptyOrders.setVisibility(orderList.isEmpty() ? View.VISIBLE : View.GONE);
                     rvMyOrders.setVisibility(orderList.isEmpty() ? View.GONE : View.VISIBLE);
                 });
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        // Quan trọng: hủy listener khi fragment bị destroy, tránh memory leak
+        if (ordersListener != null) {
+            ordersListener.remove();
+            ordersListener = null;
+        }
     }
 
     private void applyFilter(String filter) {
