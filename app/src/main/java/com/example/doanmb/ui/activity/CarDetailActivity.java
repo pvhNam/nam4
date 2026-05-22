@@ -12,6 +12,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.bumptech.glide.Glide;
 import com.example.doanmb.R;
 import com.example.doanmb.model.Car;
 import com.google.firebase.auth.FirebaseAuth;
@@ -57,8 +58,21 @@ public class CarDetailActivity extends AppCompatActivity {
         sellerId = getIntent().getStringExtra("SELLER_ID");
         carType = getIntent().getStringExtra("CAR_TYPE");
 
+        // Ẩn badge fuel và condition trước, chờ Firestore trả về đúng dữ liệu
+        tvCarFuelBadge.setVisibility(View.GONE);
+        tvCarConditionBadge.setVisibility(View.GONE);
+
         if (car != null) {
-            ivCarDetail.setImageResource(car.getImageResId());
+            // Load ảnh từ URL Cloudinary
+            String imageUrl = car.getImageUrl();
+            if (imageUrl != null && !imageUrl.isEmpty()) {
+                Glide.with(this)
+                        .load(imageUrl)
+                        .placeholder(android.R.drawable.ic_menu_gallery)
+                        .into(ivCarDetail);
+            } else {
+                ivCarDetail.setImageResource(android.R.drawable.ic_menu_gallery);
+            }
             tvCarName.setText(car.getName());
             tvCarPrice.setText(car.getPrice());
             tvCarInfo.setText(car.getInfo());
@@ -125,13 +139,32 @@ public class CarDetailActivity extends AppCompatActivity {
                     String type = doc.getString("type");
                     String sPhone = doc.getString("sellerPhone");
                     String sName = doc.getString("sellerName");
+                    String imageUrl = doc.getString("imageUrl");
 
-                    // Cập nhật badge
-                    if (fuel != null) tvCarFuelBadge.setText(fuel);
-                    if (condition != null) {
-                        if (condition.contains("mới 100")) tvCarConditionBadge.setText("Xe mới");
-                        else if (condition.contains("đăng ký")) tvCarConditionBadge.setText("Mới ĐK");
-                        else tvCarConditionBadge.setText("Xe cũ");
+                    // Load ảnh từ Firestore (chính xác nhất)
+                    if (imageUrl != null && !imageUrl.isEmpty()) {
+                        Glide.with(CarDetailActivity.this)
+                                .load(imageUrl)
+                                .placeholder(android.R.drawable.ic_menu_gallery)
+                                .into(ivCarDetail);
+                    }
+
+                    // Badge nhiên liệu (cam)
+                    if (fuel != null && !fuel.isEmpty()) {
+                        tvCarFuelBadge.setText(fuel);
+                        tvCarFuelBadge.setVisibility(View.VISIBLE);
+                    }
+
+                    // Badge tình trạng xe (xám)
+                    if (condition != null && !condition.isEmpty()) {
+                        if (condition.contains("mới 100") || condition.equalsIgnoreCase("Xe mới 100%")) {
+                            tvCarConditionBadge.setText("Xe mới");
+                        } else if (condition.contains("đăng ký") || condition.equalsIgnoreCase("Xe mới đăng ký")) {
+                            tvCarConditionBadge.setText("Mới ĐK");
+                        } else {
+                            tvCarConditionBadge.setText("Xe cũ");
+                        }
+                        tvCarConditionBadge.setVisibility(View.VISIBLE);
                     }
 
                     // Nếu document có sẵn sellerName/Phone thì dùng luôn
@@ -222,6 +255,7 @@ public class CarDetailActivity extends AppCompatActivity {
         order.put("note", etBuyerNote.getText().toString().trim());
         order.put("status", "pending");
         order.put("createdAt", com.google.firebase.Timestamp.now());
+        order.put("sellerId", sellerId != null ? sellerId : "");
 
         db.collection("orders").add(order)
                 .addOnSuccessListener(ref -> {
@@ -264,6 +298,7 @@ public class CarDetailActivity extends AppCompatActivity {
 
         Map<String, Object> order = new HashMap<>();
         order.put("buyerId", user.getUid());
+        order.put("sellerId", sellerId != null ? sellerId : ""); // ← thêm dòng này
         order.put("carId", carId != null ? carId : "");
         order.put("carName", car != null ? car.getName() : "");
         order.put("carPrice", car != null ? car.getPrice() : "");
