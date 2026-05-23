@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
 
 import com.example.doanmb.R;
 import com.example.doanmb.model.Car;
@@ -43,7 +44,16 @@ public class CarSaleAdapter extends RecyclerView.Adapter<CarSaleAdapter.CarSaleV
         holder.tvName.setText(car.getName());
         holder.tvPrice.setText(car.getPrice());
         holder.tvInfo.setText(car.getInfo());
-        holder.ivImage.setImageResource(car.getImageResId());
+
+        String imageUrl = car.getImageUrl();
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(imageUrl)
+                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .into(holder.ivImage);
+        } else {
+            holder.ivImage.setImageResource(android.R.drawable.ic_menu_gallery);
+        }
 
         // Bắt sự kiện click vào nút "XEM CHI TIẾT" hoặc toàn bộ Item
         holder.itemView.setOnClickListener(v -> {

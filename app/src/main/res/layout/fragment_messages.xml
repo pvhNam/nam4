@@ -3,28 +3,89 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center"
     android:background="#FAFAFA">
 
-    <ImageView
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:src="@android:drawable/ic_dialog_email"
-        app:tint="#FF9800"
-        xmlns:app="http://schemas.android.com/apk/res-auto" />
-
-    <TextView
-        android:layout_width="wrap_content"
+    <!-- HEADER -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="HỘP THƯ TỚI"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginTop="16dp"/>
+        android:background="#1976D2"
+        android:padding="16dp"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tin nhắn"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Liên hệ với người mua / người bán"
+            android:textColor="#E3F2FD"
+            android:textSize="13sp"
+            android:layout_marginTop="2dp"/>
+    </LinearLayout>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Bạn chưa có tin nhắn nào."
-        android:textColor="@android:color/darker_gray"
-        android:layout_marginTop="8dp"/>
+    <!-- CHƯA ĐĂNG NHẬP -->
+    <LinearLayout
+        android:id="@+id/layout_msg_not_logged_in"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="💬"
+            android:textSize="48sp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Đăng nhập để xem tin nhắn"
+            android:textColor="#777"
+            android:textSize="15sp"
+            android:layout_marginTop="12dp"/>
+    </LinearLayout>
+
+    <!-- DANH SÁCH CUỘC HỘI THOẠI -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_conversations"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="gone"/>
+
+    <!-- TRỐNG -->
+    <LinearLayout
+        android:id="@+id/layout_msg_empty"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="💬"
+            android:textSize="48sp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Chưa có tin nhắn nào"
+            android:textColor="#777"
+            android:textSize="15sp"
+            android:layout_marginTop="12dp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Gửi yêu cầu mua/thuê xe để bắt đầu liên hệ"
+            android:textColor="#AAA"
+            android:textSize="13sp"
+            android:layout_marginTop="4dp"/>
+    </LinearLayout>
+
 </LinearLayout>
