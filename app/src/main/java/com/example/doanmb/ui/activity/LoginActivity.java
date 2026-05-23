@@ -10,6 +10,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.doanmb.MainActivity;
 import com.example.doanmb.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -110,7 +111,7 @@ public class LoginActivity extends AppCompatActivity {
                                 } else if ("STAFF".equals(role)) {
                                     startActivity(new Intent(this, StaffDashboardActivity.class));
                                 }
-                                finish();
+                                startActivity(new Intent(this, MainActivity.class));
                             })
                             .addOnFailureListener(e -> finish());
                 })
