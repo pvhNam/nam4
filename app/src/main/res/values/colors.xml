@@ -2,4 +2,21 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="admin_primary">#C62828</color>
+    <color name="admin_dark">#B71C1C</color>
+    <color name="staff_primary">#00695C</color>
+    <color name="staff_dark">#004D40</color>
+
+    <color name="role_admin_bg">#FFCDD2</color>
+    <color name="role_admin_text">#B71C1C</color>
+    <color name="role_staff_bg">#B2DFDB</color>
+    <color name="role_staff_text">#004D40</color>
+    <color name="role_customer_bg">#BBDEFB</color>
+    <color name="role_customer_text">#0D47A1</color>
+
+    <color name="stat_card_blue">#E3F2FD</color>
+    <color name="stat_card_green">#E8F5E9</color>
+    <color name="stat_card_orange">#FFF3E0</color>
+    <color name="stat_card_pink">#FCE4EC</color>
 </resources>
