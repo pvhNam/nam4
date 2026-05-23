@@ -24,6 +24,7 @@ import com.example.doanmb.adapter.CategoryAdapter;
 import com.example.doanmb.model.Car;
 import com.example.doanmb.model.Category;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -51,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Luôn đăng xuất khi khởi động app → bắt đầu từ trạng thái chưa đăng nhập
+        FirebaseAuth.getInstance().signOut();
 
         db = FirebaseFirestore.getInstance();
 

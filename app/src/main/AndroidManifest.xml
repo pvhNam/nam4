@@ -30,8 +30,9 @@
         <activity android:name=".ui.activity.LoginActivity" />
         <activity android:name=".ui.activity.RegisterActivity" />
         <activity android:name=".ui.activity.ForgotPassActivity" />
-
         <activity android:name=".ui.activity.PostCarActivity" />
+        <activity android:name=".ui.activity.AdminDashboardActivity" />
+        <activity android:name=".ui.activity.StaffDashboardActivity" />
 
     </application>
 
