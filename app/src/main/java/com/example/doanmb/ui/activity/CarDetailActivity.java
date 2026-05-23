@@ -50,7 +50,6 @@ public class CarDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_car_detail);
 
         db = FirebaseFirestore.getInstance();
-
         initViews();
 
         car = (Car) getIntent().getSerializableExtra("CAR_DATA");
@@ -58,21 +57,39 @@ public class CarDetailActivity extends AppCompatActivity {
         sellerId = getIntent().getStringExtra("SELLER_ID");
         carType = getIntent().getStringExtra("CAR_TYPE");
 
+        // Ẩn badge mặc định, chờ Firestore trả về
+        tvCarFuelBadge.setVisibility(View.GONE);
+        tvCarConditionBadge.setVisibility(View.GONE);
+
         if (car != null) {
-            ivCarDetail.setImageResource(car.getImageResId());
+            // Load ảnh từ URL Cloudinary ngay nếu có
+            String imageUrl = car.getImageUrl();
+            if (imageUrl != null && !imageUrl.isEmpty()) {
+                Glide.with(this).load(imageUrl)
+                        .placeholder(android.R.drawable.ic_menu_gallery)
+                        .into(ivCarDetail);
+            } else {
+                ivCarDetail.setImageResource(android.R.drawable.ic_menu_gallery);
+            }
             tvCarName.setText(car.getName());
             tvCarPrice.setText(car.getPrice());
             tvCarInfo.setText(car.getInfo());
         }
 
-        // Load thông tin chi tiết xe từ Firestore
+        // Fallback carId và sellerId từ Car object nếu Intent thiếu
+        if ((carId == null || carId.isEmpty()) && car != null && car.getId() != null) {
+            carId = car.getId();
+        }
+        if ((sellerId == null || sellerId.isEmpty()) && car != null && car.getSellerId() != null) {
+            sellerId = car.getSellerId();
+        }
+
         if (carId != null && !carId.isEmpty()) {
             loadCarDetail(carId);
         } else {
             setupByType(carType);
         }
 
-        // Load thông tin người bán
         if (sellerId != null && !sellerId.isEmpty()) {
             loadSellerInfo(sellerId);
         } else {
@@ -90,31 +107,31 @@ public class CarDetailActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        ivCarDetail = findViewById(R.id.ivCarDetail);
-        tvCarName = findViewById(R.id.tvCarNameDetail);
-        tvCarPrice = findViewById(R.id.tvCarPriceDetail);
-        tvCarInfo = findViewById(R.id.tvCarInfoDetail);
-        tvCarTypeBadge = findViewById(R.id.tvCarTypeBadge);
-        tvCarFuelBadge = findViewById(R.id.tvCarFuelBadge);
+        ivCarDetail       = findViewById(R.id.ivCarDetail);
+        tvCarName         = findViewById(R.id.tvCarNameDetail);
+        tvCarPrice        = findViewById(R.id.tvCarPriceDetail);
+        tvCarInfo         = findViewById(R.id.tvCarInfoDetail);
+        tvCarTypeBadge    = findViewById(R.id.tvCarTypeBadge);
+        tvCarFuelBadge    = findViewById(R.id.tvCarFuelBadge);
         tvCarConditionBadge = findViewById(R.id.tvCarConditionBadge);
-        tvSellerName = findViewById(R.id.tvSellerName);
-        tvSellerPhone = findViewById(R.id.tvSellerPhone);
-        tvOwnerNote = findViewById(R.id.tvOwnerNote);
+        tvSellerName      = findViewById(R.id.tvSellerName);
+        tvSellerPhone     = findViewById(R.id.tvSellerPhone);
+        tvOwnerNote       = findViewById(R.id.tvOwnerNote);
 
-        layoutBuyForm = findViewById(R.id.layoutBuyForm);
-        etBuyerNote = findViewById(R.id.etBuyerNote);
-        btnSendRequest = findViewById(R.id.btnSendRequest);
-        btnCallSeller = findViewById(R.id.btnCallSeller);
+        layoutBuyForm     = findViewById(R.id.layoutBuyForm);
+        etBuyerNote       = findViewById(R.id.etBuyerNote);
+        btnSendRequest    = findViewById(R.id.btnSendRequest);
+        btnCallSeller     = findViewById(R.id.btnCallSeller);
 
-        layoutRentForm = findViewById(R.id.layoutRentForm);
-        etRenterName = findViewById(R.id.etRenterName);
-        etRenterPhone = findViewById(R.id.etRenterPhone);
-        etRenterCCCD = findViewById(R.id.etRenterCCCD);
-        etRentStartDate = findViewById(R.id.etRentStartDate);
-        etRentDays = findViewById(R.id.etRentDays);
-        etRenterNote = findViewById(R.id.etRenterNote);
+        layoutRentForm    = findViewById(R.id.layoutRentForm);
+        etRenterName      = findViewById(R.id.etRenterName);
+        etRenterPhone     = findViewById(R.id.etRenterPhone);
+        etRenterCCCD      = findViewById(R.id.etRenterCCCD);
+        etRentStartDate   = findViewById(R.id.etRentStartDate);
+        etRentDays        = findViewById(R.id.etRentDays);
+        etRenterNote      = findViewById(R.id.etRenterNote);
         btnSendRentRequest = findViewById(R.id.btnSendRentRequest);
-        btnCallRentSeller = findViewById(R.id.btnCallRentSeller);
+        btnCallRentSeller  = findViewById(R.id.btnCallRentSeller);
     }
 
     private void loadCarDetail(String id) {
@@ -122,21 +139,36 @@ public class CarDetailActivity extends AppCompatActivity {
                 .addOnSuccessListener(doc -> {
                     if (!doc.exists()) return;
 
-                    String fuel = doc.getString("fuel");
+                    String fuel      = doc.getString("fuel");
                     String condition = doc.getString("condition");
-                    String type = doc.getString("type");
-                    String sPhone = doc.getString("sellerPhone");
-                    String sName = doc.getString("sellerName");
+                    String type      = doc.getString("type");
+                    String sPhone    = doc.getString("sellerPhone");
+                    String sName     = doc.getString("sellerName");
+                    String imageUrl  = doc.getString("imageUrl");
 
-                    // Cập nhật badge
-                    if (fuel != null) tvCarFuelBadge.setText(fuel);
-                    if (condition != null) {
-                        if (condition.contains("mới 100")) tvCarConditionBadge.setText("Xe mới");
-                        else if (condition.contains("đăng ký")) tvCarConditionBadge.setText("Mới ĐK");
-                        else tvCarConditionBadge.setText("Xe cũ");
+                    if (imageUrl != null && !imageUrl.isEmpty()) {
+                        Glide.with(CarDetailActivity.this).load(imageUrl)
+                                .placeholder(android.R.drawable.ic_menu_gallery)
+                                .into(ivCarDetail);
                     }
 
-                    // Nếu document có sẵn sellerName/Phone thì dùng luôn
+                    // Badge nhiên liệu (cam)
+                    if (fuel != null && !fuel.isEmpty()) {
+                        tvCarFuelBadge.setText(fuel);
+                        tvCarFuelBadge.setVisibility(View.VISIBLE);
+                    }
+
+                    // Badge tình trạng xe (xám)
+                    if (condition != null && !condition.isEmpty()) {
+                        if (condition.contains("mới 100") || condition.equalsIgnoreCase("Xe mới 100%"))
+                            tvCarConditionBadge.setText("Xe mới");
+                        else if (condition.contains("đăng ký") || condition.equalsIgnoreCase("Xe mới đăng ký"))
+                            tvCarConditionBadge.setText("Mới ĐK");
+                        else
+                            tvCarConditionBadge.setText("Xe cũ");
+                        tvCarConditionBadge.setVisibility(View.VISIBLE);
+                    }
+
                     if (sName != null && !sName.isEmpty())
                         tvSellerName.setText("👤  " + sName);
                     if (sPhone != null && !sPhone.isEmpty()) {
@@ -152,7 +184,7 @@ public class CarDetailActivity extends AppCompatActivity {
         db.collection("users").document(uid).get()
                 .addOnSuccessListener(doc -> {
                     if (!doc.exists()) return;
-                    String name = doc.getString("name");
+                    String name  = doc.getString("name");
                     String phone = doc.getString("phone");
                     if (phone != null && !phone.isEmpty()) sellerPhone = phone;
                     tvSellerName.setText("👤  " + (name != null ? name : "Không rõ"));
@@ -161,22 +193,20 @@ public class CarDetailActivity extends AppCompatActivity {
     }
 
     private void setupByType(String type) {
-        // Kiểm tra nếu xe là của chính người dùng đang đăng nhập
+        // Kiểm tra chủ xe không thể tự gửi yêu cầu
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         boolean isOwner = currentUser != null && currentUser.getUid().equals(sellerId);
 
         if (isOwner) {
-            // Chủ xe xem xe của mình → ẩn form, hiện thông báo
             layoutBuyForm.setVisibility(View.GONE);
             layoutRentForm.setVisibility(View.GONE);
             tvCarTypeBadge.setText("rental".equals(type) ? "Cho Thuê" : "Cần Bán");
             tvCarTypeBadge.setBackgroundColor("rental".equals(type) ? 0xFF1976D2 : 0xFF4CAF50);
-
-            // Hiện thông báo "Đây là xe của bạn"
-            TextView tvOwnerNote = findViewById(R.id.tvOwnerNote);
             if (tvOwnerNote != null) tvOwnerNote.setVisibility(View.VISIBLE);
             return;
         }
+
+        if (tvOwnerNote != null) tvOwnerNote.setVisibility(View.GONE);
 
         if ("rental".equals(type)) {
             tvCarTypeBadge.setText("Cho Thuê");
@@ -184,12 +214,11 @@ public class CarDetailActivity extends AppCompatActivity {
             layoutBuyForm.setVisibility(View.GONE);
             layoutRentForm.setVisibility(View.VISIBLE);
 
-            // Tự điền sẵn tên + SĐT người dùng đang đăng nhập
             if (currentUser != null) {
                 db.collection("users").document(currentUser.getUid()).get()
                         .addOnSuccessListener(doc -> {
                             if (doc.exists()) {
-                                String name = doc.getString("name");
+                                String name  = doc.getString("name");
                                 String phone = doc.getString("phone");
                                 if (name != null && etRenterName.getText().toString().isEmpty())
                                     etRenterName.setText(name);
@@ -232,13 +261,14 @@ public class CarDetailActivity extends AppCompatActivity {
         }
 
         Map<String, Object> order = new HashMap<>();
-        order.put("buyerId", user.getUid());
-        order.put("carId", carId != null ? carId : "");
-        order.put("carName", car != null ? car.getName() : "");
+        order.put("buyerId",  user.getUid());
+        order.put("sellerId", sellerId != null ? sellerId : "");
+        order.put("carId",    carId != null ? carId : "");
+        order.put("carName",  car != null ? car.getName() : "");
         order.put("carPrice", car != null ? car.getPrice() : "");
-        order.put("type", "Mua xe");
-        order.put("note", etBuyerNote.getText().toString().trim());
-        order.put("status", "pending");
+        order.put("type",     "Mua xe");
+        order.put("note",     etBuyerNote.getText().toString().trim());
+        order.put("status",   "pending");
         order.put("createdAt", com.google.firebase.Timestamp.now());
 
         db.collection("orders").add(order)
@@ -257,43 +287,34 @@ public class CarDetailActivity extends AppCompatActivity {
             return;
         }
 
-        String renterName = etRenterName.getText().toString().trim();
+        String renterName  = etRenterName.getText().toString().trim();
         String renterPhone = etRenterPhone.getText().toString().trim();
-        String cccd = etRenterCCCD.getText().toString().trim();
-        String startDate = etRentStartDate.getText().toString().trim();
-        String days = etRentDays.getText().toString().trim();
-        String note = etRenterNote.getText().toString().trim();
+        String cccd        = etRenterCCCD.getText().toString().trim();
+        String startDate   = etRentStartDate.getText().toString().trim();
+        String days        = etRentDays.getText().toString().trim();
+        String note        = etRenterNote.getText().toString().trim();
 
-        if (renterName.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập họ và tên!", Toast.LENGTH_SHORT).show(); return;
-        }
-        if (renterPhone.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập số điện thoại!", Toast.LENGTH_SHORT).show(); return;
-        }
-        if (cccd.isEmpty() || cccd.length() < 9) {
-            Toast.makeText(this, "Vui lòng nhập đúng số CCCD/CMND (ít nhất 9 số)!", Toast.LENGTH_SHORT).show(); return;
-        }
-        if (startDate.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập ngày bắt đầu thuê!", Toast.LENGTH_SHORT).show(); return;
-        }
-        if (days.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập số ngày thuê!", Toast.LENGTH_SHORT).show(); return;
-        }
+        if (renterName.isEmpty())  { Toast.makeText(this, "Vui lòng nhập họ và tên!", Toast.LENGTH_SHORT).show(); return; }
+        if (renterPhone.isEmpty()) { Toast.makeText(this, "Vui lòng nhập số điện thoại!", Toast.LENGTH_SHORT).show(); return; }
+        if (cccd.isEmpty() || cccd.length() < 9) { Toast.makeText(this, "Vui lòng nhập đúng số CCCD/CMND (ít nhất 9 số)!", Toast.LENGTH_SHORT).show(); return; }
+        if (startDate.isEmpty())   { Toast.makeText(this, "Vui lòng nhập ngày bắt đầu thuê!", Toast.LENGTH_SHORT).show(); return; }
+        if (days.isEmpty())        { Toast.makeText(this, "Vui lòng nhập số ngày thuê!", Toast.LENGTH_SHORT).show(); return; }
 
         Map<String, Object> order = new HashMap<>();
-        order.put("buyerId", user.getUid());
-        order.put("carId", carId != null ? carId : "");
-        order.put("carName", car != null ? car.getName() : "");
-        order.put("carPrice", car != null ? car.getPrice() : "");
-        order.put("type", "Thuê xe");
+        order.put("buyerId",    user.getUid());
+        order.put("sellerId",   sellerId != null ? sellerId : "");
+        order.put("carId",      carId != null ? carId : "");
+        order.put("carName",    car != null ? car.getName() : "");
+        order.put("carPrice",   car != null ? car.getPrice() : "");
+        order.put("type",       "Thuê xe");
         order.put("renterName", renterName);
         order.put("renterPhone", renterPhone);
-        order.put("cccd", cccd);
-        order.put("startDate", startDate);
-        order.put("days", days);
-        order.put("note", note);
-        order.put("status", "pending");
-        order.put("createdAt", com.google.firebase.Timestamp.now());
+        order.put("cccd",       cccd);
+        order.put("startDate",  startDate);
+        order.put("days",       days);
+        order.put("note",       note);
+        order.put("status",     "pending");
+        order.put("createdAt",  com.google.firebase.Timestamp.now());
 
         db.collection("orders").add(order)
                 .addOnSuccessListener(ref -> {
