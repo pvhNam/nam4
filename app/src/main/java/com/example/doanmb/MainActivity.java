@@ -29,6 +29,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.cloudinary.android.MediaManager;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -116,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
                         String type = doc.getString("type");
                         String sellerId = doc.getString("sellerId");
                         String status = doc.getString("status");
+                        String imageUrl = doc.getString("imageUrl");
 
                         if (name == null) continue;
                         // Ẩn xe đã bán
@@ -124,14 +126,17 @@ public class MainActivity extends AppCompatActivity {
                         Car car = new Car(name, price != null ? price : "", info != null ? info : "", android.R.drawable.ic_menu_gallery);
                         car.setId(doc.getId());
                         car.setType(type != null ? type : "");
+                        car.setImageUrl(imageUrl != null ? imageUrl : "");
                         car.setSellerId(sellerId != null ? sellerId : "");
 
-                        // Badge đang có người đặt
+                        // Badge đang có người đặt — giữ đủ tất cả thông tin
                         if ("holding".equals(status)) {
-                            car = new Car("⏳ " + name, price != null ? price : "", "Đang có người đặt • " + (info != null ? info : ""), android.R.drawable.ic_menu_gallery);
-                            car.setId(doc.getId());
-                            car.setType(type != null ? type : "");
-                            car.setSellerId(sellerId != null ? sellerId : "");
+                            Car holdingCar = new Car("⏳ " + name, price != null ? price : "", "Đang có người đặt • " + (info != null ? info : ""), android.R.drawable.ic_menu_gallery);
+                            holdingCar.setId(doc.getId());
+                            holdingCar.setType(type != null ? type : "");
+                            holdingCar.setImageUrl(imageUrl != null ? imageUrl : "");
+                            holdingCar.setSellerId(sellerId != null ? sellerId : "");
+                            car = holdingCar;
                         }
 
                         String normalizedType = type != null ? type.toLowerCase().trim() : "";

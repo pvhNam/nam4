@@ -75,6 +75,9 @@ public class CategoryFragment extends Fragment {
         carAdapter = new ProfileCarAdapter(new ArrayList<>(), car -> {
             Intent intent = new Intent(getActivity(), CarDetailActivity.class);
             intent.putExtra("CAR_DATA", car);
+            intent.putExtra("CAR_ID", car.getId());
+            intent.putExtra("SELLER_ID", car.getSellerId());
+            intent.putExtra("CAR_TYPE", car.getType());
             startActivity(intent);
         });
         rvCategoryCars.setAdapter(carAdapter);
@@ -133,6 +136,9 @@ public class CategoryFragment extends Fragment {
                 .collection("cars")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
+                    // PHÒNG HỘ: Nếu người dùng đã thoát Fragment, dừng xử lý ngay lập tức
+                    if (!isAdded() || getActivity() == null) return;
+
                     allCars.clear();
                     for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
                         String name = doc.getString("name");
@@ -142,19 +148,27 @@ public class CategoryFragment extends Fragment {
                         String info = doc.getString("info");
                         String type = doc.getString("type");
                         String brand = doc.getString("brand");
-                        allCars.add(new Car(
+                        String imageUrl = doc.getString("imageUrl");
+                        String sellerId = doc.getString("sellerId"); // ← thêm dòng này
+                        Car car = new Car(
                                 name,
                                 price != null ? price : "",
                                 info != null ? info : "",
                                 type != null ? type : "",
                                 resolveBrand(name, info, brand),
                                 android.R.drawable.ic_menu_gallery
-                        ));
+                        );
+                        car.setId(doc.getId());
+                        car.setImageUrl(imageUrl != null ? imageUrl : "");
+                        car.setSellerId(sellerId != null ? sellerId : ""); // ← thêm dòng này
+                        allCars.add(car);
                     }
                     updateBrandFilters();
                     applyFilter();
                 })
                 .addOnFailureListener(e -> {
+                    // PHÒNG HỘ: Đảm bảo an toàn khi thất bại
+                    if (!isAdded() || getActivity() == null) return;
                     allCars.clear();
                     loadSampleCars();
                     updateBrandFilters();
@@ -228,6 +242,8 @@ public class CategoryFragment extends Fragment {
 
     private void renderBrandFilters() {
         if (layoutBrandFilters == null) return;
+        // PHÒNG HỘ TRỰC TIẾP LỖI LINE 238 LOGCAT:
+        if (!isAdded() || getContext() == null) return;
 
         layoutBrandFilters.removeAllViews();
         for (String brand : brandFilters) {
