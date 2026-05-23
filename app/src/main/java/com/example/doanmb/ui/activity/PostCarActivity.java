@@ -208,6 +208,7 @@ public class PostCarActivity extends AppCompatActivity {
                     car.put("year", year);
                     car.put("km", km);
                     car.put("location", location);
+                    car.put("status", "pending");
                     car.put("imageUrl", imageUrl);
                     car.put("userId", user.getUid());
                     car.put("sellerId", user.getUid());
@@ -217,7 +218,7 @@ public class PostCarActivity extends AppCompatActivity {
 
                     FirebaseFirestore.getInstance().collection("cars").add(car)
                             .addOnSuccessListener(ref -> {
-                                Toast.makeText(this, "Đăng tin thành công!", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(this, "Đăng tin thành công! Tin đang chờ admin duyệt.", Toast.LENGTH_LONG).show();
                                 finish();
                             })
                             .addOnFailureListener(e -> {
