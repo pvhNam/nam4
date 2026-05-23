@@ -1,5 +1,6 @@
 package com.example.doanmb.ui.activity;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -39,6 +40,7 @@ public class CarDetailActivity extends AppCompatActivity {
     private EditText etRentStartDate, etRentDays, etRenterNote;
     private Button btnSendRentRequest, btnCallRentSeller;
 
+    private TextView tvReportCar;
     private FirebaseFirestore db;
     private String sellerPhone = "";
     private Car car;
@@ -99,6 +101,7 @@ public class CarDetailActivity extends AppCompatActivity {
         tvCarConditionBadge = findViewById(R.id.tvCarConditionBadge);
         tvSellerName = findViewById(R.id.tvSellerName);
         tvSellerPhone = findViewById(R.id.tvSellerPhone);
+        tvReportCar = findViewById(R.id.tv_report_car);
         tvOwnerNote = findViewById(R.id.tvOwnerNote);
 
         layoutBuyForm = findViewById(R.id.layoutBuyForm);
@@ -169,13 +172,18 @@ public class CarDetailActivity extends AppCompatActivity {
             // Chủ xe xem xe của mình → ẩn form, hiện thông báo
             layoutBuyForm.setVisibility(View.GONE);
             layoutRentForm.setVisibility(View.GONE);
+            if (tvReportCar != null) tvReportCar.setVisibility(View.GONE);
             tvCarTypeBadge.setText("rental".equals(type) ? "Cho Thuê" : "Cần Bán");
             tvCarTypeBadge.setBackgroundColor("rental".equals(type) ? 0xFF1976D2 : 0xFF4CAF50);
-
             // Hiện thông báo "Đây là xe của bạn"
             TextView tvOwnerNote = findViewById(R.id.tvOwnerNote);
             if (tvOwnerNote != null) tvOwnerNote.setVisibility(View.VISIBLE);
             return;
+        }
+
+        if (tvReportCar != null) {
+            tvReportCar.setVisibility(View.VISIBLE);
+            tvReportCar.setOnClickListener(v -> showReportDialog());
         }
 
         if ("rental".equals(type)) {
@@ -304,6 +312,55 @@ public class CarDetailActivity extends AppCompatActivity {
                     etRenterNote.setText("");
                 })
                 .addOnFailureListener(e -> Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
+    private void showReportDialog() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            Toast.makeText(this, "Vui lòng đăng nhập để báo cáo!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        final String[] reasons = {
+                "Thông tin sai lệch",
+                "Xe không tồn tại",
+                "Giá cả bất hợp lý",
+                "Hình ảnh không đúng thực tế",
+                "Lừa đảo / Gian lận",
+                "Nội dung không phù hợp"
+        };
+        final int[] selectedReason = {0};
+
+        new AlertDialog.Builder(this)
+                .setTitle("Báo cáo tin đăng này")
+                .setSingleChoiceItems(reasons, 0, (dialog, which) -> selectedReason[0] = which)
+                .setPositiveButton("Gửi báo cáo", (dialog, which) -> submitReport(currentUser, reasons[selectedReason[0]]))
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
+    private void submitReport(FirebaseUser currentUser, String reason) {
+        db.collection("users").document(currentUser.getUid()).get()
+                .addOnSuccessListener(userDoc -> {
+                    String reporterName = userDoc.getString("name");
+                    String carName = car != null ? car.getName() : "";
+
+                    java.util.Map<String, Object> report = new java.util.HashMap<>();
+                    report.put("reporterId", currentUser.getUid());
+                    report.put("reporterName", reporterName != null ? reporterName : "Ẩn danh");
+                    report.put("targetId", carId != null ? carId : "");
+                    report.put("targetName", carName);
+                    report.put("targetType", "car");
+                    report.put("reason", reason);
+                    report.put("status", "pending");
+                    report.put("createdAt", com.google.firebase.Timestamp.now());
+
+                    db.collection("reports").add(report)
+                            .addOnSuccessListener(ref ->
+                                    Toast.makeText(this, "✅ Đã gửi báo cáo. Chúng tôi sẽ xem xét sớm!", Toast.LENGTH_LONG).show())
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                });
     }
 
     @Override
