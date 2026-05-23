@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
 
 import com.example.doanmb.R;
 import com.example.doanmb.model.Car;
@@ -47,7 +48,16 @@ public class ProfileCarAdapter extends RecyclerView.Adapter<ProfileCarAdapter.Vi
         holder.tvName.setText(car.getName());
         holder.tvPrice.setText(car.getPrice() != null ? car.getPrice() : "");
         holder.tvInfo.setText(car.getInfo() != null ? car.getInfo() : "");
-        holder.ivCar.setImageResource(car.getImageResId());
+
+        String imageUrl = car.getImageUrl(); // cần thêm field này vào Car.java
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(imageUrl)
+                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .into(holder.ivImage);
+        } else {
+            holder.ivImage.setImageResource(android.R.drawable.ic_menu_gallery);
+        }
 
         String type = normalizeText(car.getType());
         if (isSaleType(type)) {
@@ -97,11 +107,11 @@ public class ProfileCarAdapter extends RecyclerView.Adapter<ProfileCarAdapter.Vi
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvPrice, tvInfo, tvType;
-        ImageView ivCar;
+        ImageView ivImage;;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            ivCar = itemView.findViewById(R.id.iv_car_profile);
+            ivImage = itemView.findViewById(R.id.iv_car_profile);
             tvName = itemView.findViewById(R.id.tv_car_profile_name);
             tvPrice = itemView.findViewById(R.id.tv_car_profile_price);
             tvInfo = itemView.findViewById(R.id.tv_car_profile_info);

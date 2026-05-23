@@ -12,6 +12,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.bumptech.glide.Glide;
 import com.example.doanmb.R;
 import com.example.doanmb.model.Car;
 import com.google.firebase.auth.FirebaseAuth;
@@ -25,7 +26,7 @@ public class CarDetailActivity extends AppCompatActivity {
     private ImageView ivCarDetail;
     private TextView tvCarName, tvCarPrice, tvCarInfo;
     private TextView tvCarTypeBadge, tvCarFuelBadge, tvCarConditionBadge;
-    private TextView tvSellerName, tvSellerPhone;
+    private TextView tvSellerName, tvSellerPhone, tvOwnerNote;
 
     // Form mua xe
     private LinearLayout layoutBuyForm;
@@ -98,6 +99,7 @@ public class CarDetailActivity extends AppCompatActivity {
         tvCarConditionBadge = findViewById(R.id.tvCarConditionBadge);
         tvSellerName = findViewById(R.id.tvSellerName);
         tvSellerPhone = findViewById(R.id.tvSellerPhone);
+        tvOwnerNote = findViewById(R.id.tvOwnerNote);
 
         layoutBuyForm = findViewById(R.id.layoutBuyForm);
         etBuyerNote = findViewById(R.id.etBuyerNote);
@@ -159,6 +161,23 @@ public class CarDetailActivity extends AppCompatActivity {
     }
 
     private void setupByType(String type) {
+        // Kiểm tra nếu xe là của chính người dùng đang đăng nhập
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        boolean isOwner = currentUser != null && currentUser.getUid().equals(sellerId);
+
+        if (isOwner) {
+            // Chủ xe xem xe của mình → ẩn form, hiện thông báo
+            layoutBuyForm.setVisibility(View.GONE);
+            layoutRentForm.setVisibility(View.GONE);
+            tvCarTypeBadge.setText("rental".equals(type) ? "Cho Thuê" : "Cần Bán");
+            tvCarTypeBadge.setBackgroundColor("rental".equals(type) ? 0xFF1976D2 : 0xFF4CAF50);
+
+            // Hiện thông báo "Đây là xe của bạn"
+            TextView tvOwnerNote = findViewById(R.id.tvOwnerNote);
+            if (tvOwnerNote != null) tvOwnerNote.setVisibility(View.VISIBLE);
+            return;
+        }
+
         if ("rental".equals(type)) {
             tvCarTypeBadge.setText("Cho Thuê");
             tvCarTypeBadge.setBackgroundColor(0xFF1976D2);
@@ -166,9 +185,8 @@ public class CarDetailActivity extends AppCompatActivity {
             layoutRentForm.setVisibility(View.VISIBLE);
 
             // Tự điền sẵn tên + SĐT người dùng đang đăng nhập
-            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-            if (user != null) {
-                db.collection("users").document(user.getUid()).get()
+            if (currentUser != null) {
+                db.collection("users").document(currentUser.getUid()).get()
                         .addOnSuccessListener(doc -> {
                             if (doc.exists()) {
                                 String name = doc.getString("name");
