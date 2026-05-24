@@ -16,9 +16,9 @@
             android:id="@+id/ivCarSale"
             android:layout_width="match_parent"
             android:layout_height="120dp"
-            android:background="@android:color/darker_gray"
+            android:background="@color/color_image_placeholder"
             android:scaleType="centerCrop"
-            android:src="@android:color/darker_gray" />
+            android:src="@color/color_image_placeholder" />
 
         <TextView
             android:id="@+id/tvCarSaleName"
@@ -26,7 +26,7 @@
             android:layout_height="wrap_content"
             android:padding="8dp"
             android:text="Toyota Vios 2020"
-            android:textColor="@android:color/black"
+            android:textColor="@color/color_on_background"
             android:textSize="16sp"
             android:textStyle="bold" />
 
@@ -47,7 +47,7 @@
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
             android:text="TP.HCM • 2020 • Tự động"
-            android:textColor="@android:color/darker_gray"
+            android:textColor="@color/color_on_surface_secondary"
             android:textSize="12sp" />
 
         <Button
@@ -56,7 +56,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="end"
             android:layout_margin="8dp"
-            android:backgroundTint="@android:color/holo_blue_dark"
+            android:backgroundTint="#1976D2"
             android:text="XEM CHI TIẾT"
             android:textColor="@android:color/white"
             android:textSize="12sp" />

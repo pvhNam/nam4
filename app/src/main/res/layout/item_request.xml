@@ -48,7 +48,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="vừa xong"
-                android:textColor="#999"
+                android:textColor="@color/color_on_surface_tertiary"
                 android:textSize="11sp"/>
         </LinearLayout>
 
@@ -58,7 +58,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Toyota Vios 2020"
-            android:textColor="#333"
+            android:textColor="@color/color_on_surface"
             android:textSize="16sp"
             android:textStyle="bold"
             android:layout_marginBottom="4dp"/>
@@ -79,7 +79,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="👤  Người mua: Nguyễn Văn A"
-            android:textColor="#555"
+            android:textColor="@color/color_on_surface_secondary"
             android:textSize="13sp"
             android:layout_marginBottom="2dp"/>
 
@@ -88,7 +88,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="📞  0901234567"
-            android:textColor="#555"
+            android:textColor="@color/color_on_surface_secondary"
             android:textSize="13sp"
             android:layout_marginBottom="4dp"/>
 
@@ -98,7 +98,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="🪪  CCCD: 123456789012"
-            android:textColor="#555"
+            android:textColor="@color/color_on_surface_secondary"
             android:textSize="13sp"
             android:layout_marginBottom="4dp"
             android:visibility="gone"/>
@@ -109,7 +109,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="📅  Thuê từ: 20/05/2026 | 3 ngày"
-            android:textColor="#555"
+            android:textColor="@color/color_on_surface_secondary"
             android:textSize="13sp"
             android:layout_marginBottom="4dp"
             android:visibility="gone"/>
@@ -120,7 +120,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="💬  Ghi chú: ..."
-            android:textColor="#777"
+            android:textColor="@color/color_on_surface_secondary"
             android:textSize="13sp"
             android:layout_marginBottom="12dp"/>
 
@@ -159,7 +159,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Đã xử lý"
-            android:textColor="#999"
+            android:textColor="@color/color_on_surface_tertiary"
             android:textSize="13sp"
             android:gravity="center"
             android:visibility="gone"/>

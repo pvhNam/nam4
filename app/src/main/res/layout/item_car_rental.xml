@@ -17,7 +17,7 @@
             android:id="@+id/ivCarRental"
             android:layout_width="match_parent"
             android:layout_height="130dp"
-            android:background="#EEEEEE"
+            android:background="@color/color_image_placeholder"
             android:scaleType="centerCrop"
             android:src="@android:drawable/ic_menu_gallery" />
 
@@ -54,7 +54,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="Quận 1, TP.HCM • Tự động"
-                android:textColor="#757575"
+                android:textColor="@color/color_on_surface_secondary"
                 android:textSize="13sp" />
 
             <Button

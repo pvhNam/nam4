@@ -10,7 +10,7 @@
     <androidx.cardview.widget.CardView
         android:layout_width="56dp"
         android:layout_height="56dp"
-        app:cardBackgroundColor="#E3F2FD"
+        app:cardBackgroundColor="@color/stat_card_blue"
         app:cardCornerRadius="28dp"
         app:cardElevation="0dp">
 
@@ -20,7 +20,7 @@
             android:layout_height="32dp"
             android:layout_gravity="center"
             android:src="@android:drawable/ic_menu_directions"
-            app:tint="#1976D2" />
+            app:tint="@color/color_tab_inactive_text" />
     </androidx.cardview.widget.CardView>
 
     <TextView
@@ -30,7 +30,7 @@
         android:layout_marginTop="8dp"
         android:gravity="center"
         android:text="Mua xe"
-        android:textColor="@color/black"
+        android:textColor="@color/color_on_background"
         android:textSize="13sp" />
 
 </LinearLayout>

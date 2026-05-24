@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FAFAFA">
+    android:background="@color/color_background">
 
     <!-- TIÊU ĐỀ -->
     <TextView
@@ -12,16 +12,16 @@
         android:text="Quản lý tin đăng"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:textColor="#333333"
+        android:textColor="@color/color_on_surface"
         android:padding="16dp"
-        android:background="#FFFFFF"/>
+        android:background="@color/color_surface"/>
 
     <!-- 2 NÚT TAB -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:orientation="horizontal"
-        android:background="#FFFFFF">
+        android:background="@color/color_surface">
 
         <Button
             android:id="@+id/btnTabMyPosts"
@@ -41,7 +41,7 @@
             android:text="Yêu cầu nhận được"
             android:textSize="14sp"
             android:textColor="#1976D2"
-            android:backgroundTint="#E3F2FD"/>
+            android:backgroundTint="@color/color_tab_inactive_bg"/>
     </LinearLayout>
 
     <!-- TAB 1: XE ĐÃ ĐĂNG -->
@@ -58,7 +58,7 @@
             android:layout_height="wrap_content"
             android:text="Tin đã đăng: 0"
             android:textSize="13sp"
-            android:textColor="#666"
+            android:textColor="@color/color_on_surface_secondary"
             android:paddingStart="16dp"
             android:paddingTop="10dp"
             android:paddingBottom="6dp"/>
@@ -75,7 +75,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Bạn chưa đăng tin nào"
-            android:textColor="#999"
+            android:textColor="@color/color_on_surface_tertiary"
             android:textSize="15sp"
             android:gravity="center"
             android:padding="40dp"
@@ -96,7 +96,7 @@
             android:layout_height="wrap_content"
             android:text="Yêu cầu: 0"
             android:textSize="13sp"
-            android:textColor="#666"
+            android:textColor="@color/color_on_surface_secondary"
             android:paddingStart="16dp"
             android:paddingTop="10dp"
             android:paddingBottom="6dp"/>
@@ -113,7 +113,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Chưa có yêu cầu nào"
-            android:textColor="#999"
+            android:textColor="@color/color_on_surface_tertiary"
             android:textSize="15sp"
             android:gravity="center"
             android:padding="40dp"

@@ -26,7 +26,7 @@
             android:layout_height="wrap_content"
             android:text="Đăng nhập để xem tài khoản"
             android:textSize="16sp"
-            android:textColor="#555"
+            android:textColor="@color/color_on_surface_secondary"
             android:layout_gravity="center"
             android:layout_marginBottom="24dp"/>
 
@@ -64,7 +64,7 @@
             android:gravity="center_horizontal"
             android:paddingTop="20dp"
             android:paddingBottom="14dp"
-            android:background="#F5F5F5">
+            android:background="@color/color_surface_variant">
 
             <!-- AVATAR + NÚT CHỌN ẢNH -->
             <FrameLayout
@@ -76,7 +76,7 @@
                     android:layout_width="80dp"
                     android:layout_height="80dp"
                     android:src="@android:drawable/ic_menu_gallery"
-                    android:background="@android:color/darker_gray"
+                    android:background="@color/color_image_placeholder"
                     android:scaleType="centerCrop"/>
 
                 <!-- Overlay camera icon ở góc dưới phải -->
@@ -98,14 +98,14 @@
                 android:layout_height="wrap_content"
                 android:textStyle="bold"
                 android:textSize="20sp"
-                android:textColor="#222"
+                android:textColor="@color/color_on_background"
                 android:layout_marginTop="8dp"/>
 
             <TextView
                 android:id="@+id/tv_profile_phone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#777"
+                android:textColor="@color/color_on_surface_secondary"
                 android:textSize="14sp"
                 android:layout_marginTop="2dp"/>
 
@@ -126,7 +126,7 @@
             android:layout_width="match_parent"
             android:layout_height="46dp"
             android:orientation="horizontal"
-            android:background="#FFFFFF">
+            android:background="@color/color_surface">
 
             <Button
                 android:id="@+id/btnTabMyCars"
@@ -146,7 +146,7 @@
                 android:text="Lịch sử đơn"
                 android:textSize="13sp"
                 android:textColor="#1976D2"
-                android:backgroundTint="#E3F2FD"/>
+                android:backgroundTint="@color/color_tab_inactive_bg"/>
         </LinearLayout>
 
         <!-- TAB 1: XE ĐÃ ĐĂNG -->
@@ -163,7 +163,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:padding="8dp"
-                android:background="#FFFFFF">
+                android:background="@color/color_surface">
 
                 <Button
                     android:id="@+id/btn_filter_all"
@@ -204,7 +204,7 @@
                 android:layout_height="wrap_content"
                 android:text="Tin đã đăng: 0"
                 android:textSize="13sp"
-                android:textColor="#777"
+                android:textColor="@color/color_on_surface_secondary"
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="6dp"/>
 
@@ -220,7 +220,7 @@
                 android:layout_height="wrap_content"
                 android:text="Bạn chưa đăng tin nào"
                 android:gravity="center"
-                android:textColor="#999"
+                android:textColor="@color/color_on_surface_tertiary"
                 android:paddingVertical="40dp"
                 android:visibility="gone"/>
         </LinearLayout>
@@ -239,7 +239,7 @@
                 android:layout_height="wrap_content"
                 android:text="Đơn của tôi: 0"
                 android:textSize="13sp"
-                android:textColor="#777"
+                android:textColor="@color/color_on_surface_secondary"
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="8dp"/>
 
@@ -255,7 +255,7 @@
                 android:layout_height="wrap_content"
                 android:text="Bạn chưa có đơn nào"
                 android:gravity="center"
-                android:textColor="#999"
+                android:textColor="@color/color_on_surface_tertiary"
                 android:paddingVertical="40dp"
                 android:visibility="gone"/>
         </LinearLayout>

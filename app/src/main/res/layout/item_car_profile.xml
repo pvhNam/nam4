@@ -19,7 +19,7 @@
             android:layout_width="70dp"
             android:layout_height="70dp"
             android:src="@android:drawable/ic_menu_gallery"
-            android:background="@android:color/darker_gray"
+            android:background="@color/color_image_placeholder"
             android:scaleType="centerCrop" />
 
         <LinearLayout
@@ -35,7 +35,7 @@
                 android:layout_height="wrap_content"
                 android:textStyle="bold"
                 android:textSize="15sp"
-                android:textColor="@android:color/black" />
+                android:textColor="@color/color_on_background" />
 
             <TextView
                 android:id="@+id/tv_car_profile_price"
@@ -49,7 +49,7 @@
                 android:id="@+id/tv_car_profile_info"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@android:color/darker_gray"
+                android:textColor="@color/color_on_surface_secondary"
                 android:textSize="12sp" />
 
             <TextView

@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FAFAFA">
+    android:background="@color/color_background">
 
     <!-- HEADER -->
     <LinearLayout
@@ -45,7 +45,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Đăng nhập để xem tin nhắn"
-            android:textColor="#777"
+            android:textColor="@color/color_on_surface_secondary"
             android:textSize="15sp"
             android:layout_marginTop="12dp"/>
     </LinearLayout>
@@ -76,14 +76,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Chưa có tin nhắn nào"
-            android:textColor="#777"
+            android:textColor="@color/color_on_surface_secondary"
             android:textSize="15sp"
             android:layout_marginTop="12dp"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Gửi yêu cầu mua/thuê xe để bắt đầu liên hệ"
-            android:textColor="#AAA"
+            android:textColor="@color/color_on_surface_tertiary"
             android:textSize="13sp"
             android:layout_marginTop="4dp"/>
     </LinearLayout>
