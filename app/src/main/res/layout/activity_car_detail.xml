@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAFAFA">
+    android:background="@color/color_background">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,7 +14,7 @@
             android:layout_width="match_parent"
             android:layout_height="220dp"
             android:scaleType="centerCrop"
-            android:src="@android:color/darker_gray"/>
+            android:src="@color/color_image_placeholder"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -44,7 +44,7 @@
                 android:id="@+id/tvCarConditionBadge"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="Xe cũ" android:textColor="#FFFFFF" android:textSize="12sp"
-                android:textStyle="bold" android:background="#9E9E9E"
+                android:textStyle="bold" android:background="@color/color_on_surface_tertiary"
                 android:paddingStart="10dp" android:paddingEnd="10dp"
                 android:paddingTop="4dp" android:paddingBottom="4dp"/>
         </LinearLayout>
@@ -59,7 +59,7 @@
 
             <TextView android:id="@+id/tvCarNameDetail"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Tên Xe" android:textColor="@color/black"
+                android:text="Tên Xe" android:textColor="@color/color_on_background"
                 android:textSize="22sp" android:textStyle="bold"/>
 
             <TextView android:id="@+id/tvCarPriceDetail"
@@ -68,31 +68,31 @@
                 android:textColor="#E53935" android:textSize="20sp" android:textStyle="bold"/>
 
             <View android:layout_width="match_parent" android:layout_height="1dp"
-                android:background="#E0E0E0" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+                android:background="@color/color_divider" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Thông tin xe" android:textColor="#333" android:textSize="15sp"
+                android:text="Thông tin xe" android:textColor="@color/color_on_surface" android:textSize="15sp"
                 android:textStyle="bold" android:layout_marginBottom="8dp"/>
 
             <TextView android:id="@+id/tvCarInfoDetail"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Thông tin xe" android:textColor="#666"
+                android:text="Thông tin xe" android:textColor="@color/color_on_surface_secondary"
                 android:textSize="14sp" android:lineSpacingExtra="4dp"/>
 
             <View android:layout_width="match_parent" android:layout_height="1dp"
-                android:background="#E0E0E0" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+                android:background="@color/color_divider" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Thông tin người đăng" android:textColor="#333" android:textSize="15sp"
+                android:text="Thông tin người đăng" android:textColor="@color/color_on_surface" android:textSize="15sp"
                 android:textStyle="bold" android:layout_marginBottom="8dp"/>
 
             <TextView android:id="@+id/tvSellerName"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="👤  Đang tải..." android:textColor="#555" android:textSize="14sp"/>
+                android:text="👤  Đang tải..." android:textColor="@color/color_on_surface_secondary" android:textSize="14sp"/>
 
             <TextView android:id="@+id/tvSellerPhone"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="📞  Đang tải..." android:textColor="#555" android:textSize="14sp"
+                android:text="📞  Đang tải..." android:textColor="@color/color_on_surface_secondary" android:textSize="14sp"
                 android:layout_marginTop="4dp"/>
 
             <!-- Nút báo cáo -->
@@ -102,19 +102,19 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:text="⚑ Báo cáo tin này"
-                android:textColor="#9E9E9E"
+                android:textColor="@color/color_on_surface_tertiary"
                 android:textSize="13sp"
                 android:visibility="gone" />
 
             <View android:layout_width="match_parent" android:layout_height="1dp"
-                android:background="#E0E0E0" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+                android:background="@color/color_divider" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 
             <!-- THÔNG BÁO CHỦ XE -->
             <TextView
                 android:id="@+id/tvOwnerNote"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="#E8F5E9"
+                android:background="@color/stat_card_green"
                 android:padding="14dp"
                 android:text="🚗  Đây là xe của bạn. Bạn không thể tự gửi yêu cầu."
                 android:textColor="#2E7D32"
@@ -129,7 +129,7 @@
                 android:orientation="vertical" android:visibility="gone">
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Ghi chú / Câu hỏi" android:textColor="#333" android:textSize="15sp"
+                    android:text="Ghi chú / Câu hỏi" android:textColor="@color/color_on_surface" android:textSize="15sp"
                     android:textStyle="bold" android:layout_marginBottom="8dp"/>
 
                 <EditText android:id="@+id/etBuyerNote"
@@ -156,25 +156,25 @@
                 android:orientation="vertical" android:visibility="gone">
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Thông tin người thuê" android:textColor="#333" android:textSize="15sp"
+                    android:text="Thông tin người thuê" android:textColor="@color/color_on_surface" android:textSize="15sp"
                     android:textStyle="bold" android:layout_marginBottom="12dp"/>
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Họ và tên *" android:textColor="#555" android:textSize="13sp" android:layout_marginBottom="4dp"/>
+                    android:text="Họ và tên *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
                 <EditText android:id="@+id/etRenterName"
                     android:layout_width="match_parent" android:layout_height="50dp"
                     android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
                     android:padding="10dp" android:hint="Nhập họ và tên đầy đủ" android:inputType="textPersonName"/>
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Số điện thoại *" android:textColor="#555" android:textSize="13sp" android:layout_marginBottom="4dp"/>
+                    android:text="Số điện thoại *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
                 <EditText android:id="@+id/etRenterPhone"
                     android:layout_width="match_parent" android:layout_height="50dp"
                     android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
                     android:padding="10dp" android:hint="Nhập số điện thoại" android:inputType="phone"/>
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Số CCCD/CMND *" android:textColor="#555" android:textSize="13sp" android:layout_marginBottom="4dp"/>
+                    android:text="Số CCCD/CMND *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
                 <EditText android:id="@+id/etRenterCCCD"
                     android:layout_width="match_parent" android:layout_height="50dp"
                     android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
@@ -182,21 +182,21 @@
                     android:inputType="number" android:maxLength="12"/>
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Ngày bắt đầu thuê *" android:textColor="#555" android:textSize="13sp" android:layout_marginBottom="4dp"/>
+                    android:text="Ngày bắt đầu thuê *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
                 <EditText android:id="@+id/etRentStartDate"
                     android:layout_width="match_parent" android:layout_height="50dp"
                     android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
                     android:padding="10dp" android:hint="Ví dụ: 20/05/2026"/>
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Số ngày thuê *" android:textColor="#555" android:textSize="13sp" android:layout_marginBottom="4dp"/>
+                    android:text="Số ngày thuê *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
                 <EditText android:id="@+id/etRentDays"
                     android:layout_width="match_parent" android:layout_height="50dp"
                     android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
                     android:padding="10dp" android:hint="Nhập số ngày muốn thuê" android:inputType="number"/>
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Ghi chú thêm" android:textColor="#555" android:textSize="13sp" android:layout_marginBottom="4dp"/>
+                    android:text="Ghi chú thêm" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
                 <EditText android:id="@+id/etRenterNote"
                     android:layout_width="match_parent" android:layout_height="80dp"
                     android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
@@ -204,7 +204,7 @@
                     android:gravity="top" android:inputType="textMultiLine"/>
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:background="#FFF3E0" android:padding="10dp" android:layout_marginBottom="16dp"
+                    android:background="@color/stat_card_orange" android:padding="10dp" android:layout_marginBottom="16dp"
                     android:orientation="horizontal">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="⚠️  " android:textSize="14sp"/>

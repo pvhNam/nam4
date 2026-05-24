@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAFAFA"
+    android:background="@color/color_background"
     android:fillViewport="true">
 
     <LinearLayout
@@ -16,14 +16,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="ĐĂNG TIN MỚI"
-            android:textColor="#333333"
+            android:textColor="@color/color_on_surface"
             android:textSize="22sp"
             android:textStyle="bold"
             android:layout_marginBottom="20dp"/>
 
         <!-- TÊN XE -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Tên xe *" android:textStyle="bold" android:textColor="#333"/>
+            android:text="Tên xe *" android:textStyle="bold" android:textColor="@color/color_on_surface"/>
         <EditText
             android:id="@+id/et_car_name"
             android:layout_width="match_parent" android:layout_height="50dp"
@@ -34,7 +34,7 @@
 
         <!-- HÃNG XE -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Hãng xe *" android:textStyle="bold" android:textColor="#333"/>
+            android:text="Hãng xe *" android:textStyle="bold" android:textColor="@color/color_on_surface"/>
         <Spinner android:id="@+id/spinner_brand"
             android:layout_width="match_parent" android:layout_height="50dp"
             android:layout_marginTop="6dp" android:layout_marginBottom="14dp"
@@ -42,7 +42,7 @@
 
         <!-- LOẠI HÌNH (BÁN / THUÊ) -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Loại hình *" android:textStyle="bold" android:textColor="#333"/>
+            android:text="Loại hình *" android:textStyle="bold" android:textColor="@color/color_on_surface"/>
         <Spinner android:id="@+id/spinner_type"
             android:layout_width="match_parent" android:layout_height="50dp"
             android:layout_marginTop="6dp" android:layout_marginBottom="14dp"
@@ -50,7 +50,7 @@
 
         <!-- LOẠI NHIÊN LIỆU -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Nhiên liệu *" android:textStyle="bold" android:textColor="#333"/>
+            android:text="Nhiên liệu *" android:textStyle="bold" android:textColor="@color/color_on_surface"/>
         <Spinner android:id="@+id/spinner_fuel"
             android:layout_width="match_parent" android:layout_height="50dp"
             android:layout_marginTop="6dp" android:layout_marginBottom="14dp"
@@ -58,7 +58,7 @@
 
         <!-- TÌNH TRẠNG XE (CŨ / MỚI) -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Tình trạng xe *" android:textStyle="bold" android:textColor="#333"/>
+            android:text="Tình trạng xe *" android:textStyle="bold" android:textColor="@color/color_on_surface"/>
         <Spinner android:id="@+id/spinner_condition"
             android:layout_width="match_parent" android:layout_height="50dp"
             android:layout_marginTop="6dp" android:layout_marginBottom="14dp"
@@ -66,7 +66,7 @@
 
         <!-- HỘP SỐ -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Hộp số" android:textStyle="bold" android:textColor="#333"/>
+            android:text="Hộp số" android:textStyle="bold" android:textColor="@color/color_on_surface"/>
         <Spinner android:id="@+id/spinner_transmission"
             android:layout_width="match_parent" android:layout_height="50dp"
             android:layout_marginTop="6dp" android:layout_marginBottom="14dp"
@@ -74,7 +74,7 @@
 
         <!-- NĂM SẢN XUẤT -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Năm sản xuất" android:textStyle="bold" android:textColor="#333"/>
+            android:text="Năm sản xuất" android:textStyle="bold" android:textColor="@color/color_on_surface"/>
         <EditText
             android:id="@+id/et_car_year"
             android:layout_width="match_parent" android:layout_height="50dp"
@@ -85,7 +85,7 @@
 
         <!-- SỐ KM ĐÃ ĐI -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Số km đã đi" android:textStyle="bold" android:textColor="#333"/>
+            android:text="Số km đã đi" android:textStyle="bold" android:textColor="@color/color_on_surface"/>
         <EditText
             android:id="@+id/et_car_km"
             android:layout_width="match_parent" android:layout_height="50dp"
@@ -96,7 +96,7 @@
 
         <!-- KHU VỰC -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Khu vực" android:textStyle="bold" android:textColor="#333"/>
+            android:text="Khu vực" android:textStyle="bold" android:textColor="@color/color_on_surface"/>
         <EditText
             android:id="@+id/et_car_location"
             android:layout_width="match_parent" android:layout_height="50dp"
@@ -106,7 +106,7 @@
 
         <!-- GIÁ -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Mức giá (VNĐ) *" android:textStyle="bold" android:textColor="#333"/>
+            android:text="Mức giá (VNĐ) *" android:textStyle="bold" android:textColor="@color/color_on_surface"/>
         <EditText
             android:id="@+id/et_car_price"
             android:layout_width="match_parent" android:layout_height="50dp"
@@ -117,7 +117,7 @@
 
         <!-- MÔ TẢ THÊM -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Mô tả thêm" android:textStyle="bold" android:textColor="#333"/>
+            android:text="Mô tả thêm" android:textStyle="bold" android:textColor="@color/color_on_surface"/>
         <EditText
             android:id="@+id/et_car_info"
             android:layout_width="match_parent" android:layout_height="100dp"
@@ -137,7 +137,7 @@
 
         <!-- ẢNH XE -->
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Ảnh xe" android:textStyle="bold" android:textColor="#333"/>
+            android:text="Ảnh xe" android:textStyle="bold" android:textColor="@color/color_on_surface"/>
 
         <Button
             android:id="@+id/btn_pick_image"
@@ -152,7 +152,7 @@
             android:layout_width="match_parent" android:layout_height="180dp"
             android:layout_marginBottom="14dp"
             android:scaleType="centerCrop"
-            android:background="#EEEEEE"
+            android:background="@color/color_image_placeholder"
             android:visibility="gone"/>
         <!-- Xóa ảnh -->
         <Button

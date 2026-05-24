@@ -3,11 +3,13 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
+    <!-- Brand colors (không đổi theo dark/light) -->
     <color name="admin_primary">#C62828</color>
     <color name="admin_dark">#B71C1C</color>
     <color name="staff_primary">#00695C</color>
     <color name="staff_dark">#004D40</color>
 
+    <!-- Role badge colors -->
     <color name="role_admin_bg">#FFCDD2</color>
     <color name="role_admin_text">#B71C1C</color>
     <color name="role_staff_bg">#B2DFDB</color>
@@ -15,8 +17,43 @@
     <color name="role_customer_bg">#BBDEFB</color>
     <color name="role_customer_text">#0D47A1</color>
 
+    <!-- Stat cards - light values -->
     <color name="stat_card_blue">#E3F2FD</color>
     <color name="stat_card_green">#E8F5E9</color>
     <color name="stat_card_orange">#FFF3E0</color>
     <color name="stat_card_pink">#FCE4EC</color>
+
+    <!-- Semantic colors - thay đổi theo dark/light -->
+    <color name="color_background">#FAFAFA</color>
+    <color name="color_surface">#FFFFFF</color>
+    <color name="color_surface_variant">#F5F5F5</color>
+    <color name="color_on_background">#212121</color>
+    <color name="color_on_surface">#333333</color>
+    <color name="color_on_surface_secondary">#757575</color>
+    <color name="color_on_surface_tertiary">#9E9E9E</color>
+    <color name="color_divider">#E0E0E0</color>
+
+    <!-- Input field colors -->
+    <color name="color_input_bg">#F0F0F0</color>
+    <color name="color_input_stroke">#E0E0E0</color>
+    <color name="color_input_bg_focused">#FAFBFF</color>
+    <color name="color_input_stroke_focused">#1A56DB</color>
+    <color name="color_input_bg_alt">#F7F8FC</color>
+    <color name="color_input_stroke_alt">#DDE2EE</color>
+
+    <!-- Nav bar -->
+    <color name="color_bottom_nav_bg">#FFFFFF</color>
+
+    <!-- Card image placeholder -->
+    <color name="color_image_placeholder">#DDDDDD</color>
+
+    <!-- Tab inactive colors -->
+    <color name="color_tab_inactive_bg">#E3F2FD</color>
+    <color name="color_tab_inactive_text">#1976D2</color>
+
+    <!-- Hint text -->
+    <color name="color_hint">#9E9E9E</color>
+
+    <!-- Item backgrounds -->
+    <color name="color_item_bg">#FFFFFF</color>
 </resources>

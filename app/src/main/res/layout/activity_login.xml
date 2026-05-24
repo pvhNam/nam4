@@ -5,14 +5,14 @@
     android:orientation="vertical"
     android:padding="32dp"
     android:gravity="center"
-    android:background="#FAFAFA">
+    android:background="@color/color_background">
 
     <ImageView
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:src="@android:drawable/ic_menu_directions"
         android:layout_marginBottom="24dp"
-        android:background="@android:color/darker_gray"/>
+        android:background="@color/color_image_placeholder"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -20,7 +20,7 @@
         android:text="ĐĂNG NHẬP"
         android:textSize="24sp"
         android:textStyle="bold"
-        android:textColor="#333333"
+        android:textColor="@color/color_on_surface"
         android:layout_marginBottom="32dp"/>
 
     <EditText

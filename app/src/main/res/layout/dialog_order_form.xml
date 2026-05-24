@@ -31,7 +31,7 @@
             android:id="@+id/tv_dialog_info"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#2D3748"
+            android:textColor="@color/color_on_surface"
             android:textSize="13sp"
             android:lineSpacingExtra="5dp" />
 
@@ -51,7 +51,7 @@
             android:layout_height="wrap_content"
             android:text="Số CCCD / CMND"
             android:textStyle="bold"
-            android:textColor="#2D3748"
+            android:textColor="@color/color_on_surface"
             android:textSize="13sp" />
 
         <TextView
@@ -75,8 +75,8 @@
         android:paddingVertical="0dp"
         android:background="@drawable/bg_input_field"
         android:layout_marginBottom="16dp"
-        android:textColor="#0D1B2A"
-        android:textColorHint="#A0AEC0"
+        android:textColor="@color/color_on_background"
+        android:textColorHint="@color/color_hint"
         android:textSize="14sp"
         android:maxLines="1"
         android:imeOptions="actionNext" />
@@ -95,14 +95,14 @@
             android:layout_height="wrap_content"
             android:text="Ghi chú"
             android:textStyle="bold"
-            android:textColor="#2D3748"
+            android:textColor="@color/color_on_surface"
             android:textSize="13sp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="  (tuỳ chọn)"
-            android:textColor="#A0AEC0"
+            android:textColor="@color/color_on_surface_tertiary"
             android:textSize="12sp" />
 
     </LinearLayout>
@@ -119,8 +119,8 @@
         android:paddingVertical="12dp"
         android:background="@drawable/bg_input_field"
         android:layout_marginBottom="14dp"
-        android:textColor="#0D1B2A"
-        android:textColorHint="#A0AEC0"
+        android:textColor="@color/color_on_background"
+        android:textColorHint="@color/color_hint"
         android:textSize="14sp" />
 
     <!-- ===== HINT: Sau khi xác nhận (ẩn khi mua xe) ===== -->

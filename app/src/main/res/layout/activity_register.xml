@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAFAFA"
+    android:background="@color/color_background"
     android:fillViewport="true">
 
     <LinearLayout
@@ -17,7 +17,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="32dp"
             android:text="TẠO TÀI KHOẢN"
-            android:textColor="#333333"
+            android:textColor="@color/color_on_surface"
             android:textSize="24sp"
             android:textStyle="bold" />
 
