@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Semantic colors - dark mode overrides -->
+    <color name="color_background">#121212</color>
+    <color name="color_surface">#1E1E1E</color>
+    <color name="color_surface_variant">#2C2C2C</color>
+    <color name="color_on_background">#EEEEEE</color>
+    <color name="color_on_surface">#E0E0E0</color>
+    <color name="color_on_surface_secondary">#AAAAAA</color>
+    <color name="color_on_surface_tertiary">#777777</color>
+    <color name="color_divider">#3A3A3A</color>
+
+    <!-- Input field colors - dark -->
+    <color name="color_input_bg">#2A2A2A</color>
+    <color name="color_input_stroke">#444444</color>
+    <color name="color_input_bg_focused">#1E2A3A</color>
+    <color name="color_input_stroke_focused">#5B8DEF</color>
+    <color name="color_input_bg_alt">#252530</color>
+    <color name="color_input_stroke_alt">#3A3D50</color>
+
+    <!-- Nav bar - dark -->
+    <color name="color_bottom_nav_bg">#1E1E1E</color>
+
+    <!-- Card image placeholder - dark -->
+    <color name="color_image_placeholder">#333333</color>
+
+    <!-- Stat cards - dark mode (tối hơn, vẫn có màu nhẹ) -->
+    <color name="stat_card_blue">#0D2137</color>
+    <color name="stat_card_green">#0A1F10</color>
+    <color name="stat_card_orange">#231500</color>
+    <color name="stat_card_pink">#2A0A14</color>
+
+    <!-- Tab inactive - dark -->
+    <color name="color_tab_inactive_bg">#1A2A3A</color>
+    <color name="color_tab_inactive_text">#5B9BD5</color>
+
+    <!-- Hint text - dark -->
+    <color name="color_hint">#666666</color>
+
+    <!-- Item backgrounds - dark -->
+    <color name="color_item_bg">#1E1E1E</color>
+</resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Base.Theme.DOANMB" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#5B9BD5</item>
+        <item name="colorPrimaryVariant">#4A7FC1</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="android:windowBackground">@color/color_background</item>
+        <item name="android:textColorHint">@color/color_hint</item>
+    </style>
+</resources>
