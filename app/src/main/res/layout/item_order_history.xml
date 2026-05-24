@@ -52,7 +52,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Toyota Vios 2020"
-            android:textColor="#222"
+            android:textColor="@color/color_on_background"
             android:textSize="16sp"
             android:textStyle="bold"
             android:layout_marginBottom="4dp"/>
@@ -69,7 +69,7 @@
 
         <!-- ĐƯỜNG KẺ -->
         <View android:layout_width="match_parent" android:layout_height="1dp"
-            android:background="#EEEEEE" android:layout_marginBottom="8dp"/>
+            android:background="@color/color_image_placeholder" android:layout_marginBottom="8dp"/>
 
         <!-- NGÀY GỬI -->
         <TextView
@@ -77,7 +77,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="📅  Ngày gửi: 13/05/2026"
-            android:textColor="#777"
+            android:textColor="@color/color_on_surface_secondary"
             android:textSize="13sp"
             android:layout_marginBottom="4dp"/>
 
@@ -87,7 +87,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="💬  Ghi chú: ..."
-            android:textColor="#777"
+            android:textColor="@color/color_on_surface_secondary"
             android:textSize="13sp"
             android:layout_marginBottom="8dp"
             android:visibility="gone"/>
@@ -97,7 +97,7 @@
             android:id="@+id/layoutStatusMessage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#F5F5F5"
+            android:background="@color/color_surface_variant"
             android:padding="10dp"
             android:visibility="gone">
 
@@ -106,7 +106,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Người bán đã xác nhận yêu cầu của bạn!"
-                android:textColor="#333"
+                android:textColor="@color/color_on_surface"
                 android:textSize="13sp"/>
         </LinearLayout>
 

@@ -37,7 +37,7 @@
                 android:id="@+id/tvConvName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#222"
+                android:textColor="@color/color_on_background"
                 android:textSize="15sp"
                 android:textStyle="bold"/>
 
@@ -45,7 +45,7 @@
                 android:id="@+id/tvConvCarName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#777"
+                android:textColor="@color/color_on_surface_secondary"
                 android:textSize="13sp"
                 android:layout_marginTop="2dp"/>
 
@@ -53,7 +53,7 @@
                 android:id="@+id/tvConvLastMsg"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#AAA"
+                android:textColor="@color/color_on_surface_tertiary"
                 android:textSize="12sp"
                 android:layout_marginTop="2dp"
                 android:maxLines="1"
