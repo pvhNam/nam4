@@ -95,6 +95,17 @@
                 android:text="📞  Đang tải..." android:textColor="#555" android:textSize="14sp"
                 android:layout_marginTop="4dp"/>
 
+            <!-- Nút báo cáo -->
+            <TextView
+                android:id="@+id/tv_report_car"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="⚑ Báo cáo tin này"
+                android:textColor="#9E9E9E"
+                android:textSize="13sp"
+                android:visibility="gone" />
+
             <View android:layout_width="match_parent" android:layout_height="1dp"
                 android:background="#E0E0E0" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 

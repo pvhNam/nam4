@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.doanmb.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -98,8 +99,20 @@ public class LoginActivity extends AppCompatActivity {
     private void signIn(String email, String password) {
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener(authResult -> {
-                    Toast.makeText(this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
-                    finish();
+                    FirebaseUser user = authResult.getUser();
+                    if (user == null) { finish(); return; }
+                    db.collection("users").document(user.getUid()).get()
+                            .addOnSuccessListener(doc -> {
+                                String role = doc.getString("role");
+                                Toast.makeText(this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
+                                if ("ADMIN".equals(role)) {
+                                    startActivity(new Intent(this, AdminDashboardActivity.class));
+                                } else if ("STAFF".equals(role)) {
+                                    startActivity(new Intent(this, StaffDashboardActivity.class));
+                                }
+                                finish();
+                            })
+                            .addOnFailureListener(e -> finish());
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Sai email/số điện thoại hoặc mật khẩu!", Toast.LENGTH_SHORT).show()
