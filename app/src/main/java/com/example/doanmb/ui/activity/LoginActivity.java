@@ -110,8 +110,10 @@ public class LoginActivity extends AppCompatActivity {
                                     startActivity(new Intent(this, AdminDashboardActivity.class));
                                 } else if ("STAFF".equals(role)) {
                                     startActivity(new Intent(this, StaffDashboardActivity.class));
+                                } else {
+                                    startActivity(new Intent(this, MainActivity.class));
                                 }
-                                startActivity(new Intent(this, MainActivity.class));
+                                finish();
                             })
                             .addOnFailureListener(e -> finish());
                 })
