@@ -1,19 +1,21 @@
 package com.example.doanmb.ui.fragment;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.example.doanmb.R;
-import com.example.doanmb.ui.activity.LoginActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -31,7 +33,7 @@ public class MessagesFragment extends Fragment {
     private FirebaseFirestore db;
     private ListenerRegistration listener;
     private ConversationAdapter adapter;
-    private List<Map<String, Object>> convList = new ArrayList<>();
+    private final List<Map<String, Object>> convList = new ArrayList<>();
 
     @Nullable
     @Override
@@ -40,11 +42,11 @@ public class MessagesFragment extends Fragment {
         db = FirebaseFirestore.getInstance();
 
         layoutNotLoggedIn = view.findViewById(R.id.layout_msg_not_logged_in);
-        layoutEmpty = view.findViewById(R.id.layout_msg_empty);
-        rvConversations = view.findViewById(R.id.rv_conversations);
+        layoutEmpty       = view.findViewById(R.id.layout_msg_empty);
+        rvConversations   = view.findViewById(R.id.rv_conversations);
         rvConversations.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        adapter = new ConversationAdapter(convList);
+        adapter = new ConversationAdapter(convList, db);
         rvConversations.setAdapter(adapter);
 
         return view;
@@ -67,7 +69,6 @@ public class MessagesFragment extends Fragment {
     private void loadConversations(String uid) {
         if (listener != null) listener.remove();
 
-        // Lấy tất cả orders liên quan đến user (cả buyer lẫn seller)
         listener = db.collection("orders")
                 .whereEqualTo("buyerId", uid)
                 .addSnapshotListener((snapshots, error) -> {
@@ -76,7 +77,9 @@ public class MessagesFragment extends Fragment {
 
                     convList.clear();
                     for (QueryDocumentSnapshot doc : snapshots) {
-                        convList.add(doc.getData());
+                        Map<String, Object> data = doc.getData();
+                        data.put("_isSeller", false);
+                        convList.add(data);
                     }
 
                     // Load thêm orders mà user là seller
@@ -87,7 +90,6 @@ public class MessagesFragment extends Fragment {
                                 if (!isAdded()) return;
                                 for (QueryDocumentSnapshot doc : sellerSnaps) {
                                     Map<String, Object> data = doc.getData();
-                                    // Đánh dấu để hiển thị đúng vai trò
                                     data.put("_isSeller", true);
                                     convList.add(data);
                                 }
@@ -102,44 +104,89 @@ public class MessagesFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (listener != null) {
-            listener.remove();
-            listener = null;
-        }
+        if (listener != null) { listener.remove(); listener = null; }
     }
 
-    // ── Adapter nội bộ ──────────────────────────────────────────────
+    // ── Adapter ──────────────────────────────────────────────────────
     static class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapter.VH> {
-        private List<Map<String, Object>> list;
-        ConversationAdapter(List<Map<String, Object>> list) { this.list = list; }
+        private final List<Map<String, Object>> list;
+        private final FirebaseFirestore db;
+
+        ConversationAdapter(List<Map<String, Object>> list, FirebaseFirestore db) {
+            this.list = list;
+            this.db   = db;
+        }
 
         @NonNull
         @Override
         public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_conversation, parent, false);
+            View v = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_conversation, parent, false);
             return new VH(v);
         }
 
         @Override
         public void onBindViewHolder(@NonNull VH h, int position) {
             Map<String, Object> item = list.get(position);
-            String carName  = (String) item.get("carName");
-            String carPrice = (String) item.get("carPrice");
-            String status   = (String) item.get("status");
-            String type     = (String) item.get("type");
+            String carName   = getStr(item, "carName");
+            String carPrice  = getStr(item, "carPrice");
+            String status    = getStr(item, "status");
             boolean isSeller = Boolean.TRUE.equals(item.get("_isSeller"));
 
-            // Tên hiển thị theo vai trò
-            String displayName = isSeller
-                    ? "👤 " + getOrDefault(item, "renterName", "Người mua")
-                    : "🏪 Người bán xe";
-            h.tvName.setText(displayName);
-            h.tvCarName.setText(carName != null ? carName : "");
-            h.tvLastMsg.setText(carPrice != null ? carPrice : "");
+            // Tên + uid của đối phương
+            String otherUid;
+            String displayName;
+            if (isSeller) {
+                // Mình là seller → hiện thông tin buyer
+                otherUid    = getStr(item, "buyerId");
+                String renterName = getStr(item, "renterName");
+                displayName = renterName.isEmpty() ? "Người mua" : renterName;
+            } else {
+                // Mình là buyer → hiện thông tin seller
+                otherUid    = getStr(item, "sellerId");
+                displayName = "Người bán xe";
+            }
 
-            // Avatar chữ cái đầu
-            String initial = displayName.length() > 1 ? String.valueOf(displayName.charAt(2)).toUpperCase() : "?";
+            h.tvName.setText(displayName);
+            h.tvCarName.setText(carName);
+            h.tvLastMsg.setText(carPrice);
+
+            // Avatar mặc định — chữ cái đầu với màu theo tên
+            String initial = displayName.length() > 0
+                    ? String.valueOf(displayName.charAt(0)).toUpperCase() : "?";
             h.tvAvatar.setText(initial);
+            h.tvAvatar.setBackgroundColor(getAvatarColor(displayName));
+            h.tvAvatar.setVisibility(View.VISIBLE);
+            h.ivAvatar.setVisibility(View.GONE);
+
+            // Load avatar thật từ Firestore nếu có uid
+            if (!otherUid.isEmpty()) {
+                db.collection("users").document(otherUid).get()
+                        .addOnSuccessListener(doc -> {
+                            if (doc == null || !doc.exists()) return;
+
+                            // Cập nhật tên nếu chưa có
+                            String name = doc.getString("name");
+                            if (name != null && !name.isEmpty() && h.tvName.getText().equals("Người bán xe")) {
+                                h.tvName.setText(name);
+                                String init = String.valueOf(name.charAt(0)).toUpperCase();
+                                h.tvAvatar.setText(init);
+                                h.tvAvatar.setBackgroundColor(getAvatarColor(name));
+                            }
+
+                            // Load ảnh đại diện
+                            String avatarUrl = doc.getString("avatarUrl");
+                            if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                                h.tvAvatar.setVisibility(View.GONE);
+                                h.ivAvatar.setVisibility(View.VISIBLE);
+                                Glide.with(h.ivAvatar.getContext())
+                                        .load(avatarUrl)
+                                        .transform(new CircleCrop())
+                                        .placeholder(android.R.drawable.ic_menu_gallery)
+                                        .into(h.ivAvatar);
+                            }
+                        });
+            }
 
             // Badge trạng thái
             if ("confirmed".equals(status)) {
@@ -154,19 +201,37 @@ public class MessagesFragment extends Fragment {
             }
         }
 
-        private String getOrDefault(Map<String, Object> map, String key, String def) {
+        private String getStr(Map<String, Object> map, String key) {
             Object val = map.get(key);
-            return val instanceof String && !((String) val).isEmpty() ? (String) val : def;
+            return (val instanceof String) ? (String) val : "";
         }
 
-        @Override
-        public int getItemCount() { return list.size(); }
+        // Tạo màu avatar từ tên — mỗi tên luôn ra cùng 1 màu
+        private int getAvatarColor(String name) {
+            int[] colors = {
+                    0xFF1976D2, // xanh dương
+                    0xFF388E3C, // xanh lá
+                    0xFFF57C00, // cam
+                    0xFF7B1FA2, // tím
+                    0xFFC62828, // đỏ
+                    0xFF00838F, // xanh ngọc
+                    0xFF5D4037, // nâu
+                    0xFF1565C0, // xanh navy
+            };
+            int index = Math.abs(name.hashCode()) % colors.length;
+            return colors[index];
+        }
+
+        @Override public int getItemCount() { return list.size(); }
 
         static class VH extends RecyclerView.ViewHolder {
-            android.widget.TextView tvAvatar, tvName, tvCarName, tvLastMsg, tvStatus;
+            TextView  tvAvatar, tvName, tvCarName, tvLastMsg, tvStatus;
+            ImageView ivAvatar;
+
             VH(@NonNull View v) {
                 super(v);
                 tvAvatar  = v.findViewById(R.id.tvConvAvatar);
+                ivAvatar  = v.findViewById(R.id.ivConvAvatar);
                 tvName    = v.findViewById(R.id.tvConvName);
                 tvCarName = v.findViewById(R.id.tvConvCarName);
                 tvLastMsg = v.findViewById(R.id.tvConvLastMsg);
