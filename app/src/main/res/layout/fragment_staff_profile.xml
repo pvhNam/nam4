@@ -44,7 +44,7 @@
                 android:background="@color/role_staff_bg"
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="4dp"
-                android:text="NHÂN VIÊN"
+                android:text="TÀI XẾ"
                 android:textColor="@color/role_staff_text"
                 android:textSize="12sp"
                 android:textStyle="bold" />
