@@ -109,10 +109,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadCategories() {
         List<Category> categoryList = new ArrayList<>();
-        categoryList.add(new Category("Mua xe", android.R.drawable.ic_menu_directions));
-        categoryList.add(new Category("Bán xe", android.R.drawable.ic_menu_send));
-        categoryList.add(new Category("Thuê tự lái", android.R.drawable.ic_menu_compass));
-        categoryList.add(new Category("Có tài xế", android.R.drawable.ic_menu_myplaces));
+        categoryList.add(new Category("Mua xe", R.drawable.ic_buy_car));
+        categoryList.add(new Category("Bán xe", R.drawable.ic_sell_car));
+        categoryList.add(new Category("Thuê tự lái", R.drawable.ic_self_drive));
+        categoryList.add(new Category("Có tài xế", R.drawable.ic_with_driver));
         categoryAdapter = new CategoryAdapter(categoryList);
         rvCategories.setAdapter(categoryAdapter);
     }
