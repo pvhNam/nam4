@@ -9,6 +9,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.FrameLayout;
 
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -38,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private BottomNavigationView bottomNavigationView;
     private FrameLayout fragmentContainer;
     private View homeLayout;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     private CategoryAdapter categoryAdapter;
     private CarSaleAdapter carSaleAdapter;
@@ -61,6 +63,16 @@ public class MainActivity extends AppCompatActivity {
         loadCarsFromFirestore();
         setupSearch();
         setupBottomNavigation();
+        setupSwipeRefresh();
+    }
+
+    private void setupSwipeRefresh() {
+        swipeRefreshLayout.setColorSchemeResources(android.R.color.holo_blue_bright);
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            saleCarList.clear();
+            rentalCarList.clear();
+            loadCarsFromFirestore();
+        });
     }
 
     private void initViews() {
@@ -71,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigationView = findViewById(R.id.bottom_navigation);
         fragmentContainer = findViewById(R.id.fragment_container);
         homeLayout = findViewById(R.id.home_layout);
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh);
     }
 
     private void setupRecyclerViews() {
@@ -150,8 +163,12 @@ public class MainActivity extends AppCompatActivity {
                     carSaleAdapter.filterList(saleCarList);
                     carRentalAdapter.filterList(rentalCarList);
                     setupAutoComplete();
+                    if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(false);
                 })
-                .addOnFailureListener(e -> loadDummyData());
+                .addOnFailureListener(e -> {
+                    loadDummyData();
+                    if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(false);
+                });
     }
 
     private void loadDummyData() {

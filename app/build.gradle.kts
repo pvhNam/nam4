@@ -47,4 +47,5 @@ dependencies {
     implementation("com.google.firebase:firebase-storage")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("com.cloudinary:cloudinary-android:2.5.0")
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.2.0")
 }
