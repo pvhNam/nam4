@@ -31,7 +31,6 @@ import com.example.doanmb.util.CloudinaryHelper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -170,7 +169,8 @@ public class ProfileFragment extends Fragment {
 
     private void loadUserInfo(FirebaseUser user) {
         db.collection("users").document(user.getUid()).get()
-                .addOnSuccessListener(doc -> {
+                .addOnSuccessListener(requireActivity(), doc -> {
+                    if (!isAdded()) return;
                     if (doc.exists()) {
                         String name = doc.getString("name");
                         String phone = doc.getString("phone");
@@ -178,9 +178,9 @@ public class ProfileFragment extends Fragment {
                         if (tvProfileName != null) tvProfileName.setText(name != null ? name : "");
                         if (tvProfilePhone != null) tvProfilePhone.setText(phone != null ? "📞 " + phone : "");
 
-                        // Load ảnh đại diện nếu có
+                        // SỬA LỖI GLIDE Ở ĐÂY: Thay getViewLifecycleOwner() bằng ProfileFragment.this
                         if (avatarUrl != null && !avatarUrl.isEmpty() && ivAvatar != null) {
-                            Glide.with(this)
+                            Glide.with(ProfileFragment.this)
                                     .load(avatarUrl)
                                     .circleCrop()
                                     .placeholder(android.R.drawable.ic_menu_gallery)
@@ -207,9 +207,10 @@ public class ProfileFragment extends Fragment {
                 update.put("avatarUrl", imageUrl);
                 db.collection("users").document(user.getUid())
                         .update(update)
-                        .addOnSuccessListener(unused -> {
+                        .addOnSuccessListener(requireActivity(), unused -> {
                             if (!isAdded()) return;
-                            // Hiển thị ảnh mới ngay lập tức
+
+                            // SỬA LỖI GLIDE Ở ĐÂY: Thay getViewLifecycleOwner() bằng ProfileFragment.this
                             Glide.with(ProfileFragment.this)
                                     .load(imageUrl)
                                     .circleCrop()
@@ -228,7 +229,8 @@ public class ProfileFragment extends Fragment {
 
     private void loadMyCars(String userId) {
         db.collection("cars").whereEqualTo("userId", userId).get()
-                .addOnSuccessListener(snapshots -> {
+                .addOnSuccessListener(requireActivity(), snapshots -> {
+                    if (!isAdded()) return;
                     allCars.clear();
                     for (QueryDocumentSnapshot doc : snapshots) {
                         String name = doc.getString("name");
@@ -248,7 +250,8 @@ public class ProfileFragment extends Fragment {
 
     private void loadMyOrders(String userId) {
         db.collection("orders").whereEqualTo("buyerId", userId).get()
-                .addOnSuccessListener(snapshots -> {
+                .addOnSuccessListener(requireActivity(), snapshots -> {
+                    if (!isAdded()) return;
                     orderList.clear();
                     for (QueryDocumentSnapshot doc : snapshots) {
                         orderList.add(doc.getData());
