@@ -19,7 +19,7 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_gravity="center"
-            android:src="@android:drawable/ic_menu_directions"
+            android:src="@drawable/ic_buy_car"
             app:tint="@color/color_tab_inactive_text" />
     </androidx.cardview.widget.CardView>
 
