@@ -144,10 +144,28 @@
                     android:textSize="15sp" android:textStyle="bold"
                     android:textColor="#FFFFFF" android:backgroundTint="#1976D2"/>
 
-                <Button android:id="@+id/btnCallSeller"
-                    android:layout_width="match_parent" android:layout_height="52dp"
-                    android:layout_marginTop="8dp" android:text="📞  GỌI NGAY CHO NGƯỜI BÁN"
-                    android:textSize="14sp" android:textColor="#1976D2" android:backgroundTint="#E3F2FD"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <Button android:id="@+id/btnCallSeller"
+                        android:layout_width="0dp"
+                        android:layout_height="52dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="4dp"
+                        android:text="📞 Gọi điện"
+                        android:textSize="14sp" android:textColor="#1976D2" android:backgroundTint="#E3F2FD"/>
+
+                    <Button android:id="@+id/btnChatSeller"
+                        android:layout_width="0dp"
+                        android:layout_height="52dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
+                        android:text="💬 Nhắn tin"
+                        android:textSize="14sp" android:textColor="#FFFFFF" android:backgroundTint="#FF9800"/>
+                </LinearLayout>
             </LinearLayout>
 
             <!-- FORM THUÊ XE -->
@@ -219,10 +237,28 @@
                     android:textSize="15sp" android:textStyle="bold"
                     android:textColor="#FFFFFF" android:backgroundTint="#1976D2"/>
 
-                <Button android:id="@+id/btnCallRentSeller"
-                    android:layout_width="match_parent" android:layout_height="52dp"
-                    android:layout_marginTop="8dp" android:text="📞  GỌI NGAY CHO NGƯỜI CHO THUÊ"
-                    android:textSize="14sp" android:textColor="#1976D2" android:backgroundTint="#E3F2FD"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <Button android:id="@+id/btnCallRentSeller"
+                        android:layout_width="0dp"
+                        android:layout_height="52dp"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="4dp"
+                        android:text="📞 Gọi điện"
+                        android:textSize="14sp" android:textColor="#1976D2" android:backgroundTint="#E3F2FD"/>
+
+                    <Button android:id="@+id/btnChatRentSeller"
+                        android:layout_width="0dp"
+                        android:layout_height="52dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
+                        android:text="💬 Nhắn tin"
+                        android:textSize="14sp" android:textColor="#FFFFFF" android:backgroundTint="#FF9800"/>
+                </LinearLayout>
             </LinearLayout>
 
         </LinearLayout>

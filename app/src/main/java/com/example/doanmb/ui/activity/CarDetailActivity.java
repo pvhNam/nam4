@@ -19,7 +19,11 @@ import com.example.doanmb.model.Car;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class CarDetailActivity extends AppCompatActivity {
@@ -32,13 +36,13 @@ public class CarDetailActivity extends AppCompatActivity {
     // Form mua xe
     private LinearLayout layoutBuyForm;
     private EditText etBuyerNote;
-    private Button btnSendRequest, btnCallSeller;
+    private Button btnSendRequest, btnCallSeller, btnChatSeller;
 
     // Form thuê xe
     private LinearLayout layoutRentForm;
     private EditText etRenterName, etRenterPhone, etRenterCCCD;
     private EditText etRentStartDate, etRentDays, etRenterNote;
-    private Button btnSendRentRequest, btnCallRentSeller;
+    private Button btnSendRentRequest, btnCallRentSeller, btnChatRentSeller;
 
     private TextView tvReportCar;
     private FirebaseFirestore db;
@@ -59,12 +63,10 @@ public class CarDetailActivity extends AppCompatActivity {
         sellerId = getIntent().getStringExtra("SELLER_ID");
         carType = getIntent().getStringExtra("CAR_TYPE");
 
-        // Ẩn badge mặc định, chờ Firestore trả về
         tvCarFuelBadge.setVisibility(View.GONE);
         tvCarConditionBadge.setVisibility(View.GONE);
 
         if (car != null) {
-            // Load ảnh từ URL Cloudinary ngay nếu có
             String imageUrl = car.getImageUrl();
             if (imageUrl != null && !imageUrl.isEmpty()) {
                 Glide.with(this).load(imageUrl)
@@ -78,7 +80,6 @@ public class CarDetailActivity extends AppCompatActivity {
             tvCarInfo.setText(car.getInfo());
         }
 
-        // Fallback carId và sellerId từ Car object nếu Intent thiếu
         if ((carId == null || carId.isEmpty()) && car != null && car.getId() != null) {
             carId = car.getId();
         }
@@ -88,8 +89,6 @@ public class CarDetailActivity extends AppCompatActivity {
 
         if (carId != null && !carId.isEmpty()) {
             loadCarDetail(carId);
-        } else {
-            setupByType(carType);
         }
 
         if (sellerId != null && !sellerId.isEmpty()) {
@@ -125,6 +124,7 @@ public class CarDetailActivity extends AppCompatActivity {
         etBuyerNote = findViewById(R.id.etBuyerNote);
         btnSendRequest = findViewById(R.id.btnSendRequest);
         btnCallSeller = findViewById(R.id.btnCallSeller);
+        btnChatSeller = findViewById(R.id.btnChatSeller);
 
         layoutRentForm = findViewById(R.id.layoutRentForm);
         etRenterName = findViewById(R.id.etRenterName);
@@ -135,6 +135,68 @@ public class CarDetailActivity extends AppCompatActivity {
         etRenterNote = findViewById(R.id.etRenterNote);
         btnSendRentRequest = findViewById(R.id.btnSendRentRequest);
         btnCallRentSeller  = findViewById(R.id.btnCallRentSeller);
+        btnChatRentSeller = findViewById(R.id.btnChatRentSeller);
+    }
+
+    private void setupButtons() {
+        btnSendRequest.setOnClickListener(v -> sendBuyRequest());
+        btnCallSeller.setOnClickListener(v -> callSeller());
+        btnChatSeller.setOnClickListener(v -> openChat());
+        
+        btnSendRentRequest.setOnClickListener(v -> sendRentRequest());
+        btnCallRentSeller.setOnClickListener(v -> callSeller());
+        btnChatRentSeller.setOnClickListener(v -> openChat());
+    }
+
+    private void openChat() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Toast.makeText(this, "Vui lòng đăng nhập để nhắn tin!", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, LoginActivity.class));
+            return;
+        }
+
+        if (sellerId == null || sellerId.isEmpty()) {
+            Toast.makeText(this, "Không tìm thấy thông tin người bán", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String roomId = user.getUid() + "_" + sellerId + "_" + (carId != null ? carId : "unknown");
+
+        Map<String, Object> roomData = new HashMap<>();
+        List<String> participants = new ArrayList<>();
+        participants.add(user.getUid());
+        participants.add(sellerId);
+        
+        roomData.put("participants", participants);
+        roomData.put("carId", carId != null ? carId : "");
+        roomData.put("carName", car != null ? car.getName() : "Xe");
+        roomData.put("carPrice", car != null ? car.getPrice() : "");
+        roomData.put("carImage", car != null ? car.getImageUrl() : "");
+        roomData.put("carType", carType != null ? carType : "sale");
+        roomData.put("buyerId", user.getUid());
+        roomData.put("sellerId", sellerId);
+
+        db.collection("chat_rooms").document(roomId)
+                .set(roomData, SetOptions.merge())
+                .addOnSuccessListener(aVoid -> {
+                    Intent intent = new Intent(this, ChatDetailActivity.class);
+                    intent.putExtra("ROOM_ID", roomId);
+                    intent.putExtra("PARTNER_ID", sellerId);
+                    intent.putExtra("PARTNER_NAME", tvSellerName.getText().toString().replace("👤  ", ""));
+                    intent.putExtra("CAR_DATA", car);
+                    startActivity(intent);
+                });
+    }
+
+    private void callSeller() {
+        if (!sellerPhone.isEmpty()) {
+            Intent intent = new Intent(Intent.ACTION_DIAL);
+            intent.setData(Uri.parse("tel:" + sellerPhone));
+            startActivity(intent);
+        } else {
+            Toast.makeText(this, "Không có số điện thoại người bán!", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void loadCarDetail(String id) {
@@ -149,24 +211,22 @@ public class CarDetailActivity extends AppCompatActivity {
                     String sName     = doc.getString("sellerName");
                     String imageUrl  = doc.getString("imageUrl");
 
+                    if (type != null) carType = type;
+
                     if (imageUrl != null && !imageUrl.isEmpty()) {
                         Glide.with(CarDetailActivity.this).load(imageUrl)
                                 .placeholder(android.R.drawable.ic_menu_gallery)
                                 .into(ivCarDetail);
                     }
 
-                    // Badge nhiên liệu (cam)
                     if (fuel != null && !fuel.isEmpty()) {
                         tvCarFuelBadge.setText(fuel);
                         tvCarFuelBadge.setVisibility(View.VISIBLE);
                     }
 
-                    // Badge tình trạng xe (xám)
                     if (condition != null && !condition.isEmpty()) {
                         if (condition.contains("mới 100") || condition.equalsIgnoreCase("Xe mới 100%"))
                             tvCarConditionBadge.setText("Xe mới");
-                        else if (condition.contains("đăng ký") || condition.equalsIgnoreCase("Xe mới đăng ký"))
-                            tvCarConditionBadge.setText("Mới ĐK");
                         else
                             tvCarConditionBadge.setText("Xe cũ");
                         tvCarConditionBadge.setVisibility(View.VISIBLE);
@@ -196,7 +256,6 @@ public class CarDetailActivity extends AppCompatActivity {
     }
 
     private void setupByType(String type) {
-        // Kiểm tra chủ xe không thể tự gửi yêu cầu
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         boolean isOwner = currentUser != null && currentUser.getUid().equals(sellerId);
 
@@ -206,8 +265,6 @@ public class CarDetailActivity extends AppCompatActivity {
             if (tvReportCar != null) tvReportCar.setVisibility(View.GONE);
             tvCarTypeBadge.setText("rental".equals(type) ? "Cho Thuê" : "Cần Bán");
             tvCarTypeBadge.setBackgroundColor("rental".equals(type) ? 0xFF1976D2 : 0xFF4CAF50);
-            // Hiện thông báo "Đây là xe của bạn"
-            TextView tvOwnerNote = findViewById(R.id.tvOwnerNote);
             if (tvOwnerNote != null) tvOwnerNote.setVisibility(View.VISIBLE);
             return;
         }
@@ -223,42 +280,11 @@ public class CarDetailActivity extends AppCompatActivity {
             tvCarTypeBadge.setBackgroundColor(0xFF1976D2);
             layoutBuyForm.setVisibility(View.GONE);
             layoutRentForm.setVisibility(View.VISIBLE);
-
-            if (currentUser != null) {
-                db.collection("users").document(currentUser.getUid()).get()
-                        .addOnSuccessListener(doc -> {
-                            if (doc.exists()) {
-                                String name  = doc.getString("name");
-                                String phone = doc.getString("phone");
-                                if (name != null && etRenterName.getText().toString().isEmpty())
-                                    etRenterName.setText(name);
-                                if (phone != null && etRenterPhone.getText().toString().isEmpty())
-                                    etRenterPhone.setText(phone);
-                            }
-                        });
-            }
         } else {
             tvCarTypeBadge.setText("Cần Bán");
             tvCarTypeBadge.setBackgroundColor(0xFF4CAF50);
             layoutBuyForm.setVisibility(View.VISIBLE);
             layoutRentForm.setVisibility(View.GONE);
-        }
-    }
-
-    private void setupButtons() {
-        btnSendRequest.setOnClickListener(v -> sendBuyRequest());
-        btnCallSeller.setOnClickListener(v -> callSeller());
-        btnSendRentRequest.setOnClickListener(v -> sendRentRequest());
-        btnCallRentSeller.setOnClickListener(v -> callSeller());
-    }
-
-    private void callSeller() {
-        if (!sellerPhone.isEmpty()) {
-            Intent intent = new Intent(Intent.ACTION_DIAL);
-            intent.setData(Uri.parse("tel:" + sellerPhone));
-            startActivity(intent);
-        } else {
-            Toast.makeText(this, "Không có số điện thoại người bán!", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -283,107 +309,52 @@ public class CarDetailActivity extends AppCompatActivity {
 
         db.collection("orders").add(order)
                 .addOnSuccessListener(ref -> {
-                    Toast.makeText(this, "✅ Gửi yêu cầu mua xe thành công!\nNgười bán sẽ liên hệ bạn sớm.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "✅ Gửi yêu cầu thành công!", Toast.LENGTH_LONG).show();
                     etBuyerNote.setText("");
-                })
-                .addOnFailureListener(e -> Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                });
     }
 
     private void sendRentRequest() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
-            Toast.makeText(this, "Vui lòng đăng nhập để gửi yêu cầu!", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(this, LoginActivity.class));
+            Toast.makeText(this, "Vui lòng đăng nhập!", Toast.LENGTH_SHORT).show();
             return;
         }
-
-        String renterName  = etRenterName.getText().toString().trim();
-        String renterPhone = etRenterPhone.getText().toString().trim();
-        String cccd        = etRenterCCCD.getText().toString().trim();
-        String startDate   = etRentStartDate.getText().toString().trim();
-        String days        = etRentDays.getText().toString().trim();
-        String note        = etRenterNote.getText().toString().trim();
-
-        if (renterName.isEmpty())  { Toast.makeText(this, "Vui lòng nhập họ và tên!", Toast.LENGTH_SHORT).show(); return; }
-        if (renterPhone.isEmpty()) { Toast.makeText(this, "Vui lòng nhập số điện thoại!", Toast.LENGTH_SHORT).show(); return; }
-        if (cccd.isEmpty() || cccd.length() < 9) { Toast.makeText(this, "Vui lòng nhập đúng số CCCD/CMND (ít nhất 9 số)!", Toast.LENGTH_SHORT).show(); return; }
-        if (startDate.isEmpty())   { Toast.makeText(this, "Vui lòng nhập ngày bắt đầu thuê!", Toast.LENGTH_SHORT).show(); return; }
-        if (days.isEmpty())        { Toast.makeText(this, "Vui lòng nhập số ngày thuê!", Toast.LENGTH_SHORT).show(); return; }
 
         Map<String, Object> order = new HashMap<>();
         order.put("buyerId",    user.getUid());
         order.put("sellerId",   sellerId != null ? sellerId : "");
         order.put("carId",      carId != null ? carId : "");
         order.put("carName",    car != null ? car.getName() : "");
-        order.put("carPrice",   car != null ? car.getPrice() : "");
-        order.put("type",       "Thuê xe");
-        order.put("renterName", renterName);
-        order.put("renterPhone", renterPhone);
-        order.put("cccd",       cccd);
-        order.put("startDate",  startDate);
-        order.put("days",       days);
-        order.put("note",       note);
         order.put("status",     "pending");
         order.put("createdAt",  com.google.firebase.Timestamp.now());
 
         db.collection("orders").add(order)
-                .addOnSuccessListener(ref -> {
-                    Toast.makeText(this, "✅ Gửi yêu cầu thuê xe thành công!\nChủ xe sẽ liên hệ xác nhận sớm.", Toast.LENGTH_LONG).show();
-                    etRenterCCCD.setText("");
-                    etRentStartDate.setText("");
-                    etRentDays.setText("");
-                    etRenterNote.setText("");
-                })
-                .addOnFailureListener(e -> Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                .addOnSuccessListener(ref -> Toast.makeText(this, "✅ Gửi yêu cầu thuê xe thành công!", Toast.LENGTH_LONG).show());
     }
 
     private void showReportDialog() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser == null) {
-            Toast.makeText(this, "Vui lòng đăng nhập để báo cáo!", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        if (currentUser == null) return;
 
-        final String[] reasons = {
-                "Thông tin sai lệch",
-                "Xe không tồn tại",
-                "Giá cả bất hợp lý",
-                "Hình ảnh không đúng thực tế",
-                "Lừa đảo / Gian lận",
-                "Nội dung không phù hợp"
-        };
-        final int[] selectedReason = {0};
-
+        final String[] reasons = {"Thông tin sai lệch", "Xe không tồn tại", "Giá bất hợp lý", "Lừa đảo"};
         new AlertDialog.Builder(this)
-                .setTitle("Báo cáo tin đăng này")
-                .setSingleChoiceItems(reasons, 0, (dialog, which) -> selectedReason[0] = which)
-                .setPositiveButton("Gửi báo cáo", (dialog, which) -> submitReport(currentUser, reasons[selectedReason[0]]))
+                .setTitle("Báo cáo tin đăng")
+                .setItems(reasons, (dialog, which) -> submitReport(currentUser, reasons[which]))
                 .setNegativeButton("Hủy", null)
                 .show();
     }
 
     private void submitReport(FirebaseUser currentUser, String reason) {
-        db.collection("users").document(currentUser.getUid()).get()
-                .addOnSuccessListener(userDoc -> {
-                    String reporterName = userDoc.getString("name");
-                    String carName = car != null ? car.getName() : "";
+        Map<String, Object> report = new HashMap<>();
+        report.put("reporterId", currentUser.getUid());
+        report.put("targetId", carId);
+        report.put("reason", reason);
+        report.put("status", "pending");
+        report.put("createdAt", com.google.firebase.Timestamp.now());
 
-                    java.util.Map<String, Object> report = new java.util.HashMap<>();
-                    report.put("reporterId", currentUser.getUid());
-                    report.put("reporterName", reporterName != null ? reporterName : "Ẩn danh");
-                    report.put("targetId", carId != null ? carId : "");
-                    report.put("targetName", carName);
-                    report.put("targetType", "car");
-                    report.put("reason", reason);
-                    report.put("status", "pending");
-                    report.put("createdAt", com.google.firebase.Timestamp.now());
-
-                    db.collection("reports").add(report)
-                            .addOnSuccessListener(ref ->
-                                    Toast.makeText(this, "✅ Đã gửi báo cáo. Chúng tôi sẽ xem xét sớm!", Toast.LENGTH_LONG).show())
-                            .addOnFailureListener(e ->
-                                    Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-                });
+        db.collection("reports").add(report)
+                .addOnSuccessListener(ref -> Toast.makeText(this, "✅ Đã gửi báo cáo!", Toast.LENGTH_LONG).show());
     }
 
     @Override
