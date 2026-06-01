@@ -42,6 +42,12 @@ public class CategoryFragment extends Fragment {
     private CardView cardSellCar;
     private CardView cardSelfDrive;
     private CardView cardWithDriver;
+    private LinearLayout tabBuyCarContent;
+    private LinearLayout tabSelfDriveContent;
+    private LinearLayout tabWithDriverContent;
+    private TextView tvTabBuyCar;
+    private TextView tvTabSelfDrive;
+    private TextView tvTabWithDriver;
     private TextView tvResultTitle;
     private TextView tvCategoryCount;
     private TextView tvEmptyCategory;
@@ -65,6 +71,12 @@ public class CategoryFragment extends Fragment {
         cardSellCar = view.findViewById(R.id.card_sell_car);
         cardSelfDrive = view.findViewById(R.id.card_self_drive);
         cardWithDriver = view.findViewById(R.id.card_with_driver);
+        tabBuyCarContent = view.findViewById(R.id.tab_buy_car_content);
+        tabSelfDriveContent = view.findViewById(R.id.tab_self_drive_content);
+        tabWithDriverContent = view.findViewById(R.id.tab_with_driver_content);
+        tvTabBuyCar = view.findViewById(R.id.tv_tab_buy_car);
+        tvTabSelfDrive = view.findViewById(R.id.tv_tab_self_drive);
+        tvTabWithDriver = view.findViewById(R.id.tv_tab_with_driver);
         tvResultTitle = view.findViewById(R.id.tv_category_result_title);
         tvCategoryCount = view.findViewById(R.id.tv_category_count);
         tvEmptyCategory = view.findViewById(R.id.tv_empty_category);
@@ -118,13 +130,24 @@ public class CategoryFragment extends Fragment {
     }
 
     private void updateSelectedCategory() {
-        int selectedColor = Color.parseColor("#E3F2FD");
-        int defaultColor = Color.WHITE;
+        cardBuyCar.setCardBackgroundColor(Color.TRANSPARENT);
+        cardSellCar.setCardBackgroundColor(Color.TRANSPARENT);
+        cardSelfDrive.setCardBackgroundColor(Color.TRANSPARENT);
+        cardWithDriver.setCardBackgroundColor(Color.TRANSPARENT);
 
-        cardBuyCar.setCardBackgroundColor(currentCategory.equals(CATEGORY_SALE) ? selectedColor : defaultColor);
-        cardSelfDrive.setCardBackgroundColor(currentCategory.equals(CATEGORY_RENTAL) ? selectedColor : defaultColor);
-        cardWithDriver.setCardBackgroundColor(currentCategory.equals(CATEGORY_DRIVER) ? selectedColor : defaultColor);
-        cardSellCar.setCardBackgroundColor(defaultColor);
+        setTabSelected(tabBuyCarContent, tvTabBuyCar, currentCategory.equals(CATEGORY_SALE));
+        setTabSelected(tabSelfDriveContent, tvTabSelfDrive, currentCategory.equals(CATEGORY_RENTAL));
+        setTabSelected(tabWithDriverContent, tvTabWithDriver, currentCategory.equals(CATEGORY_DRIVER));
+    }
+
+    private void setTabSelected(LinearLayout tabContent, TextView tabLabel, boolean selected) {
+        if (selected) {
+            tabContent.setBackgroundResource(R.drawable.bg_tab_active_pill);
+            tabLabel.setTextColor(Color.parseColor("#2F54D4"));
+        } else {
+            tabContent.setBackground(null);
+            tabLabel.setTextColor(Color.WHITE);
+        }
     }
 
     private void loadCars() {
