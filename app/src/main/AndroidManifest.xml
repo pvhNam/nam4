@@ -17,13 +17,18 @@
         android:theme="@style/Theme.DOANMB">
 
         <activity
-            android:name="com.example.doanmb.MainActivity"
-            android:exported="true">
+            android:name="com.example.doanmb.ui.activity.SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.DOANMB">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="com.example.doanmb.MainActivity"
+            android:exported="false" />
 
         <activity android:name="com.example.doanmb.ui.activity.CarDetailActivity" android:exported="false" />
         <activity android:name="com.example.doanmb.ui.activity.LoginActivity" />
