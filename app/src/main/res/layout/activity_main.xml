@@ -232,7 +232,7 @@
                             android:layout_width="30dp"
                             android:layout_height="30dp"
                             android:layout_gravity="center"
-                            android:src="@drawable/ic_quick_buy_car" />
+                            android:src="@drawable/taxi_payment" />
                     </androidx.cardview.widget.CardView>
 
                     <TextView
@@ -267,7 +267,7 @@
                             android:layout_width="30dp"
                             android:layout_height="30dp"
                             android:layout_gravity="center"
-                            android:src="@drawable/ic_quick_driver" />
+                            android:src="@drawable/icons8_car_sale" />
                     </androidx.cardview.widget.CardView>
 
                     <TextView
@@ -302,7 +302,7 @@
                             android:layout_width="30dp"
                             android:layout_height="30dp"
                             android:layout_gravity="center"
-                            android:src="@drawable/ic_quick_serf_driver_car" />
+                            android:src="@drawable/self_driver" />
                     </androidx.cardview.widget.CardView>
 
                     <TextView
@@ -337,7 +337,7 @@
                             android:layout_width="30dp"
                             android:layout_height="30dp"
                             android:layout_gravity="center"
-                            android:src="@drawable/ic_quick_driver_car" />
+                            android:src="@drawable/driver" />
                     </androidx.cardview.widget.CardView>
 
                     <TextView

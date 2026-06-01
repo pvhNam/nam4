@@ -63,7 +63,7 @@
                                 android:layout_width="28dp"
                                 android:layout_height="28dp"
                                 android:layout_gravity="center"
-                                android:src="@drawable/ic_buy_car"
+                                android:src="@drawable/taxi_payment"
                                 app:tint="#2F54D4" />
                         </FrameLayout>
 
@@ -109,7 +109,7 @@
                                 android:layout_width="28dp"
                                 android:layout_height="28dp"
                                 android:layout_gravity="center"
-                                android:src="@drawable/ic_sell_car"
+                                android:src="@drawable/icons8_car_sale"
                                 app:tint="#2F54D4" />
                         </FrameLayout>
 
@@ -155,7 +155,7 @@
                                 android:layout_width="28dp"
                                 android:layout_height="28dp"
                                 android:layout_gravity="center"
-                                android:src="@drawable/ic_self_drive"
+                                android:src="@drawable/self_driver"
                                 app:tint="#2F54D4" />
                         </FrameLayout>
 
@@ -202,7 +202,7 @@
                                 android:layout_width="28dp"
                                 android:layout_height="28dp"
                                 android:layout_gravity="center"
-                                android:src="@drawable/ic_with_driver"
+                                android:src="@drawable/driver"
                                 app:tint="#2F54D4" />
                         </FrameLayout>
 
