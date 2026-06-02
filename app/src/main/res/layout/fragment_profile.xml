@@ -9,43 +9,43 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:orientation="vertical"
         android:gravity="center"
+        android:orientation="vertical"
         android:visibility="visible">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="🚗"
-            android:textSize="48sp"
             android:layout_gravity="center"
-            android:layout_marginBottom="12dp"/>
+            android:layout_marginBottom="12dp"
+            android:text="🚗"
+            android:textSize="48sp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Đăng nhập để xem tài khoản"
-            android:textSize="16sp"
-            android:textColor="@color/color_on_surface_secondary"
             android:layout_gravity="center"
-            android:layout_marginBottom="24dp"/>
+            android:layout_marginBottom="24dp"
+            android:text="Đăng nhập để xem tài khoản"
+            android:textColor="@color/color_on_surface_secondary"
+            android:textSize="16sp" />
 
         <Button
             android:id="@+id/btn_login"
             android:layout_width="220dp"
             android:layout_height="48dp"
-            android:text="Đăng nhập"
+            android:layout_marginBottom="10dp"
             android:backgroundTint="#1976D2"
-            android:textColor="#FFFFFF"
-            android:layout_marginBottom="10dp"/>
+            android:text="Đăng nhập"
+            android:textColor="#FFFFFF" />
 
         <Button
             android:id="@+id/btn_register"
             android:layout_width="220dp"
             android:layout_height="48dp"
-            android:text="Đăng ký"
             android:backgroundTint="#90A4AE"
-            android:textColor="#FFFFFF"/>
+            android:text="Đăng ký"
+            android:textColor="#FFFFFF" />
     </LinearLayout>
 
     <!-- ĐÃ ĐĂNG NHẬP -->
@@ -108,7 +108,24 @@
                 android:textColor="@color/color_on_surface_secondary"
                 android:textSize="14sp"
                 android:layout_marginTop="2dp"/>
+            <Button
+                android:id="@+id/btn_verify_phone"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginTop="8dp"
+                android:text="Xác thực số điện thoại"
+                android:textSize="12sp"
+                android:backgroundTint="#4CAF50"
+                android:textColor="#FFFFFF"/>
 
+            <TextView
+                android:id="@+id/tv_phone_verified"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Chưa xác thực"
+                android:textColor="#E53935"
+                android:textStyle="bold"/>
             <Button
                 android:id="@+id/btn_logout"
                 android:layout_width="wrap_content"

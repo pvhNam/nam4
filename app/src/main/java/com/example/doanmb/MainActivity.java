@@ -13,7 +13,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
+import com.example.doanmb.ui.fragment.NotificationsFragment;
 import com.example.doanmb.ui.activity.CarDetailActivity;
 import com.example.doanmb.ui.fragment.CategoryFragment;
 import com.example.doanmb.ui.fragment.ManageFragment;
@@ -235,7 +235,20 @@ public class MainActivity extends AppCompatActivity {
                 fragmentContainer.setVisibility(View.VISIBLE);
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new ManageFragment()).commit();
                 return true;
-            } else if (itemId == R.id.nav_messages) {
+            } else if (itemId == R.id.nav_notification) {
+                homeLayout.setVisibility(View.GONE);
+                fragmentContainer.setVisibility(View.VISIBLE);
+
+                getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(
+                                R.id.fragment_container,
+                                new NotificationsFragment()
+                        )
+                        .commit();
+
+                return true;
+            }else if (itemId == R.id.nav_messages) {
                 homeLayout.setVisibility(View.GONE);
                 fragmentContainer.setVisibility(View.VISIBLE);
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, new MessagesFragment()).commit();

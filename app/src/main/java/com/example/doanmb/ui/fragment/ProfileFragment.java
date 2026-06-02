@@ -12,6 +12,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.app.AlertDialog;
+import android.widget.EditText;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -32,6 +34,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +49,8 @@ public class ProfileFragment extends Fragment {
     private Button btnLogin, btnRegister, btnLogout;
     private TextView tvProfileName, tvProfilePhone;
     private ImageView ivAvatar;
-
+    private Button btnVerifyPhone;
+    private TextView tvPhoneVerified;
     // Launcher chọn ảnh từ thư viện
     private final ActivityResultLauncher<String> pickImageLauncher =
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
@@ -112,6 +117,9 @@ public class ProfileFragment extends Fragment {
         rvMyOrders.setLayoutManager(new LinearLayoutManager(getContext()));
         orderAdapter = new OrderHistoryAdapter(new ArrayList<>());
         rvMyOrders.setAdapter(orderAdapter);
+        // xác thực bằng sđt
+        btnVerifyPhone = view.findViewById(R.id.btn_verify_phone);
+        tvPhoneVerified = view.findViewById(R.id.tv_phone_verified);
     }
 
     private void setupListeners() {
@@ -127,6 +135,14 @@ public class ProfileFragment extends Fragment {
         btnFilterAll.setOnClickListener(v -> applyFilter("all"));
         btnFilterSale.setOnClickListener(v -> applyFilter("sale"));
         btnFilterRental.setOnClickListener(v -> applyFilter("rental"));
+        btnVerifyPhone.setOnClickListener(v -> {
+
+            Toast.makeText(getContext(),
+                    "Mã OTP của bạn là: 123456",
+                    Toast.LENGTH_LONG).show();
+
+            showOTPDialog();
+        });
     }
 
     private void showTab(boolean showCars) {
@@ -175,8 +191,22 @@ public class ProfileFragment extends Fragment {
                         String name = doc.getString("name");
                         String phone = doc.getString("phone");
                         String avatarUrl = doc.getString("avatarUrl");
+                        Boolean phoneVerified = doc.getBoolean("phoneVerified");
                         if (tvProfileName != null) tvProfileName.setText(name != null ? name : "");
-                        if (tvProfilePhone != null) tvProfilePhone.setText(phone != null ? "📞 " + phone : "");
+                        if (tvProfilePhone != null)if (phoneVerified != null && phoneVerified) {
+
+                            tvPhoneVerified.setText("Đã xác thực");
+                            tvPhoneVerified.setTextColor(Color.GREEN);
+
+                            btnVerifyPhone.setVisibility(View.GONE);
+
+                        } else {
+
+                            tvPhoneVerified.setText("Chưa xác thực");
+                            tvPhoneVerified.setTextColor(Color.RED);
+
+                            btnVerifyPhone.setVisibility(View.VISIBLE);
+                        } tvProfilePhone.setText(phone != null ? "📞 " + phone : "");
 
                         // SỬA LỖI GLIDE Ở ĐÂY: Thay getViewLifecycleOwner() bằng ProfileFragment.this
                         if (avatarUrl != null && !avatarUrl.isEmpty() && ivAvatar != null) {
@@ -283,5 +313,56 @@ public class ProfileFragment extends Fragment {
         tvCarCount.setText("Tin đã đăng: " + filtered.size());
         tvEmptyCars.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
         rvMyCars.setVisibility(filtered.isEmpty() ? View.GONE : View.VISIBLE);
+    }
+
+    private void showOTPDialog() {
+
+        EditText edtOTP = new EditText(getContext());
+        edtOTP.setHint("Nhập mã OTP");
+
+        new AlertDialog.Builder(getContext())
+                .setTitle("Xác thực OTP")
+                .setView(edtOTP)
+                .setPositiveButton("Xác thực", (dialog, which) -> {
+
+                    String code = edtOTP.getText().toString().trim();
+
+                    verifyOTP(code);
+                })
+                .setNegativeButton("Huỷ", null)
+                .show();
+    }
+    private void verifyOTP(String code) {
+
+        if (code.equals("123456")) {
+
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+            if (user == null) return;
+
+            Map<String, Object> update = new HashMap<>();
+            update.put("phoneVerified", true);
+
+            db.collection("users")
+                    .document(user.getUid())
+                    .update(update)
+                    .addOnSuccessListener(unused -> {
+
+                        tvPhoneVerified.setText("Đã xác thực");
+                        tvPhoneVerified.setTextColor(Color.GREEN);
+
+                        btnVerifyPhone.setVisibility(View.GONE);
+
+                        Toast.makeText(getContext(),
+                                "Xác thực thành công",
+                                Toast.LENGTH_SHORT).show();
+                    });
+
+        } else {
+
+            Toast.makeText(getContext(),
+                    "OTP không đúng",
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 }
