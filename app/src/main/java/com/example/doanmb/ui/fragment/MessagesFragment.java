@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -95,9 +96,7 @@ public class MessagesFragment extends Fragment {
         } else {
             String query = text.toLowerCase().trim();
             for (Map<String, Object> item : convList) {
-                String carName = ((String) item.get("carName")).toLowerCase();
-                // Note: Partner name is fetched asynchronously in adapter, 
-                // for real search we might need to store partnerName in roomData or fetch beforehand.
+                String carName = String.valueOf(item.get("carName")).toLowerCase();
                 if (carName.contains(query)) {
                     filteredList.add(item);
                 }
@@ -124,12 +123,20 @@ public class MessagesFragment extends Fragment {
     private void loadConversations(String uid) {
         if (listener != null) listener.remove();
 
+        Log.d("CHAT_DEBUG", "Đang tải danh sách chat cho UID: " + uid);
+
         listener = db.collection("chat_rooms")
                 .whereArrayContains("participants", uid)
                 .orderBy("lastTimestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((snapshots, error) -> {
-                    if (error != null || snapshots == null) return;
+                    if (error != null) {
+                        Log.e("CHAT_DEBUG", "Lỗi tải danh sách chat: " + error.getMessage());
+                        return;
+                    }
+                    if (snapshots == null) return;
                     if (!isAdded()) return;
+
+                    Log.d("CHAT_DEBUG", "Đã tìm thấy " + snapshots.size() + " phòng chat");
 
                     convList.clear();
                     shortcutList.clear();
@@ -140,12 +147,11 @@ public class MessagesFragment extends Fragment {
                         data.put("roomId", doc.getId());
                         convList.add(data);
 
-                        // Xử lý Shortcut (Những người nhắn tin gần đây)
                         String buyerId = (String) data.get("buyerId");
                         String sellerId = (String) data.get("sellerId");
                         String partnerId = uid.equals(buyerId) ? sellerId : buyerId;
 
-                        if (!addedPartners.containsKey(partnerId) && shortcutList.size() < 10) {
+                        if (partnerId != null && !addedPartners.containsKey(partnerId) && shortcutList.size() < 10) {
                             Map<String, Object> shortcut = new HashMap<>();
                             shortcut.put("partnerId", partnerId);
                             shortcut.put("roomId", doc.getId());
@@ -153,7 +159,6 @@ public class MessagesFragment extends Fragment {
                             shortcut.put("carName", data.get("carName"));
                             shortcut.put("carImage", data.get("carImage"));
                             
-                            // Fetch name for shortcut
                             db.collection("users").document(partnerId).get().addOnSuccessListener(userDoc -> {
                                 if (userDoc.exists()) {
                                     shortcut.put("partnerName", userDoc.getString("name"));
@@ -224,30 +229,32 @@ public class MessagesFragment extends Fragment {
 
             h.tvName.setText("Đang tải...");
 
-            db.collection("users").document(partnerId).get()
-                    .addOnSuccessListener(doc -> {
-                        if (doc.exists()) {
-                            String name = doc.getString("name");
-                            String avatarUrl = doc.getString("avatarUrl");
-                            h.tvName.setText(name != null ? name : "Người dùng");
-                            String displayName = name != null ? name : "U";
-                            String initial = String.valueOf(displayName.charAt(0)).toUpperCase();
-                            h.tvAvatar.setText(initial);
-                            h.tvAvatar.setBackgroundColor(getAvatarColor(displayName));
-                            
-                            if (avatarUrl != null && !avatarUrl.isEmpty()) {
-                                h.tvAvatar.setVisibility(View.GONE);
-                                h.ivAvatar.setVisibility(View.VISIBLE);
-                                Glide.with(h.ivAvatar.getContext())
-                                        .load(avatarUrl)
-                                        .transform(new CircleCrop())
-                                        .into(h.ivAvatar);
-                            } else {
-                                h.tvAvatar.setVisibility(View.VISIBLE);
-                                h.ivAvatar.setVisibility(View.GONE);
+            if (partnerId != null && !partnerId.isEmpty()) {
+                db.collection("users").document(partnerId).get()
+                        .addOnSuccessListener(doc -> {
+                            if (doc.exists()) {
+                                String name = doc.getString("name");
+                                String avatarUrl = doc.getString("avatarUrl");
+                                h.tvName.setText(name != null ? name : "Người dùng");
+                                String displayName = name != null ? name : "U";
+                                String initial = String.valueOf(displayName.charAt(0)).toUpperCase();
+                                h.tvAvatar.setText(initial);
+                                h.tvAvatar.setBackgroundColor(getAvatarColor(displayName));
+                                
+                                if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                                    h.tvAvatar.setVisibility(View.GONE);
+                                    h.ivAvatar.setVisibility(View.VISIBLE);
+                                    Glide.with(h.ivAvatar.getContext())
+                                            .load(avatarUrl)
+                                            .transform(new CircleCrop())
+                                            .into(h.ivAvatar);
+                                } else {
+                                    h.tvAvatar.setVisibility(View.VISIBLE);
+                                    h.ivAvatar.setVisibility(View.GONE);
+                                }
                             }
-                        }
-                    });
+                        });
+            }
 
             h.itemView.setOnClickListener(v -> {
                 Intent intent = new Intent(v.getContext(), ChatDetailActivity.class);
