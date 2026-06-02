@@ -5,8 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
@@ -16,9 +15,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -114,13 +111,33 @@ public class ChatDetailActivity extends AppCompatActivity {
             public void afterTextChanged(Editable s) {}
         });
 
-        btnViewPost.setOnClickListener(v -> {
-            Intent intent = new Intent(this, CarDetailActivity.class);
-            intent.putExtra("CAR_DATA", carData);
-            startActivity(intent);
+        etMessage.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEND) {
+                sendMessage();
+                return true;
+            }
+            return false;
         });
 
-        // Thiết lập menu 3 chấm (Option Menu)
+        etMessage.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus && messageList.size() > 0) {
+                rvMessages.postDelayed(() -> rvMessages.smoothScrollToPosition(messageList.size() - 1), 200);
+            }
+        });
+
+        btnViewPost.setOnClickListener(v -> {
+            if (carData != null && carData.getId() != null) {
+                Intent intent = new Intent(ChatDetailActivity.this, CarDetailActivity.class);
+                intent.putExtra("CAR_DATA", carData);
+                intent.putExtra("CAR_ID", carData.getId());
+                intent.putExtra("SELLER_ID", carData.getSellerId());
+                intent.putExtra("CAR_TYPE", carData.getType());
+                startActivity(intent);
+            } else {
+                Toast.makeText(this, "Không tìm thấy thông tin bài đăng xe", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         findViewById(R.id.btn_menu_more).setOnClickListener(this::showPopupMenu);
     }
 
@@ -181,7 +198,9 @@ public class ChatDetailActivity extends AppCompatActivity {
 
     private void setupChat() {
         chatAdapter = new ChatAdapter(messageList);
-        rvMessages.setLayoutManager(new LinearLayoutManager(this));
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager.setStackFromEnd(true);
+        rvMessages.setLayoutManager(layoutManager);
         rvMessages.setAdapter(chatAdapter);
     }
 
@@ -196,7 +215,9 @@ public class ChatDetailActivity extends AppCompatActivity {
                         if (msg != null) messageList.add(msg);
                     }
                     chatAdapter.notifyDataSetChanged();
-                    rvMessages.scrollToPosition(messageList.size() - 1);
+                    if (messageList.size() > 0) {
+                        rvMessages.smoothScrollToPosition(messageList.size() - 1);
+                    }
                     updateReadStatus();
                 });
     }
@@ -204,6 +225,10 @@ public class ChatDetailActivity extends AppCompatActivity {
     private void sendMessage() {
         String content = etMessage.getText().toString().trim();
         if (content.isEmpty() || isBlocked) return;
+        
+        // Log tin nhắn để debug trong Logcat
+        Log.d("CHAT_DEBUG", "Tin nhắn gửi đi: " + content);
+
         etMessage.setText("");
         Map<String, Object> msg = new HashMap<>();
         msg.put("senderId", currentUserId);

@@ -19,3 +19,10 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# Giữ lại các class Model để Firebase không bị lỗi khi đóng gói APK
+-keep class com.example.doanmb.model.** { *; }
+-keepclassmembers class com.example.doanmb.model.** { *; }
+
+# Giữ lại các class của Firebase và Google Play Services
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
