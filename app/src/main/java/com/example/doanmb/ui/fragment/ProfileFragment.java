@@ -1,38 +1,40 @@
 package com.example.doanmb.ui.fragment;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.cardview.widget.CardView;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.doanmb.R;
+import com.example.doanmb.adapter.OrderHistoryAdapter;
+import com.example.doanmb.adapter.ProfileCarAdapter;
+import com.example.doanmb.model.Car;
 import com.example.doanmb.ui.activity.LoginActivity;
 import com.example.doanmb.ui.activity.RegisterActivity;
 import com.example.doanmb.util.CloudinaryHelper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
-
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import android.app.DatePickerDialog;
 import android.widget.EditText;
@@ -52,25 +54,30 @@ public class ProfileFragment extends Fragment {
     private TextView tvProfileNameMain, tvPhoneVerifiedBadge;
     private ImageView ivAvatarMain,ivVerifiedIcon,ivFavouriteCar,ivRegRentCar,ivLocation;
     private Button btnLogin, btnRegister, btnLogout;
+    private TextView tvProfileName, tvProfilePhone;
+    private ImageView ivAvatar;
 
-    // Views màn 2
-    private ImageView ivAvatarSettings;
-    private CardView ivChangeAvatarTrigger;
-    private RelativeLayout menuPersonalInfoClick;
-    private ImageView btnBackToMain; // Đã đổi sang ImageView để tránh lỗi theme
-
-    // Views màn 3
-    private CardView btnBackToSettings;
-    private EditText edtInfoName, edtInfoDob, edtInfoGender, edtInfoPhone;
-    private Button btnSavePersonalInfo;
-
-    private FirebaseFirestore db;
-    private String currentUserId = "";
-
+    // Launcher chọn ảnh từ thư viện
     private final ActivityResultLauncher<String> pickImageLauncher =
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
                 if (uri != null) uploadAvatar(uri);
             });
+
+    // Tab 1: Xe đã đăng
+    private Button btnFilterAll, btnFilterSale, btnFilterRental;
+    private TextView tvCarCount, tvEmptyCars;
+    private RecyclerView rvMyCars;
+    private ProfileCarAdapter carAdapter;
+    private List<Car> allCars = new ArrayList<>();
+    private String currentFilter = "all";
+
+    // Tab 2: Lịch sử đơn
+    private TextView tvOrderCount, tvEmptyOrders;
+    private RecyclerView rvMyOrders;
+    private OrderHistoryAdapter orderAdapter;
+    private List<Map<String, Object>> orderList = new ArrayList<>();
+
+    private FirebaseFirestore db;
 
     @Nullable
     @Override
@@ -86,11 +93,6 @@ public class ProfileFragment extends Fragment {
     private void initViews(View view) {
         layoutNotLoggedIn = view.findViewById(R.id.layout_not_logged_in);
         layoutLoggedIn = view.findViewById(R.id.layout_logged_in);
-
-        layoutMainProfile = view.findViewById(R.id.layout_main_profile);
-        layoutAccountSettings = view.findViewById(R.id.layout_account_settings);
-        layoutPersonalInfo = view.findViewById(R.id.layout_personal_info);
-
         btnLogin = view.findViewById(R.id.btn_login);
         btnRegister = view.findViewById(R.id.btn_register);
         btnLogout = view.findViewById(R.id.btn_logout);
@@ -118,8 +120,8 @@ public class ProfileFragment extends Fragment {
         btnRegister.setOnClickListener(v -> startActivity(new Intent(getActivity(), RegisterActivity.class)));
         btnLogout.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
-            switchSubScreen(1);
-            checkLoginStatus();
+            startActivity(new Intent(getActivity(), LoginActivity.class));
+            if (getActivity() != null) getActivity().finish();
         });
 
         cardUserProfile.setOnClickListener(v -> switchSubScreen(2));
@@ -148,10 +150,22 @@ public class ProfileFragment extends Fragment {
         });
     }
 
-    private void switchSubScreen(int screenId) {
-        layoutMainProfile.setVisibility(screenId == 1 ? View.VISIBLE : View.GONE);
-        layoutAccountSettings.setVisibility(screenId == 2 ? View.VISIBLE : View.GONE);
-        layoutPersonalInfo.setVisibility(screenId == 3 ? View.VISIBLE : View.GONE);
+    private void showTab(boolean showCars) {
+        if (showCars) {
+            layoutTabMyCars.setVisibility(View.VISIBLE);
+            layoutTabMyOrders.setVisibility(View.GONE);
+            btnTabMyCars.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF1976D2));
+            btnTabMyCars.setTextColor(0xFFFFFFFF);
+            btnTabMyOrders.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFE3F2FD));
+            btnTabMyOrders.setTextColor(0xFF1976D2);
+        } else {
+            layoutTabMyCars.setVisibility(View.GONE);
+            layoutTabMyOrders.setVisibility(View.VISIBLE);
+            btnTabMyOrders.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF1976D2));
+            btnTabMyOrders.setTextColor(0xFFFFFFFF);
+            btnTabMyCars.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFE3F2FD));
+            btnTabMyCars.setTextColor(0xFF1976D2);
+        }
     }
 
     @Override
@@ -165,16 +179,17 @@ public class ProfileFragment extends Fragment {
         if (user != null) {
             layoutNotLoggedIn.setVisibility(View.GONE);
             layoutLoggedIn.setVisibility(View.VISIBLE);
-            currentUserId = user.getUid();
-            loadUserInfo(user.getUid());
+            loadUserInfo(user);
+            loadMyCars(user.getUid());
+            loadMyOrders(user.getUid());
         } else {
             layoutNotLoggedIn.setVisibility(View.VISIBLE);
             layoutLoggedIn.setVisibility(View.GONE);
         }
     }
 
-    private void loadUserInfo(String userId) {
-        db.collection("users").document(userId).get()
+    private void loadUserInfo(FirebaseUser user) {
+        db.collection("users").document(user.getUid()).get()
                 .addOnSuccessListener(requireActivity(), doc -> {
                     if (!isAdded() || !doc.exists()) return;
 
@@ -212,8 +227,10 @@ public class ProfileFragment extends Fragment {
                 });
     }
 
+    // Upload ảnh đại diện lên Cloudinary rồi lưu URL vào Firestore
     private void uploadAvatar(Uri uri) {
-        if (currentUserId.isEmpty()) return;
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
 
         Toast.makeText(getContext(), "Đang tải ảnh lên...", Toast.LENGTH_SHORT).show();
 
@@ -222,13 +239,19 @@ public class ProfileFragment extends Fragment {
             public void onSuccess(String imageUrl) {
                 if (!isAdded() || getActivity() == null) return;
 
-                db.collection("users").document(currentUserId)
-                        .update("avatarUrl", imageUrl)
+                // Lưu URL vào Firestore
+                Map<String, Object> update = new HashMap<>();
+                update.put("avatarUrl", imageUrl);
+                db.collection("users").document(user.getUid())
+                        .update(update)
                         .addOnSuccessListener(requireActivity(), unused -> {
                             if (!isAdded()) return;
 
-                            Glide.with(ProfileFragment.this).load(imageUrl).circleCrop().into(ivAvatarMain);
-                            Glide.with(ProfileFragment.this).load(imageUrl).circleCrop().into(ivAvatarSettings);
+                            // SỬA LỖI GLIDE Ở ĐÂY: Thay getViewLifecycleOwner() bằng ProfileFragment.this
+                            Glide.with(ProfileFragment.this)
+                                    .load(imageUrl)
+                                    .circleCrop()
+                                    .into(ivAvatar);
                             Toast.makeText(getContext(), "✅ Cập nhật ảnh đại diện thành công!", Toast.LENGTH_SHORT).show();
                         });
             }
@@ -241,34 +264,61 @@ public class ProfileFragment extends Fragment {
         });
     }
 
-    private void saveUserInformationToFirestore() {
-        if (currentUserId.isEmpty()) return;
+    private void loadMyCars(String userId) {
+        db.collection("cars").whereEqualTo("userId", userId).get()
+                .addOnSuccessListener(requireActivity(), snapshots -> {
+                    if (!isAdded()) return;
+                    allCars.clear();
+                    for (QueryDocumentSnapshot doc : snapshots) {
+                        String name = doc.getString("name");
+                        String price = doc.getString("price");
+                        String info = doc.getString("info");
+                        String type = doc.getString("type");
+                        if (name == null) continue;
+                        Car car = new Car(name, price != null ? price : "", info != null ? info : "", android.R.drawable.ic_menu_gallery);
+                        car.setId(doc.getId());
+                        car.setType(type != null ? type : "");
+                        car.setImageUrl(doc.getString("imageUrl") != null ? doc.getString("imageUrl") : "");
+                        allCars.add(car);
+                    }
+                    applyFilter(currentFilter);
+                });
+    }
 
-        String updatedName = edtInfoName.getText().toString().trim();
-        String updatedDob = edtInfoDob.getText().toString().trim();
-        String updatedGender = edtInfoGender.getText().toString().trim();
-        String updatedPhone = edtInfoPhone.getText().toString().trim();
+    private void loadMyOrders(String userId) {
+        db.collection("orders").whereEqualTo("buyerId", userId).get()
+                .addOnSuccessListener(requireActivity(), snapshots -> {
+                    if (!isAdded()) return;
+                    orderList.clear();
+                    for (QueryDocumentSnapshot doc : snapshots) {
+                        orderList.add(doc.getData());
+                    }
+                    orderAdapter.updateList(orderList);
+                    tvOrderCount.setText("Đơn của tôi: " + orderList.size());
+                    tvEmptyOrders.setVisibility(orderList.isEmpty() ? View.VISIBLE : View.GONE);
+                    rvMyOrders.setVisibility(orderList.isEmpty() ? View.GONE : View.VISIBLE);
+                });
+    }
 
-        if (updatedName.isEmpty()) {
-            Toast.makeText(getContext(), "Họ và tên không được để trống", Toast.LENGTH_SHORT).show();
-            return;
+    private void applyFilter(String filter) {
+        currentFilter = filter;
+        int active = Color.parseColor("#1976D2");
+        int inactive = Color.parseColor("#90A4AE");
+        btnFilterAll.setBackgroundTintList(android.content.res.ColorStateList.valueOf(filter.equals("all") ? active : inactive));
+        btnFilterSale.setBackgroundTintList(android.content.res.ColorStateList.valueOf(filter.equals("sale") ? active : inactive));
+        btnFilterRental.setBackgroundTintList(android.content.res.ColorStateList.valueOf(filter.equals("rental") ? active : inactive));
+
+        List<Car> filtered = new ArrayList<>();
+        for (Car car : allCars) {
+            String type = car.getType() != null ? car.getType().toLowerCase() : "";
+            if (filter.equals("all") || filter.equals(type)) {
+                filtered.add(car);
+            }
         }
 
-        Map<String, Object> updateData = new HashMap<>();
-        updateData.put("name", updatedName);
-        updateData.put("dob", updatedDob);
-        updateData.put("gender", updatedGender);
-        updateData.put("phone", updatedPhone);
-
-        Toast.makeText(getContext(), "Đang lưu thay đổi...", Toast.LENGTH_SHORT).show();
-
-        db.collection("users").document(currentUserId)
-                .update(updateData)
-                .addOnSuccessListener(unused -> {
-                    Toast.makeText(getContext(), "✅ Lưu thông tin thành công!", Toast.LENGTH_SHORT).show();
-                    loadUserInfo(currentUserId);
-                    switchSubScreen(2);
-                })
-                .addOnFailureListener(e -> Toast.makeText(getContext(), "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+        carAdapter.updateList(filtered);
+        tvCarCount.setText("Tin đã đăng: " + filtered.size());
+        tvEmptyCars.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
+        rvMyCars.setVisibility(filtered.isEmpty() ? View.GONE : View.VISIBLE);
     }
 }
