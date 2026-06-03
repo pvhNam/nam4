@@ -36,12 +36,23 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import android.app.DatePickerDialog;
+import android.widget.EditText;
+import java.util.Calendar;
 public class ProfileFragment extends Fragment {
 
-    private LinearLayout layoutNotLoggedIn, layoutLoggedIn;
-    private Button btnTabMyCars, btnTabMyOrders;
-    private LinearLayout layoutTabMyCars, layoutTabMyOrders;
+    private LinearLayout layoutNotLoggedIn;
+    private FrameLayout layoutLoggedIn;
+
+    // 3 Sub-screens quản lý layer giao diện
+    private ScrollView layoutMainProfile;
+    private ConstraintLayout layoutAccountSettings;
+    private RelativeLayout layoutPersonalInfo;
+
+    // Views màn 1
+    private CardView cardUserProfile;
+    private TextView tvProfileNameMain, tvPhoneVerifiedBadge;
+    private ImageView ivAvatarMain,ivVerifiedIcon,ivFavouriteCar,ivRegRentCar,ivLocation;
     private Button btnLogin, btnRegister, btnLogout;
     private TextView tvProfileName, tvProfilePhone;
     private ImageView ivAvatar;
@@ -76,6 +87,7 @@ public class ProfileFragment extends Fragment {
         initViews(view);
         setupListeners();
         return view;
+
     }
 
     private void initViews(View view) {
@@ -84,34 +96,23 @@ public class ProfileFragment extends Fragment {
         btnLogin = view.findViewById(R.id.btn_login);
         btnRegister = view.findViewById(R.id.btn_register);
         btnLogout = view.findViewById(R.id.btn_logout);
-        tvProfileName = view.findViewById(R.id.tv_profile_name);
-        tvProfilePhone = view.findViewById(R.id.tv_profile_phone);
-        ivAvatar = view.findViewById(R.id.iv_avatar);
+        cardUserProfile = view.findViewById(R.id.card_user_profile);
+        tvProfileNameMain = view.findViewById(R.id.tv_profile_name_main);
+        tvPhoneVerifiedBadge = view.findViewById(R.id.tv_phone_verified_badge);
+        ivAvatarMain = view.findViewById(R.id.iv_avatar_main);
 
-        // Nút camera nhỏ ở góc avatar → mở gallery
-        ImageView ivChangeAvatar = view.findViewById(R.id.iv_change_avatar);
-        ivChangeAvatar.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
-        btnTabMyCars = view.findViewById(R.id.btnTabMyCars);
-        btnTabMyOrders = view.findViewById(R.id.btnTabMyOrders);
-        layoutTabMyCars = view.findViewById(R.id.layoutTabMyCars);
-        layoutTabMyOrders = view.findViewById(R.id.layoutTabMyOrders);
+        ivAvatarSettings = view.findViewById(R.id.iv_avatar_settings);
+        ivChangeAvatarTrigger = view.findViewById(R.id.iv_change_avatar_trigger);
+        menuPersonalInfoClick = view.findViewById(R.id.menu_personal_info);
+        btnBackToMain = view.findViewById(R.id.btn_back_to_main);
 
-        btnFilterAll = view.findViewById(R.id.btn_filter_all);
-        btnFilterSale = view.findViewById(R.id.btn_filter_sale);
-        btnFilterRental = view.findViewById(R.id.btn_filter_rental);
-        tvCarCount = view.findViewById(R.id.tv_car_count);
-        tvEmptyCars = view.findViewById(R.id.tv_empty_cars);
-        rvMyCars = view.findViewById(R.id.rv_my_cars);
-        rvMyCars.setLayoutManager(new LinearLayoutManager(getContext()));
-        carAdapter = new ProfileCarAdapter(new ArrayList<>());
-        rvMyCars.setAdapter(carAdapter);
-
-        tvOrderCount = view.findViewById(R.id.tvOrderCount);
-        tvEmptyOrders = view.findViewById(R.id.tvEmptyOrders);
-        rvMyOrders = view.findViewById(R.id.rvMyOrders);
-        rvMyOrders.setLayoutManager(new LinearLayoutManager(getContext()));
-        orderAdapter = new OrderHistoryAdapter(new ArrayList<>());
-        rvMyOrders.setAdapter(orderAdapter);
+        btnBackToSettings = view.findViewById(R.id.btn_back_to_settings);
+        edtInfoName = view.findViewById(R.id.edt_info_name);
+        edtInfoDob = view.findViewById(R.id.edt_info_dob);
+        edtInfoGender = view.findViewById(R.id.edt_info_gender);
+        edtInfoPhone = view.findViewById(R.id.edt_info_phone);
+        btnSavePersonalInfo = view.findViewById(R.id.btn_save_personal_info);
+        ivVerifiedIcon = view.findViewById(R.id.iv_verified_icon);
     }
 
     private void setupListeners() {
@@ -122,11 +123,31 @@ public class ProfileFragment extends Fragment {
             startActivity(new Intent(getActivity(), LoginActivity.class));
             if (getActivity() != null) getActivity().finish();
         });
-        btnTabMyCars.setOnClickListener(v -> showTab(true));
-        btnTabMyOrders.setOnClickListener(v -> showTab(false));
-        btnFilterAll.setOnClickListener(v -> applyFilter("all"));
-        btnFilterSale.setOnClickListener(v -> applyFilter("sale"));
-        btnFilterRental.setOnClickListener(v -> applyFilter("rental"));
+
+        cardUserProfile.setOnClickListener(v -> switchSubScreen(2));
+        btnBackToMain.setOnClickListener(v -> switchSubScreen(1));
+        menuPersonalInfoClick.setOnClickListener(v -> switchSubScreen(3));
+        btnBackToSettings.setOnClickListener(v -> switchSubScreen(2));
+
+        ivChangeAvatarTrigger.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
+        btnSavePersonalInfo.setOnClickListener(v -> saveUserInformationToFirestore());
+        edtInfoDob.setOnClickListener(v -> {
+            Calendar calendar = Calendar.getInstance();
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH);
+            int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+            DatePickerDialog datePickerDialog = new DatePickerDialog(
+                    getContext(),
+                    (view1, selectedYear, selectedMonth, selectedDay) -> {
+                        // Tự động thêm số 0 nếu ngày hoặc tháng < 10 (Ví dụ: 26/08/2005)
+                        String formattedDate = String.format("%02d/%02d/%04d", selectedDay, selectedMonth + 1, selectedYear);
+                        edtInfoDob.setText(formattedDate);
+                    },
+                    year, month, day
+            );
+            datePickerDialog.show();
+        });
     }
 
     private void showTab(boolean showCars) {
@@ -170,21 +191,37 @@ public class ProfileFragment extends Fragment {
     private void loadUserInfo(FirebaseUser user) {
         db.collection("users").document(user.getUid()).get()
                 .addOnSuccessListener(requireActivity(), doc -> {
-                    if (!isAdded()) return;
-                    if (doc.exists()) {
-                        String name = doc.getString("name");
-                        String phone = doc.getString("phone");
-                        String avatarUrl = doc.getString("avatarUrl");
-                        if (tvProfileName != null) tvProfileName.setText(name != null ? name : "");
-                        if (tvProfilePhone != null) tvProfilePhone.setText(phone != null ? "📞 " + phone : "");
+                    if (!isAdded() || !doc.exists()) return;
 
-                        // SỬA LỖI GLIDE Ở ĐÂY: Thay getViewLifecycleOwner() bằng ProfileFragment.this
-                        if (avatarUrl != null && !avatarUrl.isEmpty() && ivAvatar != null) {
-                            Glide.with(ProfileFragment.this)
-                                    .load(avatarUrl)
-                                    .circleCrop()
-                                    .placeholder(android.R.drawable.ic_menu_gallery)
-                                    .into(ivAvatar);
+                    String name = doc.getString("name");
+                    String phone = doc.getString("phone");
+                    String dob = doc.getString("dob");
+                    String gender = doc.getString("gender");
+                    String avatarUrl = doc.getString("avatarUrl");
+                    Boolean phoneVerified = doc.getBoolean("phoneVerified");
+
+                    tvProfileNameMain.setText(name != null ? name : "Chưa đặt tên");
+                    if (phoneVerified != null && phoneVerified) {
+                        tvPhoneVerifiedBadge.setText("Đã xác thực");
+                        tvPhoneVerifiedBadge.setTextColor(android.graphics.Color.parseColor("#4CAF50"));
+                        ivVerifiedIcon.setVisibility(View.VISIBLE); // Hiện icon tích xanh xịn sò lên
+                    } else {
+                        tvPhoneVerifiedBadge.setText("Chưa xác thực số điện thoại");
+                        tvPhoneVerifiedBadge.setTextColor(android.graphics.Color.parseColor("#E53935"));
+                        ivVerifiedIcon.setVisibility(View.GONE); // Ẩn icon đi khi chưa xác thực
+                    }
+
+                    edtInfoName.setText(name != null ? name : "");
+                    edtInfoPhone.setText(phone != null ? phone : "");
+                    edtInfoDob.setText(dob != null ? dob : "");
+                    edtInfoGender.setText(gender != null ? gender : "Nam");
+
+                    if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                        if (ivAvatarMain != null) {
+                            Glide.with(ProfileFragment.this).load(avatarUrl).circleCrop().into(ivAvatarMain);
+                        }
+                        if (ivAvatarSettings != null) {
+                            Glide.with(ProfileFragment.this).load(avatarUrl).circleCrop().into(ivAvatarSettings);
                         }
                     }
                 });
