@@ -34,7 +34,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.Map;
-
+import android.app.DatePickerDialog;
+import android.widget.EditText;
+import java.util.Calendar;
 public class ProfileFragment extends Fragment {
 
     private LinearLayout layoutNotLoggedIn;
@@ -48,7 +50,7 @@ public class ProfileFragment extends Fragment {
     // Views màn 1
     private CardView cardUserProfile;
     private TextView tvProfileNameMain, tvPhoneVerifiedBadge;
-    private ImageView ivAvatarMain;
+    private ImageView ivAvatarMain,ivVerifiedIcon,ivFavouriteCar,ivRegRentCar,ivLocation;
     private Button btnLogin, btnRegister, btnLogout;
 
     // Views màn 2
@@ -78,6 +80,7 @@ public class ProfileFragment extends Fragment {
         initViews(view);
         setupListeners();
         return view;
+
     }
 
     private void initViews(View view) {
@@ -107,6 +110,7 @@ public class ProfileFragment extends Fragment {
         edtInfoGender = view.findViewById(R.id.edt_info_gender);
         edtInfoPhone = view.findViewById(R.id.edt_info_phone);
         btnSavePersonalInfo = view.findViewById(R.id.btn_save_personal_info);
+        ivVerifiedIcon = view.findViewById(R.id.iv_verified_icon);
     }
 
     private void setupListeners() {
@@ -125,6 +129,23 @@ public class ProfileFragment extends Fragment {
 
         ivChangeAvatarTrigger.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
         btnSavePersonalInfo.setOnClickListener(v -> saveUserInformationToFirestore());
+        edtInfoDob.setOnClickListener(v -> {
+            Calendar calendar = Calendar.getInstance();
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH);
+            int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+            DatePickerDialog datePickerDialog = new DatePickerDialog(
+                    getContext(),
+                    (view1, selectedYear, selectedMonth, selectedDay) -> {
+                        // Tự động thêm số 0 nếu ngày hoặc tháng < 10 (Ví dụ: 26/08/2005)
+                        String formattedDate = String.format("%02d/%02d/%04d", selectedDay, selectedMonth + 1, selectedYear);
+                        edtInfoDob.setText(formattedDate);
+                    },
+                    year, month, day
+            );
+            datePickerDialog.show();
+        });
     }
 
     private void switchSubScreen(int screenId) {
@@ -166,11 +187,13 @@ public class ProfileFragment extends Fragment {
 
                     tvProfileNameMain.setText(name != null ? name : "Chưa đặt tên");
                     if (phoneVerified != null && phoneVerified) {
-                        tvPhoneVerifiedBadge.setText("✓ Đã xác thực");
+                        tvPhoneVerifiedBadge.setText("Đã xác thực");
                         tvPhoneVerifiedBadge.setTextColor(android.graphics.Color.parseColor("#4CAF50"));
+                        ivVerifiedIcon.setVisibility(View.VISIBLE); // Hiện icon tích xanh xịn sò lên
                     } else {
-                        tvPhoneVerifiedBadge.setText("✕ Chưa xác thực số điện thoại");
+                        tvPhoneVerifiedBadge.setText("Chưa xác thực số điện thoại");
                         tvPhoneVerifiedBadge.setTextColor(android.graphics.Color.parseColor("#E53935"));
+                        ivVerifiedIcon.setVisibility(View.GONE); // Ẩn icon đi khi chưa xác thực
                     }
 
                     edtInfoName.setText(name != null ? name : "");
