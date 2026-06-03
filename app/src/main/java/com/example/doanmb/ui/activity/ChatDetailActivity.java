@@ -1,6 +1,4 @@
-package com.example.doanmb.ui.activity;
-
-import android.app.AlertDialog;
+package com.example.doanmb.ui.activity;import android.app.AlertDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -47,15 +45,15 @@ public class ChatDetailActivity extends AppCompatActivity {
     private String roomId, currentUserId, partnerId, partnerName;
     private Car carData;
     private boolean isBlocked = false;
-    
+
     private FirebaseFirestore db;
     private ListenerRegistration chatListener;
     private RecyclerView rvMessages;
     private ChatAdapter chatAdapter;
-    
+
     private EditText etMessage;
     private ImageButton btnSend, btnBack, btnAddImage, btnRemovePreview;
-    private View layoutLoading, layoutImagePreview;
+    private View layoutLoading, layoutImagePreview, rootLayout;
     private ImageView ivCar, ivPreview;
     private TextView tvPartnerName, tvCarName, tvCarPrice;
     private Button btnViewPost;
@@ -66,7 +64,9 @@ public class ChatDetailActivity extends AppCompatActivity {
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                     Uri imageUri = result.getData().getData();
-                    if (imageUri != null) showImagePreview(imageUri);
+                    if (imageUri != null) {
+                        showImagePreview(imageUri);
+                    }
                 }
             });
 
@@ -76,7 +76,7 @@ public class ChatDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chat_detail);
 
         db = FirebaseFirestore.getInstance();
-        currentUserId = FirebaseAuth.getInstance().getCurrentUser() != null 
+        currentUserId = FirebaseAuth.getInstance().getCurrentUser() != null
                 ? FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
 
         roomId = getIntent().getStringExtra("ROOM_ID");
@@ -98,15 +98,18 @@ public class ChatDetailActivity extends AppCompatActivity {
     }
 
     private void initViews() {
+        rootLayout = findViewById(R.id.root_layout);
         rvMessages = findViewById(R.id.rv_messages);
         etMessage = findViewById(R.id.et_message);
         btnSend = findViewById(R.id.btn_send);
         btnBack = findViewById(R.id.btn_back);
         btnAddImage = findViewById(R.id.btn_add_image);
         layoutLoading = findViewById(R.id.layout_loading);
+
         layoutImagePreview = findViewById(R.id.layout_image_preview);
         ivPreview = findViewById(R.id.iv_preview);
         btnRemovePreview = findViewById(R.id.btn_remove_preview);
+
         tvPartnerName = findViewById(R.id.tv_partner_name);
         ivCar = findViewById(R.id.iv_car);
         tvCarName = findViewById(R.id.tv_car_name);
@@ -117,11 +120,7 @@ public class ChatDetailActivity extends AppCompatActivity {
         if (carData != null) {
             tvCarName.setText(carData.getName());
             tvCarPrice.setText(carData.getPrice());
-            if (carData.getImageUrl() != null && !carData.getImageUrl().isEmpty()) {
-                Glide.with(this).load(carData.getImageUrl()).placeholder(R.drawable.ic_buy_car).into(ivCar);
-            } else {
-                ivCar.setImageResource(R.drawable.ic_buy_car);
-            }
+            Glide.with(this).load(carData.getImageUrl()).placeholder(R.drawable.ic_buy_car).into(ivCar);
         }
 
         btnBack.setOnClickListener(v -> finish());
@@ -134,10 +133,19 @@ public class ChatDetailActivity extends AppCompatActivity {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 updateSendButtonState();
             }
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override
-            public void afterTextChanged(Editable s) {}
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(Editable s) {}
+        });
+
+        // Xử lý Bàn phím: Tự động cuộn xuống khi bàn phím hiện ra (Fix lỗi che ô nhập liệu)
+        rootLayout.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+            if (bottom < oldBottom) { // Bàn phím đang được mở
+                scrollToBottom();
+            }
+        });
+
+        etMessage.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) scrollToBottom();
         });
 
         etMessage.setOnEditorActionListener((v, actionId, event) -> {
@@ -162,8 +170,14 @@ public class ChatDetailActivity extends AppCompatActivity {
         findViewById(R.id.btn_menu_more).setOnClickListener(this::showPopupMenu);
     }
 
+    private void scrollToBottom() {
+        if (chatAdapter != null && chatAdapter.getItemCount() > 0) {
+            rvMessages.postDelayed(() -> rvMessages.smoothScrollToPosition(chatAdapter.getItemCount() - 1), 100);
+        }
+    }
+
     private void setupChat() {
-        chatAdapter = new ChatAdapter(); // Fix: Không truyền messageList vào đây nữa
+        chatAdapter = new ChatAdapter();
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         layoutManager.setStackFromEnd(true);
         rvMessages.setLayoutManager(layoutManager);
@@ -173,16 +187,12 @@ public class ChatDetailActivity extends AppCompatActivity {
 
     private void listenForMessages() {
         if (chatListener != null) chatListener.remove();
-        
+
         chatListener = db.collection("chat_rooms").document(roomId)
                 .collection("messages")
-                .orderBy("timestamp", Query.Direction.ASCENDING) // Dùng đúng Query của Firebase
+                .orderBy("timestamp", Query.Direction.ASCENDING)
                 .addSnapshotListener((value, error) -> {
-                    if (error != null) {
-                        Log.e("CHAT_DEBUG", "Lỗi lắng nghe: " + error.getMessage());
-                        return;
-                    }
-                    if (value == null) return;
+                    if (error != null || value == null) return;
 
                     List<ChatMessage> newList = new ArrayList<>();
                     for (DocumentSnapshot doc : value.getDocuments()) {
@@ -192,13 +202,7 @@ public class ChatDetailActivity extends AppCompatActivity {
                             newList.add(msg);
                         }
                     }
-
-                    // Cập nhật danh sách qua ListAdapter (DiffUtil xử lý lag)
-                    chatAdapter.submitList(newList, () -> {
-                        if (!newList.isEmpty()) {
-                            rvMessages.scrollToPosition(newList.size() - 1);
-                        }
-                    });
+                    chatAdapter.submitList(newList, this::scrollToBottom);
                     updateReadStatus();
                 });
     }
@@ -250,7 +254,6 @@ public class ChatDetailActivity extends AppCompatActivity {
         db.collection("chat_rooms").document(roomId).collection("messages").add(msg)
                 .addOnSuccessListener(ref -> {
                     String lastDisplay = imageUrl != null ? "[Hình ảnh]" : content;
-                    if (imageUrl != null && !content.isEmpty()) lastDisplay = "[Hình ảnh] " + content;
                     db.collection("chat_rooms").document(roomId).update(
                             "lastMessage", lastDisplay,
                             "lastTimestamp", FieldValue.serverTimestamp()
@@ -263,6 +266,7 @@ public class ChatDetailActivity extends AppCompatActivity {
         layoutImagePreview.setVisibility(View.VISIBLE);
         Glide.with(this).load(uri).into(ivPreview);
         updateSendButtonState();
+        scrollToBottom();
     }
 
     private void clearImagePreview() {

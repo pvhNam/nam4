@@ -3,8 +3,9 @@ package com.example.doanmb.util;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
-import android.util.Log;
 import com.cloudinary.android.MediaManager;
 import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
@@ -15,7 +16,7 @@ import java.io.InputStream;
 
 public class CloudinaryHelper {
     private static final String UPLOAD_PRESET = "doanmb_preset";
-    private static final int MAX_SIDE = 800; // Chat chỉ cần 800px là cực rõ và cực nhanh
+    private static final int MAX_SIDE = 1024; 
 
     public interface OnUploadCallback {
         void onSuccess(String imageUrl);
@@ -26,9 +27,9 @@ public class CloudinaryHelper {
         new Thread(() -> {
             File tempFile = null;
             try {
-                tempFile = compressImageSafely(context, imageUri);
+                tempFile = compressAndRotateImage(context, imageUri);
                 if (tempFile == null) {
-                    callback.onFailure("Không thể xử lý tệp ảnh");
+                    callback.onFailure("Lỗi xử lý tệp ảnh");
                     return;
                 }
 
@@ -54,12 +55,27 @@ public class CloudinaryHelper {
                         }).dispatch(context);
             } catch (Exception e) {
                 if (tempFile != null) tempFile.delete();
-                callback.onFailure("Lỗi RAM: " + e.getMessage());
+                callback.onFailure("Lỗi hệ thống: " + e.getMessage());
             }
         }).start();
     }
 
-    private static File compressImageSafely(Context context, Uri uri) throws IOException {
+    private static File compressAndRotateImage(Context context, Uri uri) throws IOException {
+        // 1. Xác định độ xoay của ảnh từ EXIF
+        int rotation = 0;
+        try (InputStream in = context.getContentResolver().openInputStream(uri)) {
+            if (in != null) {
+                ExifInterface exif = new ExifInterface(in);
+                int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+                switch (orientation) {
+                    case ExifInterface.ORIENTATION_ROTATE_90: rotation = 90; break;
+                    case ExifInterface.ORIENTATION_ROTATE_180: rotation = 180; break;
+                    case ExifInterface.ORIENTATION_ROTATE_270: rotation = 270; break;
+                }
+            }
+        }
+
+        // 2. Đọc kích thước ảnh
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
         try (InputStream input = context.getContentResolver().openInputStream(uri)) {
@@ -71,24 +87,31 @@ public class CloudinaryHelper {
             sampleSize *= 2;
         }
 
+        // 3. Giải mã Bitmap vào bộ nhớ
         options.inJustDecodeBounds = false;
         options.inSampleSize = sampleSize;
-        options.inPreferredConfig = Bitmap.Config.RGB_565; // Tiết kiệm 50% RAM so với mặc định
-
-        Bitmap bitmap = null;
+        Bitmap bitmap;
         try (InputStream input = context.getContentResolver().openInputStream(uri)) {
             bitmap = BitmapFactory.decodeStream(input, null, options);
         }
 
         if (bitmap == null) return null;
 
-        File file = File.createTempFile("chat_img", ".jpg", context.getCacheDir());
+        // 4. Xoay ảnh về đúng chiều dọc nếu cần
+        if (rotation != 0) {
+            Matrix matrix = new Matrix();
+            matrix.postRotate(rotation);
+            Bitmap rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+            bitmap.recycle();
+            bitmap = rotated;
+        }
+
+        // 5. Lưu ra file tạm thời để upload
+        File file = File.createTempFile("upload_", ".jpg", context.getCacheDir());
         try (FileOutputStream out = new FileOutputStream(file)) {
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 60, out);
-            out.flush();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out);
         } finally {
-            bitmap.recycle(); // Giải phóng RAM ngay lập tức
-            System.gc(); // Gọi dọn rác hệ thống
+            bitmap.recycle();
         }
         return file;
     }

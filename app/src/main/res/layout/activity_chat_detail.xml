@@ -4,7 +4,8 @@
     android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/color_background">
+    android:background="@color/color_background"
+    android:fitsSystemWindows="true">
 
     <!-- Header -->
     <LinearLayout
@@ -115,7 +116,7 @@
         </androidx.cardview.widget.CardView>
     </LinearLayout>
 
-    <!-- Bottom Input Area -->
+    <!-- Bottom Area -->
     <LinearLayout
         android:id="@+id/layout_input_area"
         android:layout_width="match_parent"
@@ -125,7 +126,6 @@
         android:elevation="8dp"
         android:orientation="vertical">
 
-        <!-- Image Preview Layout (Mới) -->
         <RelativeLayout
             android:id="@+id/layout_image_preview"
             android:layout_width="match_parent"
@@ -133,19 +133,16 @@
             android:padding="8dp"
             android:visibility="gone"
             android:background="#F8FAFC">
-
             <androidx.cardview.widget.CardView
                 android:layout_width="100dp"
                 android:layout_height="100dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="0dp">
+                app:cardCornerRadius="8dp">
                 <ImageView
                     android:id="@+id/iv_preview"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop" />
             </androidx.cardview.widget.CardView>
-
             <ImageButton
                 android:id="@+id/btn_remove_preview"
                 android:layout_width="24dp"
@@ -157,13 +154,11 @@
         </RelativeLayout>
 
         <LinearLayout
-            android:id="@+id/layout_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:padding="8dp">
-
             <ImageButton
                 android:id="@+id/btn_add_image"
                 android:layout_width="40dp"
@@ -171,7 +166,6 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_gallery"
                 app:tint="#1976D2" />
-
             <EditText
                 android:id="@+id/et_message"
                 android:layout_width="0dp"
@@ -180,12 +174,9 @@
                 android:layout_marginStart="4dp"
                 android:background="@drawable/bg_input_field"
                 android:hint="Nhập tin nhắn..."
-                android:inputType="textShortMessage|textAutoCorrect|textCapSentences"
-                android:imeOptions="actionSend"
                 android:maxLines="4"
                 android:padding="10dp"
                 android:textSize="14sp" />
-
             <ImageButton
                 android:id="@+id/btn_send"
                 android:layout_width="40dp"
@@ -198,7 +189,6 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Messages List -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_messages"
         android:layout_width="match_parent"
@@ -208,19 +198,15 @@
         android:clipToPadding="false"
         android:padding="12dp" />
 
-    <!-- Progress Overlay for uploading -->
     <FrameLayout
         android:id="@+id/layout_loading"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#40000000"
-        android:visibility="gone"
-        android:clickable="true"
-        android:focusable="true">
+        android:visibility="gone">
         <ProgressBar
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center" />
     </FrameLayout>
-
 </RelativeLayout>
