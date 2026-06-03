@@ -2,7 +2,6 @@
     <item android:id="@+id/nav_home" android:icon="@drawable/ic_nav_home" android:title="Trang chủ"/>
     <item android:id="@+id/nav_cataloge" android:icon="@drawable/ic_nav_category" android:title="Danh mục"/>
     <item android:id="@+id/nav_manage" android:icon="@drawable/ic_nav_manage" android:title="Quản lý"/>
-    <item android:id="@+id/nav_notification" android:icon="@drawable/ic_nav_notifications" android:title="Thông báo"/>
     <item android:id="@+id/nav_messages" android:icon="@drawable/ic_nav_message" android:title="Tin nhắn"/>
     <item android:id="@+id/nav_account" android:icon="@drawable/ic_nav_account" android:title="Tài khoản"/>
 </menu>
