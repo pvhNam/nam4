@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,9 +38,12 @@ import java.util.Map;
 
 public class MessagesFragment extends Fragment {
 
-    private LinearLayout layoutNotLoggedIn, layoutEmpty;
+    private LinearLayout layoutNotLoggedIn, layoutEmpty, layoutContent;
     private RecyclerView rvConversations, rvShortcuts;
     private EditText etSearch;
+    private TextView tvGreeting;
+    private ImageView imgAvatar;
+    
     private FirebaseFirestore db;
     private ListenerRegistration listener;
     private ConversationAdapter adapter;
@@ -57,9 +59,13 @@ public class MessagesFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_messages, container, false);
         db = FirebaseFirestore.getInstance();
 
+        // Ánh xạ các ID từ XML (Đảm bảo ID khớp chính xác với fragment_messages.xml)
         layoutNotLoggedIn = view.findViewById(R.id.layout_msg_not_logged_in);
         layoutEmpty       = view.findViewById(R.id.layout_msg_empty);
+        layoutContent     = view.findViewById(R.id.layout_msg_content);
         etSearch          = view.findViewById(R.id.et_search_chat);
+        tvGreeting        = view.findViewById(R.id.tv_msg_greeting);
+        imgAvatar         = view.findViewById(R.id.img_msg_avatar);
         
         rvConversations   = view.findViewById(R.id.rv_conversations);
         rvConversations.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -91,18 +97,25 @@ public class MessagesFragment extends Fragment {
 
     private void filter(String text) {
         filteredList.clear();
-        if (text.isEmpty()) {
+        String query = text.toLowerCase().trim();
+        
+        if (query.isEmpty()) {
             filteredList.addAll(convList);
         } else {
-            String query = text.toLowerCase().trim();
             for (Map<String, Object> item : convList) {
                 String carName = String.valueOf(item.get("carName")).toLowerCase();
-                if (carName.contains(query)) {
+                String partnerName = item.containsKey("partnerName") ? String.valueOf(item.get("partnerName")).toLowerCase() : "";
+                
+                if (carName.contains(query) || partnerName.contains(query)) {
                     filteredList.add(item);
                 }
             }
         }
         adapter.notifyDataSetChanged();
+        
+        if (layoutEmpty != null) {
+            layoutEmpty.setVisibility(filteredList.isEmpty() && !query.isEmpty() ? View.VISIBLE : View.GONE);
+        }
     }
 
     @Override
@@ -110,33 +123,39 @@ public class MessagesFragment extends Fragment {
         super.onResume();
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
-            layoutNotLoggedIn.setVisibility(View.VISIBLE);
-            layoutEmpty.setVisibility(View.GONE);
-            rvConversations.setVisibility(View.GONE);
-            rvShortcuts.setVisibility(View.GONE);
+            if (layoutNotLoggedIn != null) layoutNotLoggedIn.setVisibility(View.VISIBLE);
+            if (layoutContent != null) layoutContent.setVisibility(View.GONE);
+            if (layoutEmpty != null) layoutEmpty.setVisibility(View.GONE);
             return;
         }
-        layoutNotLoggedIn.setVisibility(View.GONE);
+        if (layoutNotLoggedIn != null) layoutNotLoggedIn.setVisibility(View.GONE);
+        if (layoutContent != null) layoutContent.setVisibility(View.VISIBLE);
+        
+        loadUserProfile(user.getUid());
         loadConversations(user.getUid());
+    }
+
+    private void loadUserProfile(String uid) {
+        db.collection("users").document(uid).get().addOnSuccessListener(doc -> {
+            if (doc.exists() && isAdded()) {
+                String name = doc.getString("name");
+                String avatarUrl = doc.getString("avatarUrl");
+                if (tvGreeting != null) tvGreeting.setText("Hi, " + (name != null ? name : "User"));
+                if (avatarUrl != null && !avatarUrl.isEmpty() && imgAvatar != null) {
+                    Glide.with(this).load(avatarUrl).into(imgAvatar);
+                }
+            }
+        });
     }
 
     private void loadConversations(String uid) {
         if (listener != null) listener.remove();
 
-        Log.d("CHAT_DEBUG", "Đang tải danh sách chat cho UID: " + uid);
-
         listener = db.collection("chat_rooms")
                 .whereArrayContains("participants", uid)
                 .orderBy("lastTimestamp", Query.Direction.DESCENDING)
                 .addSnapshotListener((snapshots, error) -> {
-                    if (error != null) {
-                        Log.e("CHAT_DEBUG", "Lỗi tải danh sách chat: " + error.getMessage());
-                        return;
-                    }
-                    if (snapshots == null) return;
-                    if (!isAdded()) return;
-
-                    Log.d("CHAT_DEBUG", "Đã tìm thấy " + snapshots.size() + " phòng chat");
+                    if (error != null || snapshots == null || !isAdded()) return;
 
                     convList.clear();
                     shortcutList.clear();
@@ -145,47 +164,39 @@ public class MessagesFragment extends Fragment {
                     for (QueryDocumentSnapshot doc : snapshots) {
                         Map<String, Object> data = doc.getData();
                         data.put("roomId", doc.getId());
-                        convList.add(data);
-
+                        
                         String buyerId = (String) data.get("buyerId");
                         String sellerId = (String) data.get("sellerId");
                         String partnerId = uid.equals(buyerId) ? sellerId : buyerId;
-
-                        if (partnerId != null && !addedPartners.containsKey(partnerId) && shortcutList.size() < 10) {
-                            Map<String, Object> shortcut = new HashMap<>();
-                            shortcut.put("partnerId", partnerId);
-                            shortcut.put("roomId", doc.getId());
-                            shortcut.put("carId", data.get("carId"));
-                            shortcut.put("carName", data.get("carName"));
-                            shortcut.put("carImage", data.get("carImage"));
-                            
-                            db.collection("users").document(partnerId).get().addOnSuccessListener(userDoc -> {
-                                if (userDoc.exists()) {
-                                    shortcut.put("partnerName", userDoc.getString("name"));
-                                    shortcut.put("partnerAvatar", userDoc.getString("avatarUrl"));
+                        
+                        db.collection("users").document(partnerId).get().addOnSuccessListener(userDoc -> {
+                            if (userDoc.exists() && isAdded()) {
+                                String name = userDoc.getString("name");
+                                String avatar = userDoc.getString("avatarUrl");
+                                data.put("partnerName", name);
+                                data.put("partnerAvatar", avatar);
+                                
+                                if (!addedPartners.containsKey(partnerId) && shortcutList.size() < 10) {
+                                    shortcutList.add(new HashMap<>(data));
+                                    addedPartners.put(partnerId, true);
                                     shortcutAdapter.notifyDataSetChanged();
                                 }
-                            });
-                            
-                            shortcutList.add(shortcut);
-                            addedPartners.put(partnerId, true);
-                        }
-                    }
+                                adapter.notifyDataSetChanged();
+                                filter(etSearch.getText().toString());
+                            }
+                        });
 
+                        convList.add(data);
+                    }
+                    adapter.notifyDataSetChanged();
                     filter(etSearch.getText().toString());
-                    shortcutAdapter.notifyDataSetChanged();
-                    
-                    boolean isEmpty = convList.isEmpty();
-                    rvConversations.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
-                    rvShortcuts.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
-                    layoutEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
                 });
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (listener != null) { listener.remove(); listener = null; }
+        if (listener != null) listener.remove();
     }
 
     static class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapter.VH> {
@@ -203,92 +214,58 @@ public class MessagesFragment extends Fragment {
         @NonNull
         @Override
         public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View v = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_conversation, parent, false);
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_conversation, parent, false);
             return new VH(v);
         }
 
         @Override
         public void onBindViewHolder(@NonNull VH h, int position) {
             Map<String, Object> item = list.get(position);
-            String roomId = getStr(item, "roomId");
-            String carName = getStr(item, "carName");
-            String carPrice = getStr(item, "carPrice");
-            String lastMsg = getStr(item, "lastMessage");
-            String buyerId = getStr(item, "buyerId");
-            String sellerId = getStr(item, "sellerId");
-            String carType = getStr(item, "carType");
-            String carId = getStr(item, "carId");
-            String carImage = getStr(item, "carImage");
-
-            String partnerId = currentUid.equals(buyerId) ? sellerId : buyerId;
+            String carName = (String) item.get("carName");
+            String lastMsg = (String) item.get("lastMessage");
+            String partnerName = (String) item.get("partnerName");
+            String partnerAvatar = (String) item.get("partnerAvatar");
 
             h.tvCarName.setText(carName);
-            h.tvLastMsg.setText(lastMsg.isEmpty() ? "Bắt đầu cuộc trò chuyện..." : lastMsg);
-            h.tvStatus.setVisibility(View.GONE);
+            h.tvLastMsg.setText(lastMsg == null || lastMsg.isEmpty() ? "Bắt đầu trò chuyện..." : lastMsg);
 
-            h.tvName.setText("Đang tải...");
-
-            if (partnerId != null && !partnerId.isEmpty()) {
-                db.collection("users").document(partnerId).get()
-                        .addOnSuccessListener(doc -> {
-                            if (doc.exists()) {
-                                String name = doc.getString("name");
-                                String avatarUrl = doc.getString("avatarUrl");
-                                h.tvName.setText(name != null ? name : "Người dùng");
-                                String displayName = name != null ? name : "U";
-                                String initial = String.valueOf(displayName.charAt(0)).toUpperCase();
-                                h.tvAvatar.setText(initial);
-                                h.tvAvatar.setBackgroundColor(getAvatarColor(displayName));
-                                
-                                if (avatarUrl != null && !avatarUrl.isEmpty()) {
-                                    h.tvAvatar.setVisibility(View.GONE);
-                                    h.ivAvatar.setVisibility(View.VISIBLE);
-                                    Glide.with(h.ivAvatar.getContext())
-                                            .load(avatarUrl)
-                                            .transform(new CircleCrop())
-                                            .into(h.ivAvatar);
-                                } else {
-                                    h.tvAvatar.setVisibility(View.VISIBLE);
-                                    h.ivAvatar.setVisibility(View.GONE);
-                                }
-                            }
-                        });
+            if (partnerName != null) {
+                h.tvName.setText(partnerName);
+                String initial = String.valueOf(partnerName.charAt(0)).toUpperCase();
+                h.tvAvatar.setText(initial);
+                if (partnerAvatar != null && !partnerAvatar.isEmpty()) {
+                    h.tvAvatar.setVisibility(View.GONE);
+                    h.ivAvatar.setVisibility(View.VISIBLE);
+                    Glide.with(h.ivAvatar.getContext()).load(partnerAvatar).transform(new CircleCrop()).into(h.ivAvatar);
+                } else {
+                    h.tvAvatar.setVisibility(View.VISIBLE);
+                    h.ivAvatar.setVisibility(View.GONE);
+                }
+            } else {
+                h.tvName.setText("Đang tải...");
             }
 
             h.itemView.setOnClickListener(v -> {
                 Intent intent = new Intent(v.getContext(), ChatDetailActivity.class);
-                intent.putExtra("ROOM_ID", roomId);
-                intent.putExtra("PARTNER_ID", partnerId);
-                intent.putExtra("PARTNER_NAME", h.tvName.getText().toString());
+                intent.putExtra("ROOM_ID", (String) item.get("roomId"));
+                intent.putExtra("PARTNER_ID", currentUid.equals(item.get("buyerId")) ? (String)item.get("sellerId") : (String)item.get("buyerId"));
+                intent.putExtra("PARTNER_NAME", partnerName);
                 
-                Car car = new Car(carName, carPrice, "", 0);
-                car.setId(carId);
-                car.setSellerId(sellerId);
-                car.setImageUrl(carImage);
-                car.setType(carType);
+                Car car = new Car(carName, (String)item.get("carPrice"), "", 0);
+                car.setId((String)item.get("carId"));
+                car.setImageUrl((String)item.get("carImage"));
+                car.setSellerId((String)item.get("sellerId"));
+                car.setType((String)item.get("carType"));
                 intent.putExtra("CAR_DATA", car);
-                
                 v.getContext().startActivity(intent);
             });
-        }
-
-        private String getStr(Map<String, Object> map, String key) {
-            Object val = map.get(key);
-            return (val instanceof String) ? (String) val : "";
-        }
-
-        private int getAvatarColor(String name) {
-            int[] colors = {0xFF1976D2, 0xFF388E3C, 0xFFF57C00, 0xFF7B1FA2, 0xFFC62828, 0xFF00838F};
-            return colors[Math.abs(name.hashCode()) % colors.length];
         }
 
         @Override public int getItemCount() { return list.size(); }
 
         static class VH extends RecyclerView.ViewHolder {
-            TextView  tvAvatar, tvName, tvCarName, tvLastMsg, tvStatus;
+            TextView  tvAvatar, tvName, tvCarName, tvLastMsg;
             ImageView ivAvatar;
-
             VH(@NonNull View v) {
                 super(v);
                 tvAvatar  = v.findViewById(R.id.tvConvAvatar);
@@ -296,7 +273,6 @@ public class MessagesFragment extends Fragment {
                 tvName    = v.findViewById(R.id.tvConvName);
                 tvCarName = v.findViewById(R.id.tvConvCarName);
                 tvLastMsg = v.findViewById(R.id.tvConvLastMsg);
-                tvStatus  = v.findViewById(R.id.tvConvStatus);
             }
         }
     }
