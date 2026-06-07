@@ -55,7 +55,7 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
         String name = getStr(user, "name", "Không có tên");
         String email = getStr(user, "email", "");
         String phone = getStr(user, "phone", "");
-        String role = getStr(user, "role", "CUSTOMER");
+        String role = normalizeRole(getStr(user, "role", "CUSTOMER"));
         String avatarUrl = getStr(user, "avatarUrl", "");
 
         holder.tvName.setText(name);
@@ -77,7 +77,8 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
     }
 
     private void showRoleDialog(Context ctx, String userId, String currentRole) {
-        String[] roles = {"ADMIN", "STAFF", "CUSTOMER"};
+        currentRole = normalizeRole(currentRole);
+        String[] roles = {"ADMIN", "DRIVER", "CUSTOMER"};
         int currentIndex = 0;
         for (int i = 0; i < roles.length; i++) {
             if (roles[i].equals(currentRole)) { currentIndex = i; break; }
@@ -100,7 +101,7 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
                 tv.setBackgroundColor(ctx.getColor(R.color.role_admin_bg));
                 tv.setTextColor(ctx.getColor(R.color.role_admin_text));
                 break;
-            case "STAFF":
+            case "DRIVER":
                 tv.setBackgroundColor(ctx.getColor(R.color.role_staff_bg));
                 tv.setTextColor(ctx.getColor(R.color.role_staff_text));
                 break;
@@ -114,6 +115,11 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
     private String getStr(Map<String, Object> map, String key, String def) {
         Object v = map.get(key);
         return (v != null) ? v.toString() : def;
+    }
+
+    private String normalizeRole(String role) {
+        if ("STAFF".equals(role)) return "DRIVER";
+        return role;
     }
 
     @Override

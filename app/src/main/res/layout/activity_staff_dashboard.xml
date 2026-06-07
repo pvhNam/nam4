@@ -24,7 +24,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="NHÂN VIÊN"
+                android:text="TÀI XẾ"
                 android:textColor="#B2DFDB"
                 android:textSize="11sp"
                 android:letterSpacing="0.1" />

@@ -1,13 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- Base application theme -->
     <style name="Base.Theme.DOANMB" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">#1976D2</item>
         <item name="colorPrimaryVariant">#1565C0</item>
         <item name="colorOnPrimary">#FFFFFF</item>
         <item name="android:windowBackground">@color/color_background</item>
         <item name="android:textColorHint">@color/color_hint</item>
+        <!-- Tắt ripple mặc định của BottomNav để dùng background tùy chỉnh -->
+        <item name="bottomNavigationStyle">@style/BottomNavPill</item>
     </style>
 
     <style name="Theme.DOANMB" parent="Base.Theme.DOANMB" />
+
+    <!-- Style cho BottomNavigation pill bo tròn -->
+    <style name="BottomNavPill" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="android:background">@drawable/bg_bottom_nav</item>
+        <item name="elevation">12dp</item>
+        <item name="itemHorizontalTranslationEnabled">false</item>
+        <item name="itemRippleColor">@color/ripple_nav</item>
+        <item name="itemActiveIndicatorStyle">@style/NavActiveIndicator</item>
+    </style>
+
+    <!-- Indicator màu xanh nhạt cho item đang chọn -->
+    <style name="NavActiveIndicator" parent="@style/Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@android:color/transparent</item>
+        <item name="shapeAppearance">@style/NavIndicatorShape</item>
+    </style>
+
+    <style name="NavIndicatorShape" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+    <style name="CircleImageOverlay">
+        <item name="cornerSize">50%</item>
+    </style>
 </resources>
