@@ -37,6 +37,7 @@
         <activity android:name="com.example.doanmb.ui.activity.PostCarActivity" />
         <activity android:name="com.example.doanmb.ui.activity.AdminDashboardActivity" />
         <activity android:name="com.example.doanmb.ui.activity.StaffDashboardActivity" />
+        <activity android:name="com.example.doanmb.ui.activity.AdminRevenueDetailActivity" />
         <activity
             android:name="com.example.doanmb.ui.activity.ChatDetailActivity"
             android:windowSoftInputMode="adjustResize" />

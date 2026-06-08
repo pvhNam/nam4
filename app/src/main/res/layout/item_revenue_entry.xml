@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#FFFFFF"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp">
+
+    <!-- Badge loại giao dịch -->
+    <TextView
+        android:id="@+id/tv_rev_badge"
+        android:layout_width="40dp"
+        android:layout_height="24dp"
+        android:gravity="center"
+        android:text="Mua"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:layout_marginEnd="12dp" />
+
+    <!-- Tên xe + người mua/đăng -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_rev_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tên xe"
+            android:textColor="#212121"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/tv_rev_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Người mua: --"
+            android:textColor="#9E9E9E"
+            android:textSize="12sp"
+            android:layout_marginTop="2dp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
+
+    <!-- Số tiền + ngày/trạng thái -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="end">
+
+        <TextView
+            android:id="@+id/tv_rev_amount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="15 triệu"
+            android:textColor="#C62828"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_rev_detail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="01/06/2025"
+            android:textColor="#BDBDBD"
+            android:textSize="11sp"
+            android:layout_marginTop="2dp" />
+    </LinearLayout>
+
+    <!-- Đường kẻ dưới (bottom divider dùng foreground chia item) -->
+</LinearLayout>
