@@ -13,6 +13,7 @@
         android:gravity="end"
         android:orientation="vertical">
 
+        <!-- Nội dung text -->
         <TextView
             android:id="@+id/tv_message"
             android:layout_width="wrap_content"
@@ -23,21 +24,41 @@
             android:textColor="#FFFFFF"
             android:textSize="15sp" />
 
+        <!-- Ảnh / Thumbnail video đính kèm -->
         <androidx.cardview.widget.CardView
             android:id="@+id/card_image"
             android:layout_width="200dp"
             android:layout_height="200dp"
             android:layout_marginTop="2dp"
+            android:visibility="gone"
             app:cardCornerRadius="12dp"
-            app:cardElevation="0dp"
-            android:visibility="gone">
-            <ImageView
-                android:id="@+id/iv_message_image"
+            app:cardElevation="0dp">
+
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop" />
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/iv_message_image"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop" />
+
+                <!-- Icon ▶ hiện khi là video -->
+                <ImageView
+                    android:id="@+id/iv_play_icon"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_circle_blue"
+                    android:padding="8dp"
+                    android:src="@android:drawable/ic_media_play"
+                    android:visibility="gone"
+                    app:tint="#FFFFFF" />
+            </FrameLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- Thời gian + trạng thái -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -63,4 +84,5 @@
                 android:textSize="11sp" />
         </LinearLayout>
     </LinearLayout>
+
 </RelativeLayout>

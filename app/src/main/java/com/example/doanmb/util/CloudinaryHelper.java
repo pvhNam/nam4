@@ -6,32 +6,36 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
+
 import com.cloudinary.android.MediaManager;
 import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 public class CloudinaryHelper {
+
     private static final String UPLOAD_PRESET = "doanmb_preset";
-    private static final int MAX_SIDE = 1024; 
+    private static final int MAX_SIDE = 1024;
+
+    // ── Callback chung ───────────────────────────────────────────────────────
 
     public interface OnUploadCallback {
-        void onSuccess(String imageUrl);
+        void onSuccess(String url);
         void onFailure(String error);
     }
+
+    // ── Upload ảnh ───────────────────────────────────────────────────────────
 
     public static void uploadImage(Context context, Uri imageUri, OnUploadCallback callback) {
         new Thread(() -> {
             File tempFile = null;
             try {
                 tempFile = compressAndRotateImage(context, imageUri);
-                if (tempFile == null) {
-                    callback.onFailure("Lỗi xử lý tệp ảnh");
-                    return;
-                }
+                if (tempFile == null) { callback.onFailure("Lỗi xử lý ảnh"); return; }
 
                 final File fileToUpload = tempFile;
                 MediaManager.get().upload(fileToUpload.getAbsolutePath())
@@ -50,8 +54,7 @@ public class CloudinaryHelper {
                                 fileToUpload.delete();
                                 callback.onFailure(error.getDescription());
                             }
-                            @Override
-                            public void onReschedule(String requestId, ErrorInfo error) {}
+                            @Override public void onReschedule(String requestId, ErrorInfo error) {}
                         }).dispatch(context);
             } catch (Exception e) {
                 if (tempFile != null) tempFile.delete();
@@ -60,22 +63,84 @@ public class CloudinaryHelper {
         }).start();
     }
 
+    // ── Upload video ─────────────────────────────────────────────────────────
+
+    public static void uploadVideo(Context context, Uri videoUri, OnUploadCallback callback) {
+        new Thread(() -> {
+            File tempFile = null;
+            try {
+                tempFile = copyUriToTempFile(context, videoUri, "upload_video_", ".mp4");
+                if (tempFile == null) { callback.onFailure("Không đọc được video"); return; }
+
+                final File fileToUpload = tempFile;
+                MediaManager.get().upload(fileToUpload.getAbsolutePath())
+                        .unsigned(UPLOAD_PRESET)
+                        .option("resource_type", "video")
+                        .option("chunk_size", 6_000_000)
+                        .callback(new UploadCallback() {
+                            @Override public void onStart(String requestId) {}
+                            @Override public void onProgress(String requestId, long bytes, long totalBytes) {}
+                            @Override
+                            public void onSuccess(String requestId, java.util.Map resultData) {
+                                fileToUpload.delete();
+                                callback.onSuccess((String) resultData.get("secure_url"));
+                            }
+                            @Override
+                            public void onError(String requestId, ErrorInfo error) {
+                                fileToUpload.delete();
+                                callback.onFailure(error.getDescription());
+                            }
+                            @Override public void onReschedule(String requestId, ErrorInfo error) {}
+                        }).dispatch(context);
+
+            } catch (Exception e) {
+                if (tempFile != null) tempFile.delete();
+                callback.onFailure("Lỗi upload video: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    /**
+     * Tạo thumbnail URL từ video URL Cloudinary.
+     * Ví dụ: .../upload/v123/abc.mp4 → .../upload/so_0,w_400,c_fill,q_auto/v123/abc.jpg
+     */
+    public static String getVideoThumbnailUrl(String videoUrl) {
+        if (videoUrl == null || !videoUrl.contains("cloudinary.com")) return null;
+        return videoUrl
+                .replace("/upload/", "/upload/so_0,w_400,c_fill,q_auto/")
+                .replaceAll("\\.(mp4|mov|avi|mkv|webm)$", ".jpg");
+    }
+
+    // ── Private helpers ──────────────────────────────────────────────────────
+
+    private static File copyUriToTempFile(Context context, Uri uri,
+                                          String prefix, String suffix) throws IOException {
+        File file = File.createTempFile(prefix, suffix, context.getCacheDir());
+        try (InputStream in = context.getContentResolver().openInputStream(uri);
+             FileOutputStream out = new FileOutputStream(file)) {
+            if (in == null) return null;
+            byte[] buf = new byte[8192];
+            int len;
+            while ((len = in.read(buf)) != -1) out.write(buf, 0, len);
+        }
+        return file;
+    }
+
     private static File compressAndRotateImage(Context context, Uri uri) throws IOException {
-        // 1. Xác định độ xoay của ảnh từ EXIF
         int rotation = 0;
         try (InputStream in = context.getContentResolver().openInputStream(uri)) {
             if (in != null) {
                 ExifInterface exif = new ExifInterface(in);
-                int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+                int orientation = exif.getAttributeInt(
+                        ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
                 switch (orientation) {
-                    case ExifInterface.ORIENTATION_ROTATE_90: rotation = 90; break;
+                    case ExifInterface.ORIENTATION_ROTATE_90:  rotation = 90;  break;
                     case ExifInterface.ORIENTATION_ROTATE_180: rotation = 180; break;
                     case ExifInterface.ORIENTATION_ROTATE_270: rotation = 270; break;
                 }
             }
         }
 
-        // 2. Đọc kích thước ảnh
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
         try (InputStream input = context.getContentResolver().openInputStream(uri)) {
@@ -83,11 +148,9 @@ public class CloudinaryHelper {
         }
 
         int sampleSize = 1;
-        while (Math.max(options.outWidth, options.outHeight) / sampleSize > MAX_SIDE) {
+        while (Math.max(options.outWidth, options.outHeight) / sampleSize > MAX_SIDE)
             sampleSize *= 2;
-        }
 
-        // 3. Giải mã Bitmap vào bộ nhớ
         options.inJustDecodeBounds = false;
         options.inSampleSize = sampleSize;
         Bitmap bitmap;
@@ -97,16 +160,15 @@ public class CloudinaryHelper {
 
         if (bitmap == null) return null;
 
-        // 4. Xoay ảnh về đúng chiều dọc nếu cần
         if (rotation != 0) {
             Matrix matrix = new Matrix();
             matrix.postRotate(rotation);
-            Bitmap rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+            Bitmap rotated = Bitmap.createBitmap(
+                    bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
             bitmap.recycle();
             bitmap = rotated;
         }
 
-        // 5. Lưu ra file tạm thời để upload
         File file = File.createTempFile("upload_", ".jpg", context.getCacheDir());
         try (FileOutputStream out = new FileOutputStream(file)) {
             bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out);
