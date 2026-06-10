@@ -196,11 +196,31 @@ public class ChatDetailActivity extends AppCompatActivity {
 
     private void setupChat() {
         chatAdapter = new ChatAdapter();
+        chatAdapter.setOnMediaClickListener(this::openMedia);
         LinearLayoutManager lm = new LinearLayoutManager(this);
         lm.setStackFromEnd(true);
         rvMessages.setLayoutManager(lm);
         rvMessages.setAdapter(chatAdapter);
         rvMessages.setHasFixedSize(true);
+    }
+
+    /** Mở ảnh/video của tin nhắn bằng trình xem ngoài (video phát được). */
+    private void openMedia(ChatMessage msg) {
+        String url = msg.isVideo() ? msg.getVideoUrl() : msg.getImageUrl();
+        if (url == null || url.isEmpty()) return;
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(Uri.parse(url), msg.isVideo() ? "video/*" : "image/*");
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {
+            startActivity(intent);
+        } catch (Exception e) {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+            } catch (Exception ex) {
+                Toast.makeText(this, "Không mở được nội dung", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void listenForMessages() {

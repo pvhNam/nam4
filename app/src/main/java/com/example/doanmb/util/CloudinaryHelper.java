@@ -15,6 +15,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CloudinaryHelper {
 
@@ -26,6 +30,48 @@ public class CloudinaryHelper {
     public interface OnUploadCallback {
         void onSuccess(String url);
         void onFailure(String error);
+    }
+
+    public interface OnMultiUploadCallback {
+        void onSuccess(List<String> imageUrls);
+        void onFailure(String error);
+    }
+
+    // ── Upload nhiều ảnh (giữ đúng thứ tự) ───────────────────────────────────
+
+    public static void uploadImages(Context context, List<Uri> uris, OnMultiUploadCallback callback) {
+        if (uris == null || uris.isEmpty()) {
+            callback.onSuccess(new ArrayList<>());
+            return;
+        }
+        final int total = uris.size();
+        final String[] results = new String[total];
+        final AtomicInteger remaining = new AtomicInteger(total);
+        final AtomicBoolean failed = new AtomicBoolean(false);
+
+        for (int i = 0; i < total; i++) {
+            final int index = i;
+            uploadImage(context, uris.get(i), new OnUploadCallback() {
+                @Override
+                public void onSuccess(String imageUrl) {
+                    results[index] = imageUrl;
+                    if (remaining.decrementAndGet() == 0 && !failed.get()) {
+                        List<String> urls = new ArrayList<>();
+                        for (String url : results) {
+                            if (url != null) urls.add(url);
+                        }
+                        callback.onSuccess(urls);
+                    }
+                }
+
+                @Override
+                public void onFailure(String error) {
+                    if (failed.compareAndSet(false, true)) {
+                        callback.onFailure(error);
+                    }
+                }
+            });
+        }
     }
 
     // ── Upload ảnh ───────────────────────────────────────────────────────────

@@ -31,6 +31,16 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
     private final String currentUserId;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
+    public interface OnMediaClickListener {
+        void onMediaClick(ChatMessage message);
+    }
+
+    private OnMediaClickListener mediaClickListener;
+
+    public void setOnMediaClickListener(OnMediaClickListener listener) {
+        this.mediaClickListener = listener;
+    }
+
     public ChatAdapter() {
         super(new MessageDiffCallback());
         this.currentUserId = FirebaseAuth.getInstance().getCurrentUser() != null
@@ -89,6 +99,7 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
             } else {
                 loadMedia(h.cardImage, h.ivImage, h.ivPlayIcon, msg.getImageUrl(), false);
             }
+            bindMediaClick(h.cardImage, msg);
 
         } else {
             ReceivedVH h = (ReceivedVH) holder;
@@ -105,7 +116,22 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
             } else {
                 loadMedia(h.cardImage, h.ivImage, h.ivPlayIcon, msg.getImageUrl(), false);
             }
+            bindMediaClick(h.cardImage, msg);
         }
+    }
+
+    /** Bấm vào bóng ảnh/video để mở xem (video sẽ phát qua trình phát ngoài). */
+    private void bindMediaClick(CardView card, ChatMessage msg) {
+        boolean hasMedia = (msg.isVideo() && msg.getVideoUrl() != null && !msg.getVideoUrl().isEmpty())
+                || (!msg.isVideo() && msg.getImageUrl() != null && !msg.getImageUrl().isEmpty());
+        if (!hasMedia) {
+            card.setOnClickListener(null);
+            card.setClickable(false);
+            return;
+        }
+        card.setOnClickListener(v -> {
+            if (mediaClickListener != null) mediaClickListener.onMediaClick(msg);
+        });
     }
 
     /** Load ảnh hoặc thumbnail video vào bubble tin nhắn */
