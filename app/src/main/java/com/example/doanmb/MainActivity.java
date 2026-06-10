@@ -7,13 +7,16 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.core.widget.NestedScrollView;
+import androidx.fragment.app.Fragment;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -34,7 +37,9 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import com.cloudinary.android.MediaManager;
 
@@ -55,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Quick action buttons
     private LinearLayout btnBuyCar, btnDriver, btnPoliceCar, btnPayment;
+    private LinearLayout stickyBtnBuyCar, stickyBtnDriver, stickyBtnPoliceCar, stickyBtnPayment;
 
     private CarSaleAdapter carSaleAdapter;
     private CarRentalAdapter carRentalAdapter;
@@ -64,17 +70,22 @@ public class MainActivity extends AppCompatActivity {
 
     private FirebaseFirestore db;
 
-    // Ngưỡng scroll ~80dp để thu gọn header
-    private static final int SCROLL_THRESHOLD_DP = 80;
+    // Ngưỡng scroll: kéo lên một đoạn thì avatar/tên/search biến mất, các nút nằm trong khung xanh
+    private static final int SCROLL_THRESHOLD_DP = 72;
     private int scrollThresholdPx;
     private boolean isStickyVisible = false;
+
+    // Điều hướng Back: lưu lịch sử các tab đã đi qua để quay lại tab trước đó
+    private int currentNavId = R.id.nav_home;
+    private boolean isHandlingBack = false;
+    private final Deque<Integer> navBackStack = new ArrayDeque<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        scrollThresholdPx = (int) (SCROLL_THRESHOLD_DP * getResources().getDisplayMetrics().density);
+        scrollThresholdPx = dp(SCROLL_THRESHOLD_DP);
 
         db = FirebaseFirestore.getInstance();
 
@@ -88,6 +99,39 @@ public class MainActivity extends AppCompatActivity {
         setupSwipeRefresh();
         setupQuickActions();
         setupScrollBehavior();
+        setupBackNavigation();
+    }
+
+    /**
+     * Vuốt/nhấn Back: luôn quay về tab trước đó thay vì thoát app.
+     * - Trong tab Danh mục đang mở form đăng xe → quay lại danh sách.
+     * - Còn lịch sử tab → quay lại tab vừa rời đi.
+     * - Đang ở Home và hết lịch sử → mới thoát app.
+     */
+    private void setupBackNavigation() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (!navBackStack.isEmpty()) {
+                    int prev = navBackStack.pop();
+                    isHandlingBack = true;
+                    bottomNavigationView.setSelectedItemId(prev);
+                    isHandlingBack = false;
+                    return;
+                }
+
+                if (currentNavId != R.id.nav_home) {
+                    isHandlingBack = true;
+                    bottomNavigationView.setSelectedItemId(R.id.nav_home);
+                    isHandlingBack = false;
+                    return;
+                }
+
+                // Đang ở Home, không còn trang trước → để hệ thống thoát app
+                setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+            }
+        });
     }
 
     private void initViews() {
@@ -104,96 +148,107 @@ public class MainActivity extends AppCompatActivity {
         headerLayout         = findViewById(R.id.header_layout);
         stickyBar            = findViewById(R.id.sticky_bar);
 
-        // Quick action buttons
+        // Quick action buttons ở header gốc
         btnBuyCar    = findViewById(R.id.btn_buy_car);
         btnDriver    = findViewById(R.id.btn_driver);
         btnPoliceCar = findViewById(R.id.btn_police_car);
         btnPayment   = findViewById(R.id.btn_payment);
 
+        // Quick action buttons ở thanh xanh sau khi vuốt lên
+        stickyBtnBuyCar    = findViewById(R.id.sticky_btn_buy_car);
+        stickyBtnDriver    = findViewById(R.id.sticky_btn_driver);
+        stickyBtnPoliceCar = findViewById(R.id.sticky_btn_police_car);
+        stickyBtnPayment   = findViewById(R.id.sticky_btn_payment);
+    }
 
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     /**
-     * Lắng nghe scroll:
-     * - scroll lên > ngưỡng: ẩn header, hiện sticky bar
-     * - scroll xuống < ngưỡng: ẩn sticky bar, hiện header
+     * Khi vuốt lên:
+     * - avatar + tên + thanh tìm kiếm biến mất khỏi màn hình
+     * - 4 nút chức năng hiện trong khung xanh phía trên
      */
     private void setupScrollBehavior() {
         if (nestedScroll == null) return;
 
+        // Thu gọn header bám theo độ cuộn (1:1 với ngón tay) để hiệu ứng thật mượt,
+        // thay cho kiểu bật/tắt theo ngưỡng gây giật.
         nestedScroll.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener)
-                (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
-                    if (scrollY > scrollThresholdPx && !isStickyVisible) {
-                        isStickyVisible = true;
-                        showStickyBar();
-                    } else if (scrollY <= scrollThresholdPx && isStickyVisible) {
-                        isStickyVisible = false;
-                        hideStickyBar();
-                    }
-                });
+                (v, scrollX, scrollY, oldScrollX, oldScrollY) -> applyHeaderCollapse(scrollY));
     }
 
-    private void showStickyBar() {
-        headerLayout.animate()
-                .alpha(0f)
-                .translationY(-30f)
-                .setDuration(200)
-                .setListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        headerLayout.setVisibility(View.GONE);
-                        headerLayout.setAlpha(1f);
-                        headerLayout.setTranslationY(0f);
-                    }
-                });
+    /**
+     * Nội suy liên tục theo scrollY:
+     * - header (avatar + tên + ô tìm kiếm) trượt lên và mờ dần
+     * - thanh xanh 4 nút (sticky) trượt xuống và hiện dần
+     * Hai phần crossfade lệch pha nhẹ để không bị chồng mờ ở giữa.
+     */
+    private void applyHeaderCollapse(int scrollY) {
+        if (headerLayout == null || stickyBar == null) return;
 
-        stickyBar.setAlpha(0f);
-        stickyBar.setTranslationY(-20f);
-        stickyBar.setVisibility(View.VISIBLE);
-        stickyBar.animate()
-                .alpha(1f)
-                .translationY(0f)
-                .setDuration(200)
-                .setListener(null);
+        int headerMove = headerLayout.getHeight();
+        if (headerMove <= 0) headerMove = dp(210);
+
+        float progress = clamp01(scrollY / (float) headerMove);
+        isStickyVisible = progress > 0f;
+
+        // Header: trượt lên đúng theo ngón tay, mờ nhanh hơn (biến mất khi ~62%)
+        float headerAlpha = clamp01(1f - progress * 1.6f);
+        headerLayout.setTranslationY(-progress * headerMove);
+        headerLayout.setAlpha(headerAlpha);
+        headerLayout.setVisibility(headerAlpha <= 0f ? View.INVISIBLE : View.VISIBLE);
+
+        // Sticky: bắt đầu hiện từ ~35% trở đi
+        int stickyHeight = stickyBar.getHeight();
+        if (stickyHeight <= 0) stickyHeight = dp(120);
+        if (progress <= 0f) {
+            stickyBar.setVisibility(View.GONE);
+            stickyBar.setTranslationY(0f);
+        } else {
+            stickyBar.setVisibility(View.VISIBLE);
+            stickyBar.setTranslationY(-(1f - progress) * stickyHeight);
+            stickyBar.setAlpha(clamp01((progress - 0.35f) / 0.65f));
+        }
     }
 
-    private void hideStickyBar() {
-        stickyBar.animate()
-                .alpha(0f)
-                .translationY(-20f)
-                .setDuration(200)
-                .setListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        stickyBar.setVisibility(View.GONE);
-                        stickyBar.setAlpha(1f);
-                        stickyBar.setTranslationY(0f);
-                    }
-                });
-
-        headerLayout.setAlpha(0f);
-        headerLayout.setTranslationY(-30f);
-        headerLayout.setVisibility(View.VISIBLE);
-        headerLayout.animate()
-                .alpha(1f)
-                .translationY(0f)
-                .setDuration(200)
-                .setListener(null);
+    private float clamp01(float value) {
+        if (value < 0f) return 0f;
+        if (value > 1f) return 1f;
+        return value;
     }
 
     private void setupQuickActions() {
-        if (btnBuyCar != null)
-            btnBuyCar.setOnClickListener(v ->
-                    bottomNavigationView.setSelectedItemId(R.id.nav_cataloge));
-        if (btnDriver != null)
-            btnDriver.setOnClickListener(v ->
-                    bottomNavigationView.setSelectedItemId(R.id.nav_cataloge));
-        if (btnPoliceCar != null)
-            btnPoliceCar.setOnClickListener(v ->
-                    bottomNavigationView.setSelectedItemId(R.id.nav_cataloge));
-        if (btnPayment != null)
-            btnPayment.setOnClickListener(v ->
-                    bottomNavigationView.setSelectedItemId(R.id.nav_manage));
+        View.OnClickListener openCategory = v -> {
+            pulseView(v);
+            bottomNavigationView.setSelectedItemId(R.id.nav_cataloge);
+        };
+
+        if (btnBuyCar != null) btnBuyCar.setOnClickListener(openCategory);
+        if (btnDriver != null) btnDriver.setOnClickListener(openCategory);
+        if (btnPoliceCar != null) btnPoliceCar.setOnClickListener(openCategory);
+        if (btnPayment != null) btnPayment.setOnClickListener(openCategory);
+
+        if (stickyBtnBuyCar != null) stickyBtnBuyCar.setOnClickListener(openCategory);
+        if (stickyBtnDriver != null) stickyBtnDriver.setOnClickListener(openCategory);
+        if (stickyBtnPoliceCar != null) stickyBtnPoliceCar.setOnClickListener(openCategory);
+        if (stickyBtnPayment != null) stickyBtnPayment.setOnClickListener(openCategory);
+    }
+
+    private void pulseView(View view) {
+        view.animate().cancel();
+        view.animate()
+                .scaleX(0.94f)
+                .scaleY(0.94f)
+                .setDuration(70)
+                .withEndAction(() -> view.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(120)
+                        .setInterpolator(new DecelerateInterpolator())
+                        .start())
+                .start();
     }
 
     private void setupBanners() {
@@ -386,9 +441,15 @@ public class MainActivity extends AppCompatActivity {
         if (bottomNavigationView == null) return;
         bottomNavigationView.setOnItemSelectedListener(item -> {
             int itemId = item.getItemId();
+            // Ghi nhận tab đang đứng vào lịch sử để Back có thể quay lại (bỏ qua khi đang xử lý Back)
+            if (!isHandlingBack && itemId != currentNavId) {
+                navBackStack.push(currentNavId);
+            }
+            currentNavId = itemId;
             if (itemId == R.id.nav_home) {
                 homeLayout.setVisibility(View.VISIBLE);
                 fragmentContainer.setVisibility(View.GONE);
+                resetHomeHeaderState();
                 // Reset scroll về đầu khi về Home
                 if (nestedScroll != null) nestedScroll.smoothScrollTo(0, 0);
                 return true;
@@ -419,5 +480,21 @@ public class MainActivity extends AppCompatActivity {
             }
             return false;
         });
+    }
+
+    private void resetHomeHeaderState() {
+        isStickyVisible = false;
+        if (stickyBar != null) {
+            stickyBar.animate().cancel();
+            stickyBar.setVisibility(View.GONE);
+            stickyBar.setTranslationY(0f);
+            stickyBar.setAlpha(1f);
+        }
+        if (headerLayout != null) {
+            headerLayout.animate().cancel();
+            headerLayout.setVisibility(View.VISIBLE);
+            headerLayout.setTranslationY(0f);
+            headerLayout.setAlpha(1f);
+        }
     }
 }
