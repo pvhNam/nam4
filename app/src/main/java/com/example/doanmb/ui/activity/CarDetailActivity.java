@@ -11,10 +11,17 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.PagerSnapHelper;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.doanmb.R;
+import com.example.doanmb.adapter.CarImageAdapter;
 import com.example.doanmb.model.Car;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -29,6 +36,9 @@ import java.util.Map;
 public class CarDetailActivity extends AppCompatActivity {
 
     private ImageView ivCarDetail;
+    private RecyclerView rvCarImages;
+    private LinearLayout layoutImageDots;
+    private CarImageAdapter imageAdapter;
     private TextView tvCarName, tvCarPrice, tvCarInfo;
     private TextView tvCarTypeBadge, tvCarFuelBadge, tvCarConditionBadge;
     private TextView tvSellerName, tvSellerPhone, tvOwnerNote;
@@ -57,6 +67,7 @@ public class CarDetailActivity extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
         initViews();
+        setupDetailHeader();
 
         car = (Car) getIntent().getSerializableExtra("CAR_DATA");
         carId = getIntent().getStringExtra("CAR_ID");
@@ -67,14 +78,12 @@ public class CarDetailActivity extends AppCompatActivity {
         tvCarConditionBadge.setVisibility(View.GONE);
 
         if (car != null) {
-            String imageUrl = car.getImageUrl();
-            if (imageUrl != null && !imageUrl.isEmpty()) {
-                Glide.with(this).load(imageUrl)
-                        .placeholder(android.R.drawable.ic_menu_gallery)
-                        .into(ivCarDetail);
-            } else {
-                ivCarDetail.setImageResource(android.R.drawable.ic_menu_gallery);
+            // Hiển thị tạm ảnh đại diện; loadCarDetail() sẽ nạp đủ ảnh (vuốt) từ Firestore
+            List<String> coverImages = new ArrayList<>();
+            if (car.getImageUrl() != null && !car.getImageUrl().isEmpty()) {
+                coverImages.add(car.getImageUrl());
             }
+            showImages(coverImages);
             tvCarName.setText(car.getName());
             tvCarPrice.setText(car.getPrice());
             tvCarInfo.setText(car.getInfo());
@@ -109,6 +118,9 @@ public class CarDetailActivity extends AppCompatActivity {
 
     private void initViews() {
         ivCarDetail       = findViewById(R.id.ivCarDetail);
+        rvCarImages       = findViewById(R.id.rv_car_images);
+        layoutImageDots   = findViewById(R.id.layout_image_dots);
+        setupImagePager();
         tvCarName         = findViewById(R.id.tvCarNameDetail);
         tvCarPrice        = findViewById(R.id.tvCarPriceDetail);
         tvCarInfo         = findViewById(R.id.tvCarInfoDetail);
@@ -136,6 +148,87 @@ public class CarDetailActivity extends AppCompatActivity {
         btnSendRentRequest = findViewById(R.id.btnSendRentRequest);
         btnCallRentSeller  = findViewById(R.id.btnCallRentSeller);
         btnChatRentSeller = findViewById(R.id.btnChatRentSeller);
+    }
+
+    private void setupDetailHeader() {
+        View btnBack = findViewById(R.id.btn_back_detail);
+        if (btnBack != null) btnBack.setOnClickListener(v -> finish());
+
+        View header = findViewById(R.id.header_detail);
+        if (header != null) {
+            final int baseTop = header.getPaddingTop();
+            // Đẩy header xuống dưới thanh trạng thái để ảnh không bị che (edge-to-edge)
+            ViewCompat.setOnApplyWindowInsetsListener(header, (v, insets) -> {
+                int top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
+                v.setPadding(v.getPaddingLeft(), baseTop + top, v.getPaddingRight(), v.getPaddingBottom());
+                return insets;
+            });
+        }
+    }
+
+    private void setupImagePager() {
+        if (rvCarImages == null) return;
+        imageAdapter = new CarImageAdapter();
+        rvCarImages.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        rvCarImages.setAdapter(imageAdapter);
+        new PagerSnapHelper().attachToRecyclerView(rvCarImages);
+
+        rvCarImages.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
+                LinearLayoutManager lm = (LinearLayoutManager) rv.getLayoutManager();
+                if (lm == null) return;
+                int pos = lm.findFirstCompletelyVisibleItemPosition();
+                if (pos == RecyclerView.NO_POSITION) pos = lm.findFirstVisibleItemPosition();
+                updateDots(pos);
+            }
+        });
+    }
+
+    /** Đổ danh sách ảnh vào pager và dựng chấm chỉ số. */
+    private void showImages(List<String> images) {
+        if (imageAdapter == null) return;
+        imageAdapter.setImages(images);
+        buildDots(images.size());
+        updateDots(0);
+    }
+
+    private void buildDots(int count) {
+        if (layoutImageDots == null) return;
+        layoutImageDots.removeAllViews();
+        if (count <= 1) return; // 1 ảnh thì không cần chấm
+
+        int size = Math.round(7 * getResources().getDisplayMetrics().density);
+        int margin = Math.round(3 * getResources().getDisplayMetrics().density);
+        for (int i = 0; i < count; i++) {
+            View dot = new View(this);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(size, size);
+            lp.setMargins(margin, 0, margin, 0);
+            dot.setLayoutParams(lp);
+            dot.setBackgroundResource(R.drawable.bg_image_dot);
+            layoutImageDots.addView(dot);
+        }
+    }
+
+    private void updateDots(int activePos) {
+        if (layoutImageDots == null) return;
+        for (int i = 0; i < layoutImageDots.getChildCount(); i++) {
+            View dot = layoutImageDots.getChildAt(i);
+            dot.setAlpha(i == activePos ? 1f : 0.4f);
+            dot.setScaleX(i == activePos ? 1.25f : 1f);
+            dot.setScaleY(i == activePos ? 1.25f : 1f);
+        }
+    }
+
+    /** Chuyển field "imageUrls" của Firestore (List) thành List<String> an toàn. */
+    private static List<String> extractImageUrls(Object raw) {
+        List<String> urls = new ArrayList<>();
+        if (raw instanceof List) {
+            for (Object item : (List<?>) raw) {
+                if (item != null && !item.toString().isEmpty()) urls.add(item.toString());
+            }
+        }
+        return urls;
     }
 
     private void setupButtons() {
@@ -213,10 +306,12 @@ public class CarDetailActivity extends AppCompatActivity {
 
                     if (type != null) carType = type;
 
-                    if (imageUrl != null && !imageUrl.isEmpty()) {
-                        Glide.with(CarDetailActivity.this).load(imageUrl)
-                                .placeholder(android.R.drawable.ic_menu_gallery)
-                                .into(ivCarDetail);
+                    List<String> imgs = extractImageUrls(doc.get("imageUrls"));
+                    if (imgs.isEmpty() && imageUrl != null && !imageUrl.isEmpty()) {
+                        imgs.add(imageUrl);
+                    }
+                    if (!imgs.isEmpty()) {
+                        showImages(imgs);
                     }
 
                     if (fuel != null && !fuel.isEmpty()) {

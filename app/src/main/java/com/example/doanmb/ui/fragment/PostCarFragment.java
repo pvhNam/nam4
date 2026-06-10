@@ -2,26 +2,36 @@ package com.example.doanmb.ui.fragment;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
@@ -31,7 +41,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class PostCarFragment extends Fragment {
@@ -43,19 +55,19 @@ public class PostCarFragment extends Fragment {
     private EditText etCarName, etCarPrice, etCarInfo, etCarYear, etCarKm, etCarLocation;
     private Spinner spinnerBrand, spinnerType;
     private Button btnSubmitPost, btnPickImage, btnRemoveImage;
-    private View layoutUploadPrompt;
+    private View layoutUploadPrompt, layoutUploadMedia;
     private ImageView ivPreview;
-    private Uri selectedImageUri = null;
+    private HorizontalScrollView scrollImageThumbs;
+    private LinearLayout layoutImageThumbs;
+    private TextView tvImageCount;
+    private final List<Uri> selectedImageUris = new ArrayList<>();
+    private int scrollBasePaddingBottom;
 
     private final ActivityResultLauncher<Intent> pickImageLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (!isViewReady()) return;
                 if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-                    selectedImageUri = result.getData().getData();
-                    Glide.with(this).load(selectedImageUri).into(ivPreview);
-                    ivPreview.setVisibility(View.VISIBLE);
-                    layoutUploadPrompt.setVisibility(View.GONE);
-                    btnRemoveImage.setVisibility(View.VISIBLE);
+                    addImagesFromResult(result.getData());
                 }
             });
 
@@ -75,6 +87,7 @@ public class PostCarFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_post_car, container, false);
 
         initViews(view);
+        setupKeyboardInsets(view);
         setupSpinners();
         setupActions();
 
@@ -94,13 +107,124 @@ public class PostCarFragment extends Fragment {
         btnPickImage = view.findViewById(R.id.btn_pick_image);
         btnRemoveImage = view.findViewById(R.id.btn_remove_image);
         layoutUploadPrompt = view.findViewById(R.id.layout_upload_prompt);
+        layoutUploadMedia = view.findViewById(R.id.layout_upload_media);
         ivPreview = view.findViewById(R.id.iv_car_preview);
+        scrollImageThumbs = view.findViewById(R.id.scroll_image_thumbs);
+        layoutImageThumbs = view.findViewById(R.id.layout_image_thumbs);
+        tvImageCount = view.findViewById(R.id.tv_image_count);
+    }
+
+    /**
+     * Khi bàn phím hiện, đệm thêm chiều cao IME vào đáy ScrollView và cuộn ô đang
+     * nhập lên trên bàn phím — đảm bảo "Mô tả thêm"/"Khu vực" không bị che.
+     */
+    private void setupKeyboardInsets(View root) {
+        scrollBasePaddingBottom = root.getPaddingBottom();
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+            v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(),
+                    scrollBasePaddingBottom + imeBottom);
+            if (imeBottom > 0) {
+                View focused = v.findFocus();
+                if (focused != null) {
+                    v.post(() -> focused.requestRectangleOnScreen(
+                            new Rect(0, 0, focused.getWidth(), focused.getHeight()), false));
+                }
+            }
+            return insets;
+        });
     }
 
     private void setupActions() {
         btnPickImage.setOnClickListener(v -> pickImage());
+        if (layoutUploadMedia != null) layoutUploadMedia.setOnClickListener(v -> pickImage());
         btnRemoveImage.setOnClickListener(v -> clearSelectedImage());
         btnSubmitPost.setOnClickListener(v -> submitPost());
+    }
+
+    private void addImagesFromResult(Intent data) {
+        ClipData clip = data.getClipData();
+        if (clip != null) {
+            for (int i = 0; i < clip.getItemCount(); i++) {
+                Uri uri = clip.getItemAt(i).getUri();
+                if (uri != null && !selectedImageUris.contains(uri)) selectedImageUris.add(uri);
+            }
+        } else if (data.getData() != null) {
+            Uri uri = data.getData();
+            if (!selectedImageUris.contains(uri)) selectedImageUris.add(uri);
+        }
+        refreshImagePreview();
+    }
+
+    private void refreshImagePreview() {
+        if (!isViewReady()) return;
+        boolean hasImages = !selectedImageUris.isEmpty();
+
+        if (hasImages) {
+            Glide.with(this).load(selectedImageUris.get(0)).into(ivPreview);
+            ivPreview.setVisibility(View.VISIBLE);
+            layoutUploadPrompt.setVisibility(View.GONE);
+        } else {
+            ivPreview.setImageDrawable(null);
+            ivPreview.setVisibility(View.GONE);
+            layoutUploadPrompt.setVisibility(View.VISIBLE);
+        }
+
+        btnRemoveImage.setVisibility(hasImages ? View.VISIBLE : View.GONE);
+        tvImageCount.setVisibility(hasImages ? View.VISIBLE : View.GONE);
+        tvImageCount.setText("Đã chọn " + selectedImageUris.size() + " ảnh");
+        buildThumbnails();
+    }
+
+    private void buildThumbnails() {
+        layoutImageThumbs.removeAllViews();
+        scrollImageThumbs.setVisibility(selectedImageUris.isEmpty() ? View.GONE : View.VISIBLE);
+
+        int size = dp(84);
+        int margin = dp(8);
+        for (int i = 0; i < selectedImageUris.size(); i++) {
+            final Uri uri = selectedImageUris.get(i);
+
+            FrameLayout holder = new FrameLayout(requireContext());
+            LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(size, size);
+            hp.setMarginEnd(margin);
+            holder.setLayoutParams(hp);
+
+            CardView card = new CardView(requireContext());
+            card.setLayoutParams(new FrameLayout.LayoutParams(size, size));
+            card.setRadius(dp(10));
+            card.setCardElevation(0f);
+
+            ImageView img = new ImageView(requireContext());
+            img.setLayoutParams(new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            img.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            Glide.with(this).load(uri).into(img);
+            card.addView(img);
+            holder.addView(card);
+
+            TextView remove = new TextView(requireContext());
+            int rs = dp(22);
+            FrameLayout.LayoutParams rp = new FrameLayout.LayoutParams(rs, rs);
+            rp.gravity = Gravity.TOP | Gravity.END;
+            remove.setLayoutParams(rp);
+            remove.setText("✕");
+            remove.setGravity(Gravity.CENTER);
+            remove.setTextColor(0xFFFFFFFF);
+            remove.setTextSize(12);
+            remove.setBackgroundColor(0x99000000);
+            remove.setOnClickListener(v -> {
+                selectedImageUris.remove(uri);
+                refreshImagePreview();
+            });
+            holder.addView(remove);
+
+            layoutImageThumbs.addView(holder);
+        }
+    }
+
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 
     private void setupSpinners() {
@@ -165,15 +289,15 @@ public class PostCarFragment extends Fragment {
         btnSubmitPost.setEnabled(false);
         btnSubmitPost.setText("Đang đăng...");
 
-        if (selectedImageUri != null) {
-            CloudinaryHelper.uploadImage(
+        if (!selectedImageUris.isEmpty()) {
+            CloudinaryHelper.uploadImages(
                     requireContext().getApplicationContext(),
-                    selectedImageUri,
-                    new CloudinaryHelper.OnUploadCallback() {
+                    new ArrayList<>(selectedImageUris),
+                    new CloudinaryHelper.OnMultiUploadCallback() {
                         @Override
-                        public void onSuccess(String imageUrl) {
+                        public void onSuccess(List<String> imageUrls) {
                             saveCar(user, name, price, fullInfo, type, brand,
-                                    year, km, location, imageUrl);
+                                    year, km, location, imageUrls);
                         }
 
                         @Override
@@ -186,13 +310,13 @@ public class PostCarFragment extends Fragment {
             );
         } else {
             saveCar(user, name, price, fullInfo, type, brand,
-                    year, km, location, "");
+                    year, km, location, new ArrayList<>());
         }
     }
 
     private void saveCar(FirebaseUser user, String name, String price, String fullInfo,
                          String type, String brand, String year, String km,
-                         String location, String imageUrl) {
+                         String location, List<String> imageUrls) {
         FirebaseFirestore.getInstance().collection("users").document(user.getUid()).get()
                 .addOnSuccessListener(doc -> {
                     if (!isViewReady()) return;
@@ -213,7 +337,8 @@ public class PostCarFragment extends Fragment {
                     car.put("km", km);
                     car.put("location", location);
                     car.put("status", "pending");
-                    car.put("imageUrl", imageUrl);
+                    car.put("imageUrl", imageUrls.isEmpty() ? "" : imageUrls.get(0));
+                    car.put("imageUrls", imageUrls);
                     car.put("userId", user.getUid());
                     car.put("sellerId", user.getUid());
                     car.put("sellerName", sellerName != null ? sellerName : "");
@@ -254,11 +379,8 @@ public class PostCarFragment extends Fragment {
     }
 
     private void clearSelectedImage() {
-        selectedImageUri = null;
-        ivPreview.setImageDrawable(null);
-        ivPreview.setVisibility(View.GONE);
-        layoutUploadPrompt.setVisibility(View.VISIBLE);
-        btnRemoveImage.setVisibility(View.GONE);
+        selectedImageUris.clear();
+        refreshImagePreview();
     }
 
     private void resetButton() {
@@ -275,6 +397,7 @@ public class PostCarFragment extends Fragment {
 
     private void openGallery() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         pickImageLauncher.launch(intent);
     }
 
@@ -297,6 +420,10 @@ public class PostCarFragment extends Fragment {
         btnPickImage = null;
         btnRemoveImage = null;
         layoutUploadPrompt = null;
+        layoutUploadMedia = null;
         ivPreview = null;
+        scrollImageThumbs = null;
+        layoutImageThumbs = null;
+        tvImageCount = null;
     }
 }

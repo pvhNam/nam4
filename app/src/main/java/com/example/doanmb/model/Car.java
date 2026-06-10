@@ -9,7 +9,6 @@ public class Car implements Serializable {
     private String brand;
     private String sellerId;
     private String imageUrl;
-    private String location;
     private int imageResId;
 
     public Car(String name, String price, String info, int imageResId) {
@@ -43,12 +42,10 @@ public class Car implements Serializable {
     public String getBrand() { return brand; }
     public String getSellerId() { return sellerId; }
     public String getImageUrl() { return imageUrl; }
-    public String getLocation() { return location; }
     public int getImageResId() { return imageResId; }
 
     public void setId(String id) { this.id = id; }
     public void setType(String type) { this.type = type; }
     public void setSellerId(String sellerId) { this.sellerId = sellerId; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
-    public void setLocation(String location) { this.location = location; }
 }

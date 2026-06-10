@@ -77,7 +77,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Ảnh rõ xe giúp tin dễ được duyệt hơn"
+                    android:text="Có thể chọn nhiều ảnh cùng lúc"
                     android:textColor="@color/color_on_surface_secondary"
                     android:textSize="12sp" />
 
@@ -95,18 +95,47 @@
             </LinearLayout>
         </FrameLayout>
 
-        <Button
-            android:id="@+id/btn_remove_image"
-            android:layout_width="wrap_content"
-            android:layout_height="38dp"
-            android:layout_gravity="end"
+        <HorizontalScrollView
+            android:id="@+id/scroll_image_thumbs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:backgroundTint="#E53935"
-            android:text="Xóa ảnh"
-            android:textAllCaps="false"
-            android:textColor="@android:color/white"
-            android:textSize="13sp"
-            android:visibility="gone" />
+            android:scrollbars="none"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/layout_image_thumbs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tv_image_count"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="@color/color_on_surface_secondary"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/btn_remove_image"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:backgroundTint="#E53935"
+                android:text="Xóa tất cả"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textSize="13sp"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"
