@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -21,7 +22,6 @@ import com.example.doanmb.R;
 import com.example.doanmb.adapter.ProfileCarAdapter;
 import com.example.doanmb.model.Car;
 import com.example.doanmb.ui.activity.CarDetailActivity;
-import com.example.doanmb.ui.activity.PostCarActivity;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -30,9 +30,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class CategoryFragment extends Fragment {
+public class CategoryFragment extends Fragment implements PostCarFragment.OnPostCarSubmittedListener {
 
     private static final String CATEGORY_SALE = "sale";
+    private static final String CATEGORY_SELL = "sell";
     private static final String CATEGORY_RENTAL = "rental";
     private static final String CATEGORY_DRIVER = "driver";
     private static final String BRAND_ALL = "all";
@@ -43,15 +44,19 @@ public class CategoryFragment extends Fragment {
     private CardView cardSelfDrive;
     private CardView cardWithDriver;
     private LinearLayout tabBuyCarContent;
+    private LinearLayout tabSellCarContent;
     private LinearLayout tabSelfDriveContent;
     private LinearLayout tabWithDriverContent;
     private TextView tvTabBuyCar;
+    private TextView tvTabSellCar;
     private TextView tvTabSelfDrive;
     private TextView tvTabWithDriver;
     private TextView tvResultTitle;
     private TextView tvCategoryCount;
     private TextView tvEmptyCategory;
+    private LinearLayout layoutCategoryBrowseContent;
     private LinearLayout layoutBrandFilters;
+    private FrameLayout postCarFragmentContainer;
     private RecyclerView rvCategoryCars;
 
     private final List<Car> allCars = new ArrayList<>();
@@ -60,7 +65,6 @@ public class CategoryFragment extends Fragment {
     private String currentCategory = CATEGORY_SALE;
     private String currentTitle = "Xe đang bán";
     private String selectedBrand = BRAND_ALL;
-    private boolean shouldRefreshOnResume = false;
 
     @Nullable
     @Override
@@ -72,15 +76,19 @@ public class CategoryFragment extends Fragment {
         cardSelfDrive = view.findViewById(R.id.card_self_drive);
         cardWithDriver = view.findViewById(R.id.card_with_driver);
         tabBuyCarContent = view.findViewById(R.id.tab_buy_car_content);
+        tabSellCarContent = view.findViewById(R.id.tab_sell_car_content);
         tabSelfDriveContent = view.findViewById(R.id.tab_self_drive_content);
         tabWithDriverContent = view.findViewById(R.id.tab_with_driver_content);
         tvTabBuyCar = view.findViewById(R.id.tv_tab_buy_car);
+        tvTabSellCar = view.findViewById(R.id.tv_tab_sell_car);
         tvTabSelfDrive = view.findViewById(R.id.tv_tab_self_drive);
         tvTabWithDriver = view.findViewById(R.id.tv_tab_with_driver);
         tvResultTitle = view.findViewById(R.id.tv_category_result_title);
         tvCategoryCount = view.findViewById(R.id.tv_category_count);
         tvEmptyCategory = view.findViewById(R.id.tv_empty_category);
+        layoutCategoryBrowseContent = view.findViewById(R.id.layout_category_browse_content);
         layoutBrandFilters = view.findViewById(R.id.layout_brand_filters);
+        postCarFragmentContainer = view.findViewById(R.id.post_car_fragment_container);
         rvCategoryCars = view.findViewById(R.id.rv_category_cars);
 
         rvCategoryCars.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -101,23 +109,11 @@ public class CategoryFragment extends Fragment {
         return view;
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (shouldRefreshOnResume) {
-            shouldRefreshOnResume = false;
-            loadCars();
-        }
-    }
-
     private void setupCategoryActions() {
         cardBuyCar.setOnClickListener(v -> selectCategory(CATEGORY_SALE, "Xe đang bán"));
         cardSelfDrive.setOnClickListener(v -> selectCategory(CATEGORY_RENTAL, "Xe thuê tự lái"));
         cardWithDriver.setOnClickListener(v -> selectCategory(CATEGORY_DRIVER, "Xe có tài xế"));
-        cardSellCar.setOnClickListener(v -> {
-            shouldRefreshOnResume = true;
-            startActivity(new Intent(getActivity(), PostCarActivity.class));
-        });
+        cardSellCar.setOnClickListener(v -> showPostCarForm());
 
         updateSelectedCategory();
     }
@@ -125,8 +121,33 @@ public class CategoryFragment extends Fragment {
     private void selectCategory(String category, String title) {
         currentCategory = category;
         currentTitle = title;
+        showBrowseContent();
         updateSelectedCategory();
         applyFilter();
+    }
+
+    private void showPostCarForm() {
+        currentCategory = CATEGORY_SELL;
+        updateSelectedCategory();
+
+        layoutCategoryBrowseContent.setVisibility(View.GONE);
+        postCarFragmentContainer.setVisibility(View.VISIBLE);
+
+        if (getChildFragmentManager().findFragmentById(R.id.post_car_fragment_container) == null) {
+            getChildFragmentManager().beginTransaction()
+                    .replace(R.id.post_car_fragment_container, new PostCarFragment())
+                    .commit();
+        }
+    }
+
+    private void showBrowseContent() {
+        layoutCategoryBrowseContent.setVisibility(View.VISIBLE);
+        postCarFragmentContainer.setVisibility(View.GONE);
+    }
+
+    @Override
+    public void onPostCarSubmitted() {
+        loadCars();
     }
 
     private void updateSelectedCategory() {
@@ -136,6 +157,7 @@ public class CategoryFragment extends Fragment {
         cardWithDriver.setCardBackgroundColor(Color.TRANSPARENT);
 
         setTabSelected(tabBuyCarContent, tvTabBuyCar, currentCategory.equals(CATEGORY_SALE));
+        setTabSelected(tabSellCarContent, tvTabSellCar, currentCategory.equals(CATEGORY_SELL));
         setTabSelected(tabSelfDriveContent, tvTabSelfDrive, currentCategory.equals(CATEGORY_RENTAL));
         setTabSelected(tabWithDriverContent, tvTabWithDriver, currentCategory.equals(CATEGORY_DRIVER));
     }

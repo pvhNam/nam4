@@ -91,6 +91,7 @@
                     app:cardUseCompatPadding="false">
 
                     <LinearLayout
+                        android:id="@+id/tab_sell_car_content"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center"
@@ -112,6 +113,7 @@
                         </FrameLayout>
 
                         <TextView
+                            android:id="@+id/tv_tab_sell_car"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="7dp"
@@ -226,6 +228,12 @@
             android:layout_marginBottom="8dp"
             android:background="@drawable/bg_category_content_panel"
             android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/layout_category_browse_content"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
             <LinearLayout
                 android:id="@+id/card_search_form"
@@ -373,6 +381,13 @@
                     android:textColor="@color/color_on_surface_secondary"
                     android:textSize="15sp" />
             </FrameLayout>
+            </LinearLayout>
+
+            <FrameLayout
+                android:id="@+id/post_car_fragment_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
         </LinearLayout>
     </FrameLayout>
 </LinearLayout>
