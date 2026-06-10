@@ -10,6 +10,9 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -38,6 +41,8 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
     private static final String CATEGORY_DRIVER = "driver";
     private static final String BRAND_ALL = "all";
     private static final String[] KNOWN_BRANDS = {"Toyota", "Honda", "Mazda", "Kia", "Ford", "Hyundai", "VinFast", "Khác"};
+    private static final String LOCATION_ALL = "Tất cả địa điểm";
+    private static final String[] DEFAULT_LOCATIONS = {"TP. Hồ Chí Minh", "Hà Nội", "Đà Nẵng", "Cần Thơ"};
 
     private CardView cardBuyCar;
     private CardView cardSellCar;
@@ -54,6 +59,8 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
     private TextView tvResultTitle;
     private TextView tvCategoryCount;
     private TextView tvEmptyCategory;
+    private TextView tvSearchLocation;
+    private TextView btnSearchCar;
     private LinearLayout layoutCategoryBrowseContent;
     private LinearLayout layoutBrandFilters;
     private FrameLayout postCarFragmentContainer;
@@ -61,10 +68,13 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
 
     private final List<Car> allCars = new ArrayList<>();
     private final List<String> brandFilters = new ArrayList<>();
+    private final List<String> locationOptions = new ArrayList<>();
     private ProfileCarAdapter carAdapter;
     private String currentCategory = CATEGORY_SALE;
     private String currentTitle = "Xe đang bán";
     private String selectedBrand = BRAND_ALL;
+    private String selectedLocation = "TP. Hồ Chí Minh";
+    private String appliedLocation = LOCATION_ALL;
 
     @Nullable
     @Override
@@ -86,6 +96,8 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         tvResultTitle = view.findViewById(R.id.tv_category_result_title);
         tvCategoryCount = view.findViewById(R.id.tv_category_count);
         tvEmptyCategory = view.findViewById(R.id.tv_empty_category);
+        tvSearchLocation = view.findViewById(R.id.tv_search_location);
+        btnSearchCar = view.findViewById(R.id.btn_search_car);
         layoutCategoryBrowseContent = view.findViewById(R.id.layout_category_browse_content);
         layoutBrandFilters = view.findViewById(R.id.layout_brand_filters);
         postCarFragmentContainer = view.findViewById(R.id.post_car_fragment_container);
@@ -103,6 +115,7 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         rvCategoryCars.setAdapter(carAdapter);
 
         setupCategoryActions();
+        setupSearchActions();
         setupDefaultBrandFilters();
         loadCars();
 
@@ -116,6 +129,118 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         cardSellCar.setOnClickListener(v -> showPostCarForm());
 
         updateSelectedCategory();
+    }
+
+    private void setupSearchActions() {
+        updateLocationOptions();
+        tvSearchLocation.setText(selectedLocation);
+        tvSearchLocation.setOnClickListener(v -> showLocationPicker());
+        btnSearchCar.setOnClickListener(v -> performSearch());
+    }
+
+    private void showLocationPicker() {
+        if (!isAdded() || getContext() == null) return;
+
+        String[] options = locationOptions.toArray(new String[0]);
+        int checkedItem = locationOptions.indexOf(selectedLocation);
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Chọn địa điểm")
+                .setSingleChoiceItems(options, checkedItem, (dialog, which) -> {
+                    selectedLocation = locationOptions.get(which);
+                    tvSearchLocation.setText(selectedLocation);
+                    dialog.dismiss();
+                })
+                .setNegativeButton("Đóng", null)
+                .show();
+    }
+
+    private void performSearch() {
+        appliedLocation = selectedLocation;
+        showBrowseContent();
+        if (currentCategory.equals(CATEGORY_SELL)) {
+            currentCategory = CATEGORY_SALE;
+            currentTitle = "Xe đang bán";
+            updateSelectedCategory();
+        }
+        int resultCount = applyFilter();
+
+        if (isAdded() && getContext() != null) {
+            String message = appliedLocation.equals(LOCATION_ALL)
+                    ? "Tìm thấy " + resultCount + " xe"
+                    : "Tìm thấy " + resultCount + " xe tại " + appliedLocation;
+            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void updateLocationOptions() {
+        locationOptions.clear();
+        locationOptions.add(LOCATION_ALL);
+        for (String location : DEFAULT_LOCATIONS) {
+            addLocationOption(location);
+        }
+        for (Car car : allCars) {
+            addLocationOption(car.getLocation());
+        }
+
+        if (!locationOptions.contains(selectedLocation)) {
+            selectedLocation = LOCATION_ALL;
+            tvSearchLocation.setText(selectedLocation);
+        }
+    }
+
+    private void addLocationOption(String location) {
+        if (location == null || location.trim().isEmpty()) return;
+
+        String normalized = normalizeText(location);
+        for (String existing : locationOptions) {
+            if (normalizeText(existing).equals(normalized)) return;
+            // Bỏ qua các cách viết khác của cùng một thành phố (vd: "TP.HCM" vs "TP. Hồ Chí Minh")
+            if (sameCity(normalizeText(existing), normalized)) return;
+        }
+        locationOptions.add(location.trim());
+    }
+
+    private boolean sameCity(String normalizedA, String normalizedB) {
+        for (String alias : cityAliases(normalizedA)) {
+            if (normalizedB.contains(alias)) return true;
+        }
+        for (String alias : cityAliases(normalizedB)) {
+            if (normalizedA.contains(alias)) return true;
+        }
+        return false;
+    }
+
+    private List<String> cityAliases(String normalizedLocation) {
+        List<String> aliases = new ArrayList<>();
+        if (normalizedLocation.contains("ho chi minh") || normalizedLocation.contains("hcm")
+                || normalizedLocation.contains("sai gon")) {
+            aliases.add("ho chi minh");
+            aliases.add("tp.hcm");
+            aliases.add("tp hcm");
+            aliases.add("hcm");
+            aliases.add("sai gon");
+        } else if (normalizedLocation.contains("ha noi")) {
+            aliases.add("ha noi");
+        } else if (normalizedLocation.contains("da nang")) {
+            aliases.add("da nang");
+        } else if (normalizedLocation.contains("can tho")) {
+            aliases.add("can tho");
+        } else if (!normalizedLocation.isEmpty()) {
+            aliases.add(normalizedLocation);
+        }
+        return aliases;
+    }
+
+    private boolean matchesLocation(Car car) {
+        if (appliedLocation.equals(LOCATION_ALL)) return true;
+
+        String haystack = normalizeText(
+                (car.getLocation() != null ? car.getLocation() : "") + " "
+                        + (car.getInfo() != null ? car.getInfo() : ""));
+        for (String alias : cityAliases(normalizeText(appliedLocation))) {
+            if (haystack.contains(alias)) return true;
+        }
+        return false;
     }
 
     private void selectCategory(String category, String title) {
@@ -195,6 +320,7 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
                         String brand = doc.getString("brand");
                         String imageUrl = doc.getString("imageUrl");
                         String sellerId = doc.getString("sellerId"); // ← thêm dòng này
+                        String location = doc.getString("location");
                         Car car = new Car(
                                 name,
                                 price != null ? price : "",
@@ -206,9 +332,11 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
                         car.setId(doc.getId());
                         car.setImageUrl(imageUrl != null ? imageUrl : "");
                         car.setSellerId(sellerId != null ? sellerId : ""); // ← thêm dòng này
+                        car.setLocation(location != null ? location : "");
                         allCars.add(car);
                     }
                     updateBrandFilters();
+                    updateLocationOptions();
                     applyFilter();
                 })
                 .addOnFailureListener(e -> {
@@ -217,6 +345,7 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
                     allCars.clear();
                     loadSampleCars();
                     updateBrandFilters();
+                    updateLocationOptions();
                     applyFilter();
                 });
     }
@@ -228,7 +357,7 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         allCars.add(new Car("Toyota Fortuner 2023", "1.600.000đ / ngày", "TP.HCM - Có tài xế", "driver", "Toyota", android.R.drawable.ic_menu_gallery));
     }
 
-    private void applyFilter() {
+    private int applyFilter() {
         List<Car> filteredCars = new ArrayList<>();
 
         for (Car car : allCars) {
@@ -238,19 +367,24 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
                             || (currentCategory.equals(CATEGORY_RENTAL) && isRentalType(type) && !isDriverType(type))
                             || (currentCategory.equals(CATEGORY_DRIVER) && isDriverType(type));
 
-            if (matchesCategory && matchesSelectedBrand(car)) {
+            if (matchesCategory && matchesSelectedBrand(car) && matchesLocation(car)) {
                 filteredCars.add(car);
             }
         }
 
         carAdapter.updateList(filteredCars);
-        tvResultTitle.setText(currentTitle);
+        tvResultTitle.setText(appliedLocation.equals(LOCATION_ALL)
+                ? currentTitle
+                : currentTitle + " tại " + appliedLocation);
         tvCategoryCount.setText(filteredCars.size() + " tin phù hợp");
 
         boolean isEmpty = filteredCars.isEmpty();
         rvCategoryCars.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
-        tvEmptyCategory.setText("Chưa có xe trong danh mục này");
+        tvEmptyCategory.setText(appliedLocation.equals(LOCATION_ALL)
+                ? "Chưa có xe trong danh mục này"
+                : "Không có xe nào tại " + appliedLocation);
         tvEmptyCategory.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+        return filteredCars.size();
     }
 
     private void setupDefaultBrandFilters() {
