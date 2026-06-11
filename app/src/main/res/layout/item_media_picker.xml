@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Mỗi ô trong media picker grid: ảnh/video thumbnail vuông.
+    Dùng GridLayoutManager 3 cột trong RecyclerView.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="100dp"
+    android:layout_margin="1dp">
+
+    <!-- Thumbnail ảnh / frame đầu video -->
+    <ImageView
+        android:id="@+id/iv_picker_thumb"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:background="#DDDDDD" />
+
+    <!-- Overlay xanh mờ khi đã chọn -->
+    <View
+        android:id="@+id/view_picker_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#441976D2"
+        android:visibility="gone" />
+
+    <!-- Icon play giữa ô (chỉ hiện khi video) -->
+    <ImageView
+        android:id="@+id/iv_picker_play"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="center"
+        android:src="@android:drawable/ic_media_play"
+        android:background="#88000000"
+        android:padding="5dp"
+        android:visibility="gone" />
+
+    <!-- Duration video góc dưới phải -->
+    <TextView
+        android:id="@+id/tv_picker_duration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="4dp"
+        android:background="#88000000"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
+        android:paddingTop="1dp"
+        android:paddingBottom="1dp"
+        android:textColor="#FFFFFF"
+        android:textSize="11sp"
+        android:visibility="gone" />
+
+    <!-- Số thứ tự chọn góc trên phải -->
+    <TextView
+        android:id="@+id/tv_picker_order"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="4dp"
+        android:background="#FF1976D2"
+        android:gravity="center"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+</FrameLayout>

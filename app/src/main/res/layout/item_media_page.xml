@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mỗi trang trong ViewPager2 của FullscreenMediaActivity -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- Ảnh với pinch-to-zoom -->
+    <com.github.chrisbanes.photoview.PhotoView
+        android:id="@+id/photo_view_page"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitCenter"
+        android:visibility="gone" />
+
+    <!-- Video player -->
+    <VideoView
+        android:id="@+id/video_view_page"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+    <!-- Loading khi buffer video -->
+    <ProgressBar
+        android:id="@+id/progress_page"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="center"
+        android:indeterminateTint="#FFFFFF"
+        android:visibility="gone" />
+
+    <!-- Nút play lớn ở giữa (trước khi bấm phát) -->
+    <ImageView
+        android:id="@+id/iv_play_page"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_gravity="center"
+        android:background="#88000000"
+        android:padding="18dp"
+        android:src="@android:drawable/ic_media_play"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone" />
+
+</FrameLayout>
