@@ -33,13 +33,25 @@
                 android:tint="#1A1A2E" />
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
+                android:layout_weight="1"
                 android:text="Trang chủ"
                 android:textColor="#1A1A2E"
                 android:textSize="18sp"
                 android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/btn_menu_detail"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Tùy chọn bài viết"
+                android:padding="9dp"
+                android:src="@drawable/ic_menu_bars"
+                android:tint="#1A1A2E"
+                android:visibility="gone" />
         </LinearLayout>
 
         <FrameLayout

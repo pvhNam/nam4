@@ -62,7 +62,6 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
     private TextView tvEmptyCategory;
     private LinearLayout layoutCategoryBrowseContent;
     private LinearLayout layoutBrandFilters;
-    private LinearLayout cardSearchForm;
     private FrameLayout postCarFragmentContainer;
     private RecyclerView rvCategoryCars;
 
@@ -97,7 +96,6 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         tvEmptyCategory = view.findViewById(R.id.tv_empty_category);
         layoutCategoryBrowseContent = view.findViewById(R.id.layout_category_browse_content);
         layoutBrandFilters = view.findViewById(R.id.layout_brand_filters);
-        cardSearchForm = view.findViewById(R.id.card_search_form);
         postCarFragmentContainer = view.findViewById(R.id.post_car_fragment_container);
         rvCategoryCars = view.findViewById(R.id.rv_category_cars);
 
@@ -111,7 +109,6 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
             startActivity(intent);
         });
         rvCategoryCars.setAdapter(carAdapter);
-        setupSearchFormCollapse();
 
         TextView btnSearchCar = view.findViewById(R.id.btn_search_car);
         if (btnSearchCar != null) {
@@ -210,6 +207,7 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
                     for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
                         String name = doc.getString("name");
                         if (name == null || name.trim().isEmpty()) continue;
+                        if ("hidden".equals(doc.getString("status"))) continue; // chủ bài đã ẩn
 
                         String price = doc.getString("price");
                         String info = doc.getString("info");
@@ -248,32 +246,6 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         allCars.add(new Car("Kia Morning 2021", "320.000.000 VNĐ", "Hà Nội - 2021 - Số sàn", "sale", "Kia", android.R.drawable.ic_menu_gallery));
         allCars.add(new Car("Hyundai Accent 2022", "800.000đ / ngày", "Quận 1, TP.HCM - Tự lái", "rental", "Hyundai", android.R.drawable.ic_menu_gallery));
         allCars.add(new Car("Toyota Fortuner 2023", "1.600.000đ / ngày", "TP.HCM - Có tài xế", "driver", "Toyota", android.R.drawable.ic_menu_gallery));
-    }
-
-    /**
-     * Lướt danh sách xe lên thì thu gọn form tìm kiếm để xem được nhiều xe hơn,
-     * kéo xuống lại (hoặc về đầu danh sách) thì form hiện trở lại.
-     */
-    private void setupSearchFormCollapse() {
-        rvCategoryCars.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                if (dy > 4) {
-                    setSearchFormVisible(false);
-                } else if (dy < -4 || !recyclerView.canScrollVertically(-1)) {
-                    setSearchFormVisible(true);
-                }
-            }
-        });
-    }
-
-    private void setSearchFormVisible(boolean visible) {
-        if (cardSearchForm == null) return;
-        boolean currentlyVisible = cardSearchForm.getVisibility() == View.VISIBLE;
-        if (currentlyVisible == visible) return;
-        androidx.transition.TransitionManager.beginDelayedTransition(
-                layoutCategoryBrowseContent, new androidx.transition.AutoTransition());
-        cardSearchForm.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
     /** Nút "Tìm xe": áp dụng bộ lọc hiện tại (loại xe + hãng + khu vực) và cuộn về đầu kết quả. */

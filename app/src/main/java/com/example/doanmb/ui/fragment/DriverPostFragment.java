@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
@@ -39,19 +40,19 @@ public class DriverPostFragment extends Fragment {
 
     private RadioGroup rgPostType;
     private EditText etTitle, etCarType, etPrice, etLocation, etInfo;
-    private ImageView ivPreview;
+    private View scrollPreviews;
+    private LinearLayout layoutPreviews;
     private Button btnPickImage, btnSubmit;
 
-    private Uri selectedImage;
+    private final List<Uri> selectedImages = new ArrayList<>();
     private FirebaseFirestore db;
     private String uid;
 
     private final ActivityResultLauncher<String> pickImageLauncher =
-            registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-                if (uri == null || !isAdded()) return;
-                selectedImage = uri;
-                ivPreview.setVisibility(View.VISIBLE);
-                Glide.with(this).load(uri).into(ivPreview);
+            registerForActivityResult(new ActivityResultContracts.GetMultipleContents(), uris -> {
+                if (uris == null || uris.isEmpty() || !isAdded()) return;
+                selectedImages.addAll(uris);
+                renderPreviews();
             });
 
     @Nullable
@@ -69,7 +70,8 @@ public class DriverPostFragment extends Fragment {
         etPrice = view.findViewById(R.id.et_post_price);
         etLocation = view.findViewById(R.id.et_post_location);
         etInfo = view.findViewById(R.id.et_post_info);
-        ivPreview = view.findViewById(R.id.iv_post_preview);
+        scrollPreviews = view.findViewById(R.id.scroll_post_previews);
+        layoutPreviews = view.findViewById(R.id.layout_post_previews);
         btnPickImage = view.findViewById(R.id.btn_post_pick_image);
         btnSubmit = view.findViewById(R.id.btn_post_submit);
 
@@ -83,6 +85,34 @@ public class DriverPostFragment extends Fragment {
 
         prefillCarType();
         return view;
+    }
+
+    /** Vẽ lại dải ảnh đã chọn; bấm vào một ảnh để bỏ ảnh đó. */
+    private void renderPreviews() {
+        if (layoutPreviews == null) return;
+        layoutPreviews.removeAllViews();
+        scrollPreviews.setVisibility(selectedImages.isEmpty() ? View.GONE : View.VISIBLE);
+
+        int size = dp(110);
+        int margin = dp(6);
+        for (Uri uri : selectedImages) {
+            ImageView iv = new ImageView(requireContext());
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(size, size);
+            lp.setMarginEnd(margin);
+            iv.setLayoutParams(lp);
+            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            iv.setBackgroundColor(0xFFEEEEEE);
+            Glide.with(this).load(uri).into(iv);
+            iv.setOnClickListener(v -> {
+                selectedImages.remove(uri);
+                renderPreviews();
+            });
+            layoutPreviews.addView(iv);
+        }
+    }
+
+    private int dp(int value) {
+        return (int) (value * getResources().getDisplayMetrics().density + 0.5f);
     }
 
     /** Điền sẵn loại xe từ hồ sơ tài xế cho đỡ phải gõ lại. */
@@ -113,12 +143,13 @@ public class DriverPostFragment extends Fragment {
         btnSubmit.setEnabled(false);
         btnSubmit.setText("Đang đăng...");
 
-        if (selectedImage != null) {
-            CloudinaryHelper.uploadImage(requireContext().getApplicationContext(), selectedImage,
-                    new CloudinaryHelper.OnUploadCallback() {
+        if (!selectedImages.isEmpty()) {
+            CloudinaryHelper.uploadImages(requireContext().getApplicationContext(),
+                    new ArrayList<>(selectedImages),
+                    new CloudinaryHelper.OnMultiUploadCallback() {
                         @Override
-                        public void onSuccess(String imageUrl) {
-                            savePost(title, price, imageUrl);
+                        public void onSuccess(List<String> imageUrls) {
+                            savePost(title, price, imageUrls);
                         }
 
                         @Override
@@ -129,11 +160,11 @@ public class DriverPostFragment extends Fragment {
                         }
                     });
         } else {
-            savePost(title, price, "");
+            savePost(title, price, new ArrayList<>());
         }
     }
 
-    private void savePost(String title, String price, String imageUrl) {
+    private void savePost(String title, String price, List<String> imageUrls) {
         boolean withCar = rgPostType.getCheckedRadioButtonId() == R.id.rb_with_car;
         String carType = etCarType.getText().toString().trim();
         String location = etLocation.getText().toString().trim();
@@ -151,8 +182,7 @@ public class DriverPostFragment extends Fragment {
                     String sellerName = doc.getString("name");
                     String sellerPhone = doc.getString("phone");
 
-                    List<String> imageUrls = new ArrayList<>();
-                    if (!imageUrl.isEmpty()) imageUrls.add(imageUrl);
+                    String coverUrl = imageUrls.isEmpty() ? "" : imageUrls.get(0);
 
                     Map<String, Object> post = new HashMap<>();
                     post.put("name", title);
@@ -162,7 +192,7 @@ public class DriverPostFragment extends Fragment {
                     post.put("brand", "");
                     post.put("location", location);
                     post.put("status", "pending");
-                    post.put("imageUrl", imageUrl);
+                    post.put("imageUrl", coverUrl);
                     post.put("imageUrls", imageUrls);
                     post.put("userId", uid);
                     post.put("sellerId", uid);
@@ -194,9 +224,8 @@ public class DriverPostFragment extends Fragment {
         etPrice.setText("");
         etLocation.setText("");
         etInfo.setText("");
-        selectedImage = null;
-        ivPreview.setImageDrawable(null);
-        ivPreview.setVisibility(View.GONE);
+        selectedImages.clear();
+        renderPreviews();
         resetButton();
     }
 

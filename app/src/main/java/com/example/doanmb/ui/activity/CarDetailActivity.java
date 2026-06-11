@@ -55,10 +55,13 @@ public class CarDetailActivity extends AppCompatActivity {
     private Button btnSendRentRequest, btnCallRentSeller, btnChatRentSeller;
 
     private TextView tvReportCar;
+    private ImageView btnMenuDetail;
     private FirebaseFirestore db;
     private String sellerPhone = "";
     private Car car;
     private String carId, sellerId, carType;
+    private String carStatus = "";
+    private String statusBeforeHide = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,6 +134,7 @@ public class CarDetailActivity extends AppCompatActivity {
         tvSellerPhone = findViewById(R.id.tvSellerPhone);
         tvReportCar = findViewById(R.id.tv_report_car);
         tvOwnerNote = findViewById(R.id.tvOwnerNote);
+        btnMenuDetail = findViewById(R.id.btn_menu_detail);
 
         layoutBuyForm = findViewById(R.id.layoutBuyForm);
         etBuyerNote = findViewById(R.id.etBuyerNote);
@@ -305,6 +309,10 @@ public class CarDetailActivity extends AppCompatActivity {
                     String imageUrl  = doc.getString("imageUrl");
 
                     if (type != null) carType = type;
+                    String status = doc.getString("status");
+                    carStatus = status != null ? status : "";
+                    String prevStatus = doc.getString("statusBeforeHide");
+                    statusBeforeHide = prevStatus != null ? prevStatus : "";
 
                     List<String> imgs = extractImageUrls(doc.get("imageUrls"));
                     if (imgs.isEmpty() && imageUrl != null && !imageUrl.isEmpty()) {
@@ -361,9 +369,14 @@ public class CarDetailActivity extends AppCompatActivity {
             tvCarTypeBadge.setText("rental".equals(type) ? "Cho Thuê" : "Cần Bán");
             tvCarTypeBadge.setBackgroundColor("rental".equals(type) ? 0xFF1976D2 : 0xFF4CAF50);
             if (tvOwnerNote != null) tvOwnerNote.setVisibility(View.VISIBLE);
+            if (btnMenuDetail != null) {
+                btnMenuDetail.setVisibility(View.VISIBLE);
+                btnMenuDetail.setOnClickListener(v -> showOwnerMenu());
+            }
             return;
         }
 
+        if (btnMenuDetail != null) btnMenuDetail.setVisibility(View.GONE);
         if (tvOwnerNote != null) tvOwnerNote.setVisibility(View.GONE);
         if (tvReportCar != null) {
             tvReportCar.setVisibility(View.VISIBLE);
@@ -381,6 +394,126 @@ public class CarDetailActivity extends AppCompatActivity {
             layoutBuyForm.setVisibility(View.VISIBLE);
             layoutRentForm.setVisibility(View.GONE);
         }
+    }
+
+    /** Menu 3 gạch (chỉ chủ bài đăng): chỉnh sửa, ẩn/hiện, xóa bài viết. */
+    private void showOwnerMenu() {
+        boolean isHidden = "hidden".equals(carStatus);
+        androidx.appcompat.widget.PopupMenu menu =
+                new androidx.appcompat.widget.PopupMenu(this, btnMenuDetail);
+        menu.getMenu().add(0, 1, 0, "✏️  Chỉnh sửa bài viết");
+        menu.getMenu().add(0, 2, 1, isHidden ? "👁  Hiện bài viết" : "🙈  Ẩn bài viết");
+        menu.getMenu().add(0, 3, 2, "🗑  Xóa bài viết");
+        menu.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case 1: showEditPostDialog(); return true;
+                case 2: toggleHidePost();     return true;
+                case 3: confirmDeletePost();  return true;
+                default: return false;
+            }
+        });
+        menu.show();
+    }
+
+    private void showEditPostDialog() {
+        if (carId == null || carId.isEmpty()) return;
+
+        int pad = Math.round(20 * getResources().getDisplayMetrics().density);
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(pad, pad / 2, pad, 0);
+
+        final EditText etName = new EditText(this);
+        etName.setHint("Tiêu đề tin");
+        etName.setText(tvCarName.getText());
+        layout.addView(etName);
+
+        final EditText etPrice = new EditText(this);
+        etPrice.setHint("Giá");
+        etPrice.setText(tvCarPrice.getText());
+        layout.addView(etPrice);
+
+        final EditText etInfo = new EditText(this);
+        etInfo.setHint("Thông tin / mô tả");
+        etInfo.setText(tvCarInfo.getText());
+        layout.addView(etInfo);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Chỉnh sửa bài viết")
+                .setView(layout)
+                .setPositiveButton("Lưu", (dialog, which) -> {
+                    String name = etName.getText().toString().trim();
+                    String price = etPrice.getText().toString().trim();
+                    String info = etInfo.getText().toString().trim();
+                    if (name.isEmpty() || price.isEmpty()) {
+                        Toast.makeText(this, "Tiêu đề và giá không được để trống!", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    Map<String, Object> update = new HashMap<>();
+                    update.put("name", name);
+                    update.put("price", price);
+                    update.put("info", info);
+                    db.collection("cars").document(carId).update(update)
+                            .addOnSuccessListener(aVoid -> {
+                                tvCarName.setText(name);
+                                tvCarPrice.setText(price);
+                                tvCarInfo.setText(info);
+                                Toast.makeText(this, "✅ Đã cập nhật bài viết!", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e ->
+                                    Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
+    /** Ẩn bài: status = "hidden" (các danh sách bỏ qua); hiện lại: trả về trạng thái trước khi ẩn. */
+    private void toggleHidePost() {
+        if (carId == null || carId.isEmpty()) return;
+
+        boolean isHidden = "hidden".equals(carStatus);
+        Map<String, Object> update = new HashMap<>();
+        if (isHidden) {
+            String restored = statusBeforeHide.isEmpty() ? "approved" : statusBeforeHide;
+            update.put("status", restored);
+            update.put("statusBeforeHide", com.google.firebase.firestore.FieldValue.delete());
+            db.collection("cars").document(carId).update(update)
+                    .addOnSuccessListener(aVoid -> {
+                        carStatus = restored;
+                        statusBeforeHide = "";
+                        Toast.makeText(this, "✅ Bài viết đã hiển thị trở lại!", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+        } else {
+            update.put("status", "hidden");
+            update.put("statusBeforeHide", carStatus);
+            db.collection("cars").document(carId).update(update)
+                    .addOnSuccessListener(aVoid -> {
+                        statusBeforeHide = carStatus;
+                        carStatus = "hidden";
+                        Toast.makeText(this, "🙈 Đã ẩn bài viết khỏi danh sách!", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e ->
+                            Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+        }
+    }
+
+    private void confirmDeletePost() {
+        if (carId == null || carId.isEmpty()) return;
+        new AlertDialog.Builder(this)
+                .setTitle("Xóa bài viết")
+                .setMessage("Bạn có chắc muốn xóa bài viết này? Hành động không thể hoàn tác.")
+                .setPositiveButton("Xóa", (dialog, which) ->
+                        db.collection("cars").document(carId).delete()
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(this, "🗑 Đã xóa bài viết!", Toast.LENGTH_LONG).show();
+                                    finish();
+                                })
+                                .addOnFailureListener(e ->
+                                        Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show()))
+                .setNegativeButton("Hủy", null)
+                .show();
     }
 
     private void sendBuyRequest() {
