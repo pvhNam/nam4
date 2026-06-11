@@ -7,15 +7,19 @@
     android:background="@color/color_background"
     android:fitsSystemWindows="true">
 
-    <!-- ── Header ── -->
+    <!-- ══════════════════════════════════════════════════════════════
+         HEADER  (tên đối phương + icon tìm kiếm + menu)
+    ══════════════════════════════════════════════════════════════ -->
     <LinearLayout
         android:id="@+id/layout_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#1976D2"
         android:orientation="vertical"
-        android:elevation="4dp">
+        android:elevation="4dp"
+        android:layout_alignParentTop="true">
 
+        <!-- Hàng chính: back | tên | search-icon + menu -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
@@ -41,16 +45,106 @@
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
-            <ImageButton
-                android:id="@+id/btn_menu_more"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_more"
-                app:tint="#FFFFFF" />
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/btn_search_toggle"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_menu_search"
+                    app:tint="#FFFFFF" />
+
+                <ImageButton
+                    android:id="@+id/btn_menu_more"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_menu_more"
+                    app:tint="#FFFFFF" />
+            </LinearLayout>
         </RelativeLayout>
+
+        <!-- Thanh tìm kiếm tin nhắn trong đoạn chat (ẩn mặc định) -->
+        <LinearLayout
+            android:id="@+id/layout_search_bar"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="#1565C0"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="8dp"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/et_search_messages"
+                android:layout_width="0dp"
+                android:layout_height="38dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_search"
+                android:hint="Tìm tên hoặc nội dung tin nhắn..."
+                android:textColorHint="#80FFFFFF"
+                android:textColor="#1A1A2E"
+                android:textSize="14sp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:singleLine="true" />
+
+            <ImageButton
+                android:id="@+id/btn_search_close"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                app:tint="#FFFFFF" />
+        </LinearLayout>
+
+        <!-- Thanh điều hướng kết quả tìm kiếm (ẩn mặc định) -->
+        <LinearLayout
+            android:id="@+id/layout_search_nav"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:background="#0D47A1"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="4dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tv_search_result_info"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="0 kết quả"
+                android:textColor="#BBDEFB"
+                android:textSize="13sp" />
+
+            <ImageButton
+                android:id="@+id/btn_search_prev"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/arrow_up_float"
+                app:tint="#FFFFFF" />
+
+            <ImageButton
+                android:id="@+id/btn_search_next"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/arrow_down_float"
+                app:tint="#FFFFFF" />
+        </LinearLayout>
 
         <!-- Car info widget -->
         <androidx.cardview.widget.CardView
@@ -117,7 +211,31 @@
         </androidx.cardview.widget.CardView>
     </LinearLayout>
 
-    <!-- ── Media Picker Panel ── -->
+    <!-- ══════════════════════════════════════════════════════════════
+         BANNER BỊ CHẶN — đặt DƯỚI header, TRÊN rv_messages
+         rv_messages sẽ layout_below banner này
+    ══════════════════════════════════════════════════════════════ -->
+    <TextView
+        android:id="@+id/tv_blocked_banner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layout_header"
+        android:background="#FFCDD2"
+        android:gravity="center"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:text="🚫 Bạn đã bị chặn bởi người này. Không thể gửi tin nhắn."
+        android:textColor="#C62828"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:elevation="3dp"
+        android:visibility="gone" />
+
+    <!-- ══════════════════════════════════════════════════════════════
+         MEDIA PICKER PANEL  (từ dưới lên)
+    ══════════════════════════════════════════════════════════════ -->
     <LinearLayout
         android:id="@+id/layout_media_picker"
         android:layout_width="match_parent"
@@ -128,7 +246,6 @@
         android:orientation="vertical"
         android:visibility="gone">
 
-        <!-- Header bar: icon ảnh | icon video | spacer | icon đóng -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="52dp"
@@ -136,7 +253,6 @@
             android:paddingStart="8dp"
             android:paddingEnd="8dp">
 
-            <!-- Nút chọn ảnh (icon send_pic) -->
             <LinearLayout
                 android:id="@+id/btn_picker_image"
                 android:layout_width="wrap_content"
@@ -165,7 +281,6 @@
                     android:visibility="visible" />
             </LinearLayout>
 
-            <!-- Nút chọn video (icon video_content) -->
             <LinearLayout
                 android:id="@+id/btn_picker_video"
                 android:layout_width="wrap_content"
@@ -196,7 +311,6 @@
                     android:visibility="invisible" />
             </LinearLayout>
 
-            <!-- Nút đóng (icon ic_cross_bl) ở bên phải -->
             <ImageView
                 android:id="@+id/tv_picker_close"
                 android:layout_width="32dp"
@@ -217,7 +331,6 @@
             android:layout_weight="1"
             android:clipToPadding="false" />
 
-        <!-- Nút gửi: ẩn khi chưa chọn, hiện + đổi text theo số lượng -->
         <Button
             android:id="@+id/btn_picker_send"
             android:layout_width="match_parent"
@@ -234,10 +347,11 @@
             android:visibility="gone"
             android:clickable="true"
             android:focusable="true" />
-
     </LinearLayout>
 
-    <!-- ── Input area (bottom) ── -->
+    <!-- ══════════════════════════════════════════════════════════════
+         INPUT AREA  (phía trên media picker)
+    ══════════════════════════════════════════════════════════════ -->
     <LinearLayout
         android:id="@+id/layout_input_area"
         android:layout_width="match_parent"
@@ -248,7 +362,6 @@
         android:elevation="8dp"
         android:orientation="vertical">
 
-        <!-- Media preview strip -->
         <HorizontalScrollView
             android:id="@+id/scroll_image_preview"
             android:layout_width="match_parent"
@@ -268,7 +381,6 @@
                 android:gravity="center_vertical" />
         </HorizontalScrollView>
 
-        <!-- Input row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -309,17 +421,22 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- ── Messages list ── -->
+    <!-- ══════════════════════════════════════════════════════════════
+         DANH SÁCH TIN NHẮN
+         layout_below="@id/tv_blocked_banner" → banner luôn hiện trước
+    ══════════════════════════════════════════════════════════════ -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_messages"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/layout_input_area"
-        android:layout_below="@id/layout_header"
+        android:layout_below="@id/tv_blocked_banner"
         android:clipToPadding="false"
         android:padding="12dp" />
 
-    <!-- ── Loading overlay ── -->
+    <!-- ══════════════════════════════════════════════════════════════
+         LOADING OVERLAY
+    ══════════════════════════════════════════════════════════════ -->
     <FrameLayout
         android:id="@+id/layout_loading"
         android:layout_width="match_parent"

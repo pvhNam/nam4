@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -42,45 +44,59 @@ import com.google.firebase.firestore.WriteBatch;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class ChatDetailActivity extends AppCompatActivity {
 
     private String roomId, currentUserId, partnerId, partnerName;
     private Car carData;
-    private boolean isBlocked = false;
+
+    // ── Trạng thái chặn (2 chiều) ────────────────────────────────────────────
+    private boolean iBlockedPartner  = false;   // tôi chặn đối phương
+    private boolean partnerBlockedMe = false;   // đối phương chặn tôi
 
     private FirebaseFirestore db;
     private ListenerRegistration chatListener;
+    private ListenerRegistration blockListenerMine, blockListenerPartner;
 
-    // Views
+    // ── Views cơ bản ──────────────────────────────────────────────────────────
     private RecyclerView rvMessages;
-    private ChatAdapter chatAdapter;
-    private EditText etMessage;
-    private ImageButton btnSend, btnBack, btnAddMedia;
-    private View layoutLoading, rootLayout;
-    private ImageView ivCar;
-    private TextView tvPartnerName, tvCarName, tvCarPrice;
-    private Button btnViewPost;
+    private ChatAdapter  chatAdapter;
+    private EditText     etMessage;
+    private ImageButton  btnSend, btnBack, btnAddMedia;
+    private View         layoutLoading, rootLayout;
+    private ImageView    ivCar;
+    private TextView     tvPartnerName, tvCarName, tvCarPrice;
+    private TextView     tvBlockedBanner;
+    private Button       btnViewPost;
 
-    // Media picker panel
+    // ── Search views ──────────────────────────────────────────────────────────
+    private ImageButton  btnSearchToggle, btnSearchClose, btnSearchPrev, btnSearchNext;
+    private EditText     etSearchMessages;
+    private LinearLayout layoutSearchBar, layoutSearchNav;
+    private TextView     tvSearchResultInfo;
+
+    // ── Search state ──────────────────────────────────────────────────────────
+    private final List<ChatMessage> allMessages      = new ArrayList<>();
+    private final List<Integer>     searchPositions  = new ArrayList<>();
+    private int currentSearchIdx = -1;
+
+    // ── Media picker ──────────────────────────────────────────────────────────
     private LinearLayout layoutMediaPicker;
-    private ImageView tvPickerClose;
+    private ImageView    tvPickerClose;
     private RecyclerView rvMediaPicker;
-    private Button btnPickerSend;
+    private Button       btnPickerSend;
     private MediaPickerAdapter mediaPickerAdapter;
     private boolean isPickerOpen = false;
 
-    // Tab switching trong picker: IMAGE hoặc VIDEO
     private LinearLayout btnPickerImage, btnPickerVideo;
-    private ImageView ivTabImage, ivTabVideo;
-    private View indicatorImage, indicatorVideo;
-    private boolean isVideoMode = false; // false = ảnh, true = video
+    private ImageView    ivTabImage, ivTabVideo;
+    private View         indicatorImage, indicatorVideo;
+    private boolean      isVideoMode = false;
 
-    // Media đã chọn để gửi (ảnh + video cộng gộp)
     private final List<MediaPickerAdapter.MediaItem> pendingMedia = new ArrayList<>();
 
-    // Permission launcher
     private final ActivityResultLauncher<String[]> permissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                 boolean granted = false;
@@ -89,6 +105,9 @@ public class ChatDetailActivity extends AppCompatActivity {
                 else Toast.makeText(this, "Cần quyền truy cập thư viện!", Toast.LENGTH_SHORT).show();
             });
 
+    // ══════════════════════════════════════════════════════════════════════════
+    //  onCreate
+    // ══════════════════════════════════════════════════════════════════════════
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -108,13 +127,15 @@ public class ChatDetailActivity extends AppCompatActivity {
         initViews();
         setupChat();
         setupMediaPicker();
+        setupSearch();
         listenForMessages();
         updateReadStatus();
-        checkBlockStatus();
+        listenForBlockStatus(); // thay checkBlockStatus cũ
     }
 
-    // ── Init Views ───────────────────────────────────────────────────────────
-
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Init Views
+    // ══════════════════════════════════════════════════════════════════════════
     private void initViews() {
         rootLayout        = findViewById(R.id.root_layout);
         rvMessages        = findViewById(R.id.rv_messages);
@@ -128,19 +149,31 @@ public class ChatDetailActivity extends AppCompatActivity {
         tvCarName         = findViewById(R.id.tv_car_name);
         tvCarPrice        = findViewById(R.id.tv_car_price);
         btnViewPost       = findViewById(R.id.btn_view_post);
+        tvBlockedBanner   = findViewById(R.id.tv_blocked_banner);
         layoutMediaPicker = findViewById(R.id.layout_media_picker);
         tvPickerClose     = findViewById(R.id.tv_picker_close);
         rvMediaPicker     = findViewById(R.id.rv_media_picker);
         btnPickerSend     = findViewById(R.id.btn_picker_send);
 
-        // Tab icons
-        btnPickerImage  = findViewById(R.id.btn_picker_image);
-        btnPickerVideo  = findViewById(R.id.btn_picker_video);
-        ivTabImage      = findViewById(R.id.iv_tab_image);
-        ivTabVideo      = findViewById(R.id.iv_tab_video);
-        indicatorImage  = findViewById(R.id.indicator_image);
-        indicatorVideo  = findViewById(R.id.indicator_video);
+        // Search
+        btnSearchToggle   = findViewById(R.id.btn_search_toggle);
+        btnSearchClose    = findViewById(R.id.btn_search_close);
+        btnSearchPrev     = findViewById(R.id.btn_search_prev);
+        btnSearchNext     = findViewById(R.id.btn_search_next);
+        etSearchMessages  = findViewById(R.id.et_search_messages);
+        layoutSearchBar   = findViewById(R.id.layout_search_bar);
+        layoutSearchNav   = findViewById(R.id.layout_search_nav);
+        tvSearchResultInfo = findViewById(R.id.tv_search_result_info);
 
+        // Picker tabs
+        btnPickerImage = findViewById(R.id.btn_picker_image);
+        btnPickerVideo = findViewById(R.id.btn_picker_video);
+        ivTabImage     = findViewById(R.id.iv_tab_image);
+        ivTabVideo     = findViewById(R.id.iv_tab_video);
+        indicatorImage = findViewById(R.id.indicator_image);
+        indicatorVideo = findViewById(R.id.indicator_video);
+
+        // ── Gán dữ liệu cơ bản ────────────────────────────────────────────
         tvPartnerName.setText(partnerName != null ? partnerName : "Người dùng");
         if (carData != null) {
             tvCarName.setText(carData.getName());
@@ -149,39 +182,23 @@ public class ChatDetailActivity extends AppCompatActivity {
                     .placeholder(R.drawable.ic_buy_car).into(ivCar);
         }
 
+        // ── Listeners ─────────────────────────────────────────────────────
         btnBack.setOnClickListener(v -> finish());
         btnSend.setOnClickListener(v -> handleSendMessage());
 
-        // Nút thêm media ở thanh nhập: mở picker ở tab ảnh (mặc định)
         btnAddMedia.setOnClickListener(v -> {
-            if (isBlocked) return;
-            if (isPickerOpen) {
-                closeMediaPicker();
-            } else {
-                isVideoMode = false;
-                checkPermissionAndOpen();
-            }
+            if (isAnyoneBlocked()) return;
+            if (isPickerOpen) closeMediaPicker();
+            else { isVideoMode = false; checkPermissionAndOpen(); }
         });
 
-        // Tab ảnh
         btnPickerImage.setOnClickListener(v -> {
-            if (isVideoMode) {
-                isVideoMode = false;
-                applyTabStyle();
-                reloadPickerContent();
-            }
+            if (isVideoMode) { isVideoMode = false; applyTabStyle(); reloadPickerContent(); }
         });
-
-        // Tab video
         btnPickerVideo.setOnClickListener(v -> {
-            if (!isVideoMode) {
-                isVideoMode = true;
-                applyTabStyle();
-                reloadPickerContent();
-            }
+            if (!isVideoMode) { isVideoMode = true; applyTabStyle(); reloadPickerContent(); }
         });
 
-        // Nút đóng (X): reset tất cả selection rồi đóng picker
         if (tvPickerClose != null) {
             tvPickerClose.setOnClickListener(v -> {
                 pendingMedia.clear();
@@ -192,10 +209,10 @@ public class ChatDetailActivity extends AppCompatActivity {
             });
         }
 
-        etMessage.addTextChangedListener(new android.text.TextWatcher() {
+        etMessage.addTextChangedListener(new TextWatcher() {
             @Override public void onTextChanged(CharSequence s, int i, int b, int c) { updateSendButtonState(); }
             @Override public void beforeTextChanged(CharSequence s, int i, int c, int a) {}
-            @Override public void afterTextChanged(android.text.Editable s) {}
+            @Override public void afterTextChanged(Editable s) {}
         });
 
         rootLayout.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
@@ -218,138 +235,219 @@ public class ChatDetailActivity extends AppCompatActivity {
         findViewById(R.id.btn_menu_more).setOnClickListener(this::showPopupMenu);
     }
 
-    // ── Áp dụng style cho 2 tab icon ─────────────────────────────────────────
-
-    private void applyTabStyle() {
-        if (isVideoMode) {
-            // Video tab active
-            ivTabImage.setAlpha(0.45f);
-            indicatorImage.setVisibility(View.INVISIBLE);
-            ivTabVideo.setAlpha(1.0f);
-            indicatorVideo.setVisibility(View.VISIBLE);
-        } else {
-            // Image tab active
-            ivTabImage.setAlpha(1.0f);
-            indicatorImage.setVisibility(View.VISIBLE);
-            ivTabVideo.setAlpha(0.45f);
-            indicatorVideo.setVisibility(View.INVISIBLE);
-        }
-    }
-
-    // ── Reload nội dung picker theo tab hiện tại ─────────────────────────────
-
-    private void reloadPickerContent() {
-        if (mediaPickerAdapter == null) return;
-        new Thread(() -> {
-            mediaPickerAdapter.loadFromDevice(this, isVideoMode);
-            runOnUiThread(() -> {
-                if (!isFinishing() && !isDestroyed()) {
-                    mediaPickerAdapter.notifyDataSetChanged();
-                }
-            });
-        }).start();
-    }
-
-    // ── Media Picker ─────────────────────────────────────────────────────────
-
-    private void setupMediaPicker() {
-        if (rvMediaPicker == null) return;
-        mediaPickerAdapter = new MediaPickerAdapter();
-        rvMediaPicker.setLayoutManager(new GridLayoutManager(this, 3));
-        rvMediaPicker.setAdapter(mediaPickerAdapter);
-
-        mediaPickerAdapter.setOnMediaSelectedListener(selected -> {
-            // Cập nhật pendingMedia: giữ item từ tab kia, cộng thêm item từ tab hiện tại
-            // Xoá các item cùng loại (ảnh hoặc video) với tab hiện tại khỏi pending
-            List<MediaPickerAdapter.MediaItem> toKeep = new ArrayList<>();
-            for (MediaPickerAdapter.MediaItem item : pendingMedia) {
-                if (item.isVideo != isVideoMode) {
-                    toKeep.add(item); // giữ lại item từ tab kia
-                }
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Tìm kiếm tin nhắn + tên
+    // ══════════════════════════════════════════════════════════════════════════
+    private void setupSearch() {
+        // Bật/tắt thanh tìm kiếm
+        btnSearchToggle.setOnClickListener(v -> {
+            if (layoutSearchBar.getVisibility() == View.VISIBLE) {
+                closeSearch();
+            } else {
+                layoutSearchBar.setVisibility(View.VISIBLE);
+                etSearchMessages.requestFocus();
             }
-            pendingMedia.clear();
-            pendingMedia.addAll(toKeep);
-            pendingMedia.addAll(selected);
-
-            updatePickerSendButton();
-            updateSendButtonState();
         });
 
-        // Bấm nút Gửi N trong picker → gửi và đóng picker
-        if (btnPickerSend != null) {
-            btnPickerSend.setOnClickListener(v -> {
-                if (!pendingMedia.isEmpty()) {
-                    handleSendMessage();
-                }
-                closeMediaPicker();
-            });
-        }
-    }
+        btnSearchClose.setOnClickListener(v -> closeSearch());
 
-    private void updatePickerSendButton() {
-        if (btnPickerSend == null) return;
-        int total = pendingMedia.size();
-        if (total > 0) {
-            btnPickerSend.setVisibility(View.VISIBLE);
-            btnPickerSend.setText("Gửi " + total);
-        } else {
-            btnPickerSend.setVisibility(View.GONE);
-        }
-    }
-
-    private void checkPermissionAndOpen() {
-        boolean hasImage, hasVideo;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            hasImage = ContextCompat.checkSelfPermission(this,
-                    Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED;
-            hasVideo = ContextCompat.checkSelfPermission(this,
-                    Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED;
-            if (!hasImage || !hasVideo) {
-                permissionLauncher.launch(new String[]{
-                        Manifest.permission.READ_MEDIA_IMAGES,
-                        Manifest.permission.READ_MEDIA_VIDEO});
-                return;
+        etSearchMessages.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int i, int c, int a) {}
+            @Override public void onTextChanged(CharSequence s, int i, int b, int c) {
+                performSearch(s.toString().trim());
             }
-        } else {
-            boolean hasStorage = ContextCompat.checkSelfPermission(this,
-                    Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-            if (!hasStorage) {
-                permissionLauncher.launch(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE});
-                return;
+            @Override public void afterTextChanged(Editable s) {}
+        });
+
+        btnSearchPrev.setOnClickListener(v -> navigateSearch(-1));
+        btnSearchNext.setOnClickListener(v -> navigateSearch(+1));
+    }
+
+    /**
+     * Tìm kiếm đa năng:
+     *  1. Nếu query khớp tên đối phương → cuộn lên đầu để thấy tên trên header.
+     *  2. Tìm trong nội dung tin nhắn  → highlight + điều hướng từng kết quả.
+     */
+    private void performSearch(String query) {
+        searchPositions.clear();
+        currentSearchIdx = -1;
+
+        if (query.isEmpty()) {
+            layoutSearchNav.setVisibility(View.GONE);
+            chatAdapter.setSearchQuery("");
+            chatAdapter.notifyDataSetChanged();
+            return;
+        }
+
+        String lowerQuery = query.toLowerCase(Locale.ROOT);
+
+        // Kiểm tra tên đối phương
+        boolean nameMatch = partnerName != null
+                && partnerName.toLowerCase(Locale.ROOT).contains(lowerQuery);
+
+        // Tìm trong nội dung tin nhắn
+        for (int i = 0; i < allMessages.size(); i++) {
+            ChatMessage msg = allMessages.get(i);
+            if (msg.isRecalled()) continue;
+            String content = msg.getContent();
+            if (content != null && content.toLowerCase(Locale.ROOT).contains(lowerQuery)) {
+                searchPositions.add(i);
             }
         }
-        openMediaPicker(isVideoMode);
-    }
 
-    private void openMediaPicker(boolean videoMode) {
-        if (layoutMediaPicker == null || mediaPickerAdapter == null) return;
-        isPickerOpen = true;
-        isVideoMode = videoMode;
-        applyTabStyle();
-        layoutMediaPicker.setVisibility(View.VISIBLE);
-        new Thread(() -> {
-            mediaPickerAdapter.loadFromDevice(this, isVideoMode);
-            runOnUiThread(() -> {
-                if (!isFinishing() && !isDestroyed()) {
-                    mediaPickerAdapter.notifyDataSetChanged();
-                    scrollToBottom();
-                }
-            });
-        }).start();
-    }
+        // Highlight trong adapter
+        chatAdapter.setSearchQuery(query);
+        chatAdapter.notifyDataSetChanged();
 
-    private void closeMediaPicker() {
-        isPickerOpen = false;
-        if (layoutMediaPicker != null) {
-            layoutMediaPicker.setVisibility(View.GONE);
+        int total = searchPositions.size();
+
+        if (nameMatch && total == 0) {
+            // Chỉ khớp tên — thông báo và tô sáng tên
+            layoutSearchNav.setVisibility(View.VISIBLE);
+            tvSearchResultInfo.setText("Tên: " + partnerName);
+            tvPartnerName.setBackgroundColor(0x55FFFF00);
+        } else if (total > 0) {
+            // Có tin nhắn khớp
+            tvPartnerName.setBackgroundColor(0x00000000);
+            layoutSearchNav.setVisibility(View.VISIBLE);
+            // Bắt đầu từ kết quả cuối cùng (mới nhất)
+            currentSearchIdx = total - 1;
+            updateSearchNavUI(nameMatch ? total + " tin  |  tên: " + partnerName
+                    : String.valueOf(total) + " kết quả");
+            scrollToSearchResult(currentSearchIdx);
+        } else if (nameMatch) {
+            layoutSearchNav.setVisibility(View.VISIBLE);
+            tvSearchResultInfo.setText("Tên: " + partnerName);
+            tvPartnerName.setBackgroundColor(0x55FFFF00);
+        } else {
+            layoutSearchNav.setVisibility(View.VISIBLE);
+            tvSearchResultInfo.setText("Không tìm thấy");
         }
     }
 
-    // ── Setup Chat ───────────────────────────────────────────────────────────
+    private void navigateSearch(int direction) {
+        if (searchPositions.isEmpty()) return;
+        currentSearchIdx += direction;
+        if (currentSearchIdx < 0) currentSearchIdx = searchPositions.size() - 1;
+        if (currentSearchIdx >= searchPositions.size()) currentSearchIdx = 0;
+        updateSearchNavUI((currentSearchIdx + 1) + " / " + searchPositions.size());
+        scrollToSearchResult(currentSearchIdx);
+    }
 
+    private void updateSearchNavUI(String text) {
+        tvSearchResultInfo.setText(text);
+    }
+
+    private void scrollToSearchResult(int idx) {
+        if (idx < 0 || idx >= searchPositions.size()) return;
+        rvMessages.scrollToPosition(searchPositions.get(idx));
+    }
+
+    private void closeSearch() {
+        layoutSearchBar.setVisibility(View.GONE);
+        layoutSearchNav.setVisibility(View.GONE);
+        etSearchMessages.setText("");
+        searchPositions.clear();
+        currentSearchIdx = -1;
+        tvPartnerName.setBackgroundColor(0x00000000);
+        chatAdapter.setSearchQuery("");
+        chatAdapter.notifyDataSetChanged();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Chặn 2 chiều (real-time)
+    // ══════════════════════════════════════════════════════════════════════════
+    private void listenForBlockStatus() {
+        // Chiều 1: tôi chặn đối phương
+        blockListenerMine = db.collection("blocks")
+                .document(currentUserId + "_" + partnerId)
+                .addSnapshotListener((doc, e) -> {
+                    iBlockedPartner = doc != null && doc.exists();
+                    updateBlockUI();
+                });
+
+        // Chiều 2: đối phương chặn tôi
+        blockListenerPartner = db.collection("blocks")
+                .document(partnerId + "_" + currentUserId)
+                .addSnapshotListener((doc, e) -> {
+                    partnerBlockedMe = doc != null && doc.exists();
+                    updateBlockUI();
+                });
+    }
+
+    private void updateBlockUI() {
+        boolean blocked = isAnyoneBlocked();
+
+        if (tvBlockedBanner != null) {
+            if (partnerBlockedMe && !iBlockedPartner) {
+                tvBlockedBanner.setText("🚫 Bạn đã bị người này chặn. Không thể gửi tin nhắn.");
+                tvBlockedBanner.setVisibility(View.VISIBLE);
+            } else if (iBlockedPartner) {
+                tvBlockedBanner.setText("🚫 Bạn đang chặn người này. Hãy bỏ chặn để nhắn tin.");
+                tvBlockedBanner.setVisibility(View.VISIBLE);
+            } else {
+                tvBlockedBanner.setVisibility(View.GONE);
+            }
+        }
+
+        if (etMessage != null) {
+            etMessage.setEnabled(!blocked);
+            etMessage.setHint(blocked ? "Không thể gửi tin nhắn" : "Nhập tin nhắn...");
+        }
+        updateSendButtonState();
+        if (btnAddMedia != null) btnAddMedia.setEnabled(!blocked);
+    }
+
+    private boolean isAnyoneBlocked() {
+        return iBlockedPartner || partnerBlockedMe;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Thu hồi tin nhắn
+    // ══════════════════════════════════════════════════════════════════════════
+    private void recallMessage(String messageId, ChatMessage msg) {
+        if (!msg.getSenderId().equals(currentUserId)) return; // chỉ thu hồi tin của mình
+
+        new AlertDialog.Builder(this)
+                .setTitle("Thu hồi tin nhắn")
+                .setMessage("Tin nhắn sẽ bị thu hồi với cả hai phía và không thể hoàn tác.")
+                .setPositiveButton("Thu hồi", (d, w) ->
+                        db.collection("chat_rooms").document(roomId)
+                                .collection("messages").document(messageId)
+                                .update(
+                                        "recalled",     true,
+                                        "content",      "",
+                                        "imageUrl",     "",
+                                        "videoUrl",     "",
+                                        "thumbnailUrl", ""
+                                )
+                                .addOnSuccessListener(v ->
+                                        Toast.makeText(this, "Đã thu hồi tin nhắn",
+                                                Toast.LENGTH_SHORT).show())
+                                .addOnFailureListener(e ->
+                                        Toast.makeText(this, "Lỗi: " + e.getMessage(),
+                                                Toast.LENGTH_SHORT).show())
+                )
+                .setNegativeButton("Hủy", null)
+                .show();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Setup Chat (adapter + listeners)
+    // ══════════════════════════════════════════════════════════════════════════
     private void setupChat() {
         chatAdapter = new ChatAdapter();
-        chatAdapter.setOnMediaClickListener(msg -> openFullscreenMedia(msg));
+
+        // Mở media toàn màn hình
+        chatAdapter.setOnMediaClickListener(this::openFullscreenMedia);
+
+        // Long-press → thu hồi tin nhắn (chỉ tin của mình)
+        chatAdapter.setOnMessageLongClickListener((messageId, message) -> {
+            if (message.getSenderId().equals(currentUserId)) {
+                recallMessage(messageId, message);
+            }
+        });
+
         LinearLayoutManager lm = new LinearLayoutManager(this);
         lm.setStackFromEnd(true);
         rvMessages.setLayoutManager(lm);
@@ -358,33 +456,22 @@ public class ChatDetailActivity extends AppCompatActivity {
     }
 
     private void openFullscreenMedia(ChatMessage clickedMsg) {
-        List<ChatMessage> allMessages = new ArrayList<>();
-        for (int i = 0; i < chatAdapter.getItemCount(); i++) {
-            allMessages.add(chatAdapter.getCurrentList().get(i));
-        }
-
         ArrayList<String>  urls     = new ArrayList<>();
         ArrayList<Boolean> isVideos = new ArrayList<>();
         int startPos = 0;
 
         for (ChatMessage msg : allMessages) {
+            if (msg.isRecalled()) continue;
             if (msg.isVideo() && msg.getVideoUrl() != null && !msg.getVideoUrl().isEmpty()) {
-                if (msg == clickedMsg || (clickedMsg.getVideoUrl() != null
-                        && clickedMsg.getVideoUrl().equals(msg.getVideoUrl()))) {
-                    startPos = urls.size();
-                }
+                if (msg.getVideoUrl().equals(clickedMsg.getVideoUrl())) startPos = urls.size();
                 urls.add(msg.getVideoUrl());
                 isVideos.add(true);
             } else if (!msg.isVideo() && msg.getImageUrl() != null && !msg.getImageUrl().isEmpty()) {
-                if (msg == clickedMsg || (clickedMsg.getImageUrl() != null
-                        && clickedMsg.getImageUrl().equals(msg.getImageUrl()))) {
-                    startPos = urls.size();
-                }
+                if (msg.getImageUrl().equals(clickedMsg.getImageUrl())) startPos = urls.size();
                 urls.add(msg.getImageUrl());
                 isVideos.add(false);
             }
         }
-
         if (urls.isEmpty()) return;
 
         Intent intent = new Intent(this, FullscreenMediaActivity.class);
@@ -401,19 +488,125 @@ public class ChatDetailActivity extends AppCompatActivity {
                 .orderBy("timestamp", Query.Direction.ASCENDING)
                 .addSnapshotListener((value, error) -> {
                     if (value == null) return;
-                    List<ChatMessage> list = new ArrayList<>();
+                    allMessages.clear();
                     for (DocumentSnapshot doc : value.getDocuments()) {
                         ChatMessage msg = doc.toObject(ChatMessage.class);
-                        if (msg != null) { msg.setMessageId(doc.getId()); list.add(msg); }
+                        if (msg != null) {
+                            msg.setMessageId(doc.getId());
+                            allMessages.add(msg);
+                        }
                     }
-                    chatAdapter.submitList(list, this::scrollToBottom);
+                    chatAdapter.submitList(new ArrayList<>(allMessages), this::scrollToBottom);
                     updateReadStatus();
+
+                    // Refresh highlight nếu đang tìm kiếm
+                    if (layoutSearchBar != null
+                            && layoutSearchBar.getVisibility() == View.VISIBLE
+                            && etSearchMessages != null) {
+                        String q = etSearchMessages.getText().toString().trim();
+                        if (!q.isEmpty()) performSearch(q);
+                    }
                 });
     }
 
-    // ── Gửi tin nhắn ────────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Media Picker
+    // ══════════════════════════════════════════════════════════════════════════
+    private void applyTabStyle() {
+        if (isVideoMode) {
+            ivTabImage.setAlpha(0.45f); indicatorImage.setVisibility(View.INVISIBLE);
+            ivTabVideo.setAlpha(1.0f);  indicatorVideo.setVisibility(View.VISIBLE);
+        } else {
+            ivTabImage.setAlpha(1.0f);  indicatorImage.setVisibility(View.VISIBLE);
+            ivTabVideo.setAlpha(0.45f); indicatorVideo.setVisibility(View.INVISIBLE);
+        }
+    }
 
+    private void reloadPickerContent() {
+        if (mediaPickerAdapter == null) return;
+        new Thread(() -> {
+            mediaPickerAdapter.loadFromDevice(this, isVideoMode);
+            runOnUiThread(() -> {
+                if (!isFinishing() && !isDestroyed()) mediaPickerAdapter.notifyDataSetChanged();
+            });
+        }).start();
+    }
+
+    private void setupMediaPicker() {
+        if (rvMediaPicker == null) return;
+        mediaPickerAdapter = new MediaPickerAdapter();
+        rvMediaPicker.setLayoutManager(new GridLayoutManager(this, 3));
+        rvMediaPicker.setAdapter(mediaPickerAdapter);
+
+        mediaPickerAdapter.setOnMediaSelectedListener(selected -> {
+            List<MediaPickerAdapter.MediaItem> toKeep = new ArrayList<>();
+            for (MediaPickerAdapter.MediaItem item : pendingMedia) {
+                if (item.isVideo != isVideoMode) toKeep.add(item);
+            }
+            pendingMedia.clear();
+            pendingMedia.addAll(toKeep);
+            pendingMedia.addAll(selected);
+            updatePickerSendButton();
+            updateSendButtonState();
+        });
+
+        if (btnPickerSend != null) {
+            btnPickerSend.setOnClickListener(v -> {
+                if (!pendingMedia.isEmpty()) handleSendMessage();
+                closeMediaPicker();
+            });
+        }
+    }
+
+    private void updatePickerSendButton() {
+        if (btnPickerSend == null) return;
+        int total = pendingMedia.size();
+        btnPickerSend.setVisibility(total > 0 ? View.VISIBLE : View.GONE);
+        if (total > 0) btnPickerSend.setText("Gửi " + total);
+    }
+
+    private void checkPermissionAndOpen() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            boolean hi = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED;
+            boolean hv = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO)  == PackageManager.PERMISSION_GRANTED;
+            if (!hi || !hv) { permissionLauncher.launch(new String[]{Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO}); return; }
+        } else {
+            boolean hs = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+            if (!hs) { permissionLauncher.launch(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}); return; }
+        }
+        openMediaPicker(isVideoMode);
+    }
+
+    private void openMediaPicker(boolean videoMode) {
+        if (layoutMediaPicker == null || mediaPickerAdapter == null) return;
+        isPickerOpen = true;
+        isVideoMode  = videoMode;
+        applyTabStyle();
+        layoutMediaPicker.setVisibility(View.VISIBLE);
+        new Thread(() -> {
+            mediaPickerAdapter.loadFromDevice(this, isVideoMode);
+            runOnUiThread(() -> {
+                if (!isFinishing() && !isDestroyed()) {
+                    mediaPickerAdapter.notifyDataSetChanged();
+                    scrollToBottom();
+                }
+            });
+        }).start();
+    }
+
+    private void closeMediaPicker() {
+        isPickerOpen = false;
+        if (layoutMediaPicker != null) layoutMediaPicker.setVisibility(View.GONE);
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Gửi tin nhắn
+    // ══════════════════════════════════════════════════════════════════════════
     private void handleSendMessage() {
+        if (isAnyoneBlocked()) {
+            Toast.makeText(this, "Không thể gửi tin nhắn", Toast.LENGTH_SHORT).show();
+            return;
+        }
         String content = etMessage.getText().toString().trim();
         if (content.isEmpty() && pendingMedia.isEmpty()) return;
 
@@ -432,8 +625,7 @@ public class ChatDetailActivity extends AppCompatActivity {
     private void sendMediaSequentially(List<MediaPickerAdapter.MediaItem> items, String textContent) {
         layoutLoading.setVisibility(View.VISIBLE);
         btnSend.setEnabled(false);
-
-        final int total = items.size();
+        final int   total     = items.size();
         final int[] doneCount = {0};
 
         for (int i = 0; i < total; i++) {
@@ -445,34 +637,20 @@ public class ChatDetailActivity extends AppCompatActivity {
                 CloudinaryHelper.uploadVideo(getApplicationContext(), item.uri,
                         new CloudinaryHelper.OnUploadCallback() {
                             @Override public void onSuccess(String url) {
-                                runOnUiThread(() -> {
-                                    performSendMessage(msgText, null, url);
-                                    finishOneUpload(doneCount, total);
-                                });
+                                runOnUiThread(() -> { performSendMessage(msgText, null, url); finishOneUpload(doneCount, total); });
                             }
                             @Override public void onFailure(String error) {
-                                runOnUiThread(() -> {
-                                    Toast.makeText(ChatDetailActivity.this,
-                                            "Lỗi video: " + error, Toast.LENGTH_SHORT).show();
-                                    finishOneUpload(doneCount, total);
-                                });
+                                runOnUiThread(() -> { Toast.makeText(ChatDetailActivity.this, "Lỗi video: " + error, Toast.LENGTH_SHORT).show(); finishOneUpload(doneCount, total); });
                             }
                         });
             } else {
                 CloudinaryHelper.uploadImage(getApplicationContext(), item.uri,
                         new CloudinaryHelper.OnUploadCallback() {
                             @Override public void onSuccess(String url) {
-                                runOnUiThread(() -> {
-                                    performSendMessage(msgText, url, null);
-                                    finishOneUpload(doneCount, total);
-                                });
+                                runOnUiThread(() -> { performSendMessage(msgText, url, null); finishOneUpload(doneCount, total); });
                             }
                             @Override public void onFailure(String error) {
-                                runOnUiThread(() -> {
-                                    Toast.makeText(ChatDetailActivity.this,
-                                            "Lỗi ảnh: " + error, Toast.LENGTH_SHORT).show();
-                                    finishOneUpload(doneCount, total);
-                                });
+                                runOnUiThread(() -> { Toast.makeText(ChatDetailActivity.this, "Lỗi ảnh: " + error, Toast.LENGTH_SHORT).show(); finishOneUpload(doneCount, total); });
                             }
                         });
             }
@@ -494,6 +672,7 @@ public class ChatDetailActivity extends AppCompatActivity {
         msg.put("content",   content != null ? content : "");
         msg.put("timestamp", FieldValue.serverTimestamp());
         msg.put("status",    0);
+        msg.put("recalled",  false);
 
         if (videoUrl != null && !videoUrl.isEmpty()) {
             msg.put("videoUrl",     videoUrl);
@@ -509,23 +688,23 @@ public class ChatDetailActivity extends AppCompatActivity {
         db.collection("chat_rooms").document(roomId)
                 .collection("messages").add(msg)
                 .addOnSuccessListener(ref -> {
-                    String last;
-                    if (videoUrl != null)      last = "[Video]";
-                    else if (imageUrl != null) last = "[Hình ảnh]";
-                    else                       last = content;
+                    String last = videoUrl != null ? "[Video]"
+                            : imageUrl != null ? "[Hình ảnh]"
+                            : content;
                     db.collection("chat_rooms").document(roomId)
                             .update("lastMessage", last,
                                     "lastTimestamp", FieldValue.serverTimestamp());
                 });
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
-
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Helpers
+    // ══════════════════════════════════════════════════════════════════════════
     private void updateSendButtonState() {
-        if (isBlocked) { btnSend.setEnabled(false); return; }
-        btnSend.setEnabled(
-                etMessage.getText().toString().trim().length() > 0
-                        || !pendingMedia.isEmpty());
+        if (btnSend == null) return;
+        if (isAnyoneBlocked()) { btnSend.setEnabled(false); return; }
+        btnSend.setEnabled(!pendingMedia.isEmpty()
+                || (etMessage != null && !etMessage.getText().toString().trim().isEmpty()));
     }
 
     private void scrollToBottom() {
@@ -549,32 +728,34 @@ public class ChatDetailActivity extends AppCompatActivity {
                 });
     }
 
-    private void checkBlockStatus() {
-        db.collection("blocks")
-                .document(currentUserId + "_" + partnerId)
-                .addSnapshotListener((doc, e) -> {
-                    isBlocked = doc != null && doc.exists();
-                    etMessage.setHint(isBlocked ? "Bạn đã chặn người này" : "Nhập tin nhắn...");
-                    etMessage.setEnabled(!isBlocked);
-                    btnSend.setEnabled(!isBlocked);
-                    btnAddMedia.setEnabled(!isBlocked);
-                });
-    }
-
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Menu (Chặn / Báo cáo)
+    // ══════════════════════════════════════════════════════════════════════════
     private void showPopupMenu(View v) {
-        String[] options = isBlocked
+        String[] options = iBlockedPartner
                 ? new String[]{"Bỏ chặn", "Báo cáo"}
                 : new String[]{"Chặn người này", "Báo cáo"};
+
         new AlertDialog.Builder(this).setItems(options, (dialog, which) -> {
             if (which == 0) {
-                if (isBlocked) {
-                    db.collection("blocks").document(currentUserId + "_" + partnerId).delete();
+                if (iBlockedPartner) {
+                    // Bỏ chặn
+                    db.collection("blocks").document(currentUserId + "_" + partnerId)
+                            .delete()
+                            .addOnSuccessListener(aVoid ->
+                                    Toast.makeText(this, "Đã bỏ chặn " + partnerName,
+                                            Toast.LENGTH_SHORT).show());
                 } else {
+                    // Chặn
                     Map<String, Object> b = new HashMap<>();
                     b.put("blockerId", currentUserId);
                     b.put("blockedId", partnerId);
                     b.put("timestamp", FieldValue.serverTimestamp());
-                    db.collection("blocks").document(currentUserId + "_" + partnerId).set(b);
+                    db.collection("blocks").document(currentUserId + "_" + partnerId)
+                            .set(b)
+                            .addOnSuccessListener(aVoid ->
+                                    Toast.makeText(this, "Đã chặn " + partnerName,
+                                            Toast.LENGTH_SHORT).show());
                 }
             } else {
                 showReportDialog();
@@ -596,8 +777,15 @@ public class ChatDetailActivity extends AppCompatActivity {
                 }).show();
     }
 
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Lifecycle
+    // ══════════════════════════════════════════════════════════════════════════
     @Override
     public void onBackPressed() {
+        if (layoutSearchBar != null && layoutSearchBar.getVisibility() == View.VISIBLE) {
+            closeSearch();
+            return;
+        }
         if (isPickerOpen) {
             closeMediaPicker();
             return;
@@ -608,6 +796,8 @@ public class ChatDetailActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (chatListener != null) chatListener.remove();
+        if (chatListener         != null) chatListener.remove();
+        if (blockListenerMine    != null) blockListenerMine.remove();
+        if (blockListenerPartner != null) blockListenerPartner.remove();
     }
 }

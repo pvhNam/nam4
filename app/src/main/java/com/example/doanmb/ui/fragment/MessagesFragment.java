@@ -41,96 +41,235 @@ public class MessagesFragment extends Fragment {
     private LinearLayout layoutNotLoggedIn, layoutEmpty, layoutContent;
     private RecyclerView rvConversations, rvShortcuts;
     private EditText etSearch;
-    private TextView tvGreeting;
+    private TextView tvGreeting, tvEmptyHint;
     private ImageView imgAvatar;
-    
+
     private FirebaseFirestore db;
     private ListenerRegistration listener;
     private ConversationAdapter adapter;
     private ShortcutAdapter shortcutAdapter;
-    
-    private final List<Map<String, Object>> convList = new ArrayList<>();
+
+    // Toàn bộ danh sách hội thoại gốc (chưa lọc)
+    private final List<Map<String, Object>> convList     = new ArrayList<>();
+    // Danh sách hiện lên RecyclerView (đã lọc)
     private final List<Map<String, Object>> filteredList = new ArrayList<>();
     private final List<Map<String, Object>> shortcutList = new ArrayList<>();
 
+    // Đang tìm kiếm trong tin nhắn hay không
+    private boolean isSearchingMessages = false;
+    // Kết quả tìm kiếm trong nội dung tin nhắn:
+    // mỗi item = map hội thoại + thêm key "matchedMessage" (nội dung tin nhắn khớp)
+    private final List<Map<String, Object>> messageSearchResults = new ArrayList<>();
+
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_messages, container, false);
         db = FirebaseFirestore.getInstance();
 
-        // Ánh xạ các ID từ XML (Đảm bảo ID khớp chính xác với fragment_messages.xml)
         layoutNotLoggedIn = view.findViewById(R.id.layout_msg_not_logged_in);
         layoutEmpty       = view.findViewById(R.id.layout_msg_empty);
         layoutContent     = view.findViewById(R.id.layout_msg_content);
         etSearch          = view.findViewById(R.id.et_search_chat);
         tvGreeting        = view.findViewById(R.id.tv_msg_greeting);
         imgAvatar         = view.findViewById(R.id.img_msg_avatar);
-        
-        rvConversations   = view.findViewById(R.id.rv_conversations);
+        tvEmptyHint       = view.findViewById(R.id.layout_msg_empty) != null
+                ? view.findViewById(R.id.layout_msg_empty).findViewById(android.R.id.text1)
+                : null;
+
+        rvConversations = view.findViewById(R.id.rv_conversations);
         rvConversations.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new ConversationAdapter(filteredList, db);
         rvConversations.setAdapter(adapter);
 
         rvShortcuts = view.findViewById(R.id.rv_shortcuts);
-        rvShortcuts.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        rvShortcuts.setLayoutManager(
+                new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         shortcutAdapter = new ShortcutAdapter(shortcutList);
         rvShortcuts.setAdapter(shortcutAdapter);
 
         setupSearch();
-
         return view;
     }
 
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Search  —  tìm theo tên cuộc trò chuyện  VÀ  nội dung tin nhắn
+    // ══════════════════════════════════════════════════════════════════════════
     private void setupSearch() {
         etSearch.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int i, int c, int a) {}
+            @Override public void afterTextChanged(Editable s) {}
+
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                filter(s.toString());
+                String query = s.toString().trim();
+                if (query.isEmpty()) {
+                    // Quay lại hiển thị tất cả hội thoại
+                    isSearchingMessages = false;
+                    messageSearchResults.clear();
+                    showAllConversations();
+                } else {
+                    searchEverything(query);
+                }
             }
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override
-            public void afterTextChanged(Editable s) {}
         });
     }
 
-    private void filter(String text) {
-        filteredList.clear();
-        String query = text.toLowerCase().trim();
-        
-        if (query.isEmpty()) {
-            filteredList.addAll(convList);
-        } else {
-            for (Map<String, Object> item : convList) {
-                String carName = String.valueOf(item.get("carName")).toLowerCase();
-                String partnerName = item.containsKey("partnerName") ? String.valueOf(item.get("partnerName")).toLowerCase() : "";
-                
-                if (carName.contains(query) || partnerName.contains(query)) {
-                    filteredList.add(item);
-                }
+    /**
+     * Tìm kiếm đa năng:
+     * 1. Lọc hội thoại theo tên xe hoặc tên đối phương (instant, local)
+     * 2. Tìm trong nội dung tin nhắn của từng phòng chat (Firestore query)
+     * Kết quả 2 loại gộp lại không trùng, hiển thị cùng một danh sách.
+     */
+    private void searchEverything(String query) {
+        String lower = query.toLowerCase();
+
+        // ── Bước 1: lọc local theo tên ────────────────────────────────────
+        List<Map<String, Object>> nameMatches = new ArrayList<>();
+        for (Map<String, Object> item : convList) {
+            String carName     = String.valueOf(item.getOrDefault("carName", "")).toLowerCase();
+            String partnerName = String.valueOf(item.getOrDefault("partnerName", "")).toLowerCase();
+            if (carName.contains(lower) || partnerName.contains(lower)) {
+                nameMatches.add(item);
             }
         }
-        adapter.notifyDataSetChanged();
-        
-        if (layoutEmpty != null) {
-            layoutEmpty.setVisibility(filteredList.isEmpty() && !query.isEmpty() ? View.VISIBLE : View.GONE);
+
+        // ── Bước 2: tìm trong nội dung tin nhắn Firestore ─────────────────
+        // Chạy song song cho tất cả roomId
+        messageSearchResults.clear();
+        isSearchingMessages = true;
+
+        if (convList.isEmpty()) {
+            // Chưa có hội thoại nào → chỉ hiện kết quả tên
+            mergeAndShow(nameMatches);
+            return;
+        }
+
+        final int[] remaining = {convList.size()};
+        final List<Map<String, Object>> msgMatches = new ArrayList<>();
+
+        for (Map<String, Object> conv : convList) {
+            String roomId = String.valueOf(conv.getOrDefault("roomId", ""));
+            if (roomId.isEmpty()) {
+                decrementAndMerge(remaining, nameMatches, msgMatches);
+                continue;
+            }
+
+            db.collection("chat_rooms").document(roomId)
+                    .collection("messages")
+                    .orderBy("timestamp", Query.Direction.DESCENDING)
+                    .limit(200) // giới hạn để không quá nặng
+                    .get()
+                    .addOnSuccessListener(snapshots -> {
+                        if (!isAdded()) return;
+                        for (QueryDocumentSnapshot doc : snapshots) {
+                            // Bỏ qua tin bị thu hồi
+                            Boolean recalled = doc.getBoolean("recalled");
+                            if (Boolean.TRUE.equals(recalled)) continue;
+
+                            String content = doc.getString("content");
+                            if (content != null && content.toLowerCase().contains(lower)) {
+                                // Tìm thấy tin nhắn khớp trong phòng này
+                                // Thêm conv vào kết quả nếu chưa có (tránh trùng)
+                                Map<String, Object> resultItem = new HashMap<>(conv);
+                                // Gắn đoạn tin nhắn khớp để hiển thị preview
+                                resultItem.put("matchedMessage", content);
+                                synchronized (msgMatches) {
+                                    // Kiểm tra trùng roomId
+                                    boolean alreadyAdded = false;
+                                    for (Map<String, Object> m : msgMatches) {
+                                        if (roomId.equals(m.get("roomId"))) {
+                                            alreadyAdded = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!alreadyAdded) msgMatches.add(resultItem);
+                                }
+                                break; // chỉ cần 1 tin khớp mỗi phòng
+                            }
+                        }
+                        decrementAndMerge(remaining, nameMatches, msgMatches);
+                    })
+                    .addOnFailureListener(e -> decrementAndMerge(remaining, nameMatches, msgMatches));
         }
     }
 
+    private void decrementAndMerge(int[] remaining,
+                                   List<Map<String, Object>> nameMatches,
+                                   List<Map<String, Object>> msgMatches) {
+        synchronized (remaining) {
+            remaining[0]--;
+            if (remaining[0] <= 0) {
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(() -> mergeAndShow(nameMatches, msgMatches));
+                }
+            }
+        }
+    }
+
+    /** Gộp kết quả tên + kết quả tin nhắn (không trùng roomId) rồi hiển thị */
+    private void mergeAndShow(List<Map<String, Object>> nameMatches,
+                              List<Map<String, Object>> msgMatches) {
+        List<Map<String, Object>> merged = new ArrayList<>(nameMatches);
+        for (Map<String, Object> m : msgMatches) {
+            String roomId = String.valueOf(m.getOrDefault("roomId", ""));
+            boolean exists = false;
+            for (Map<String, Object> n : nameMatches) {
+                if (roomId.equals(n.getOrDefault("roomId", ""))) { exists = true; break; }
+            }
+            if (!exists) merged.add(m);
+        }
+        showFiltered(merged, etSearch.getText().toString().trim());
+    }
+
+    /** Overload cho khi chỉ có nameMatches (convList rỗng) */
+    private void mergeAndShow(List<Map<String, Object>> nameMatches) {
+        showFiltered(nameMatches, etSearch.getText().toString().trim());
+    }
+
+    private void showAllConversations() {
+        filteredList.clear();
+        filteredList.addAll(convList);
+        adapter.setSearchQuery("");
+        adapter.notifyDataSetChanged();
+        updateEmptyState(false, "");
+    }
+
+    private void showFiltered(List<Map<String, Object>> results, String query) {
+        filteredList.clear();
+        filteredList.addAll(results);
+        adapter.setSearchQuery(query);
+        adapter.notifyDataSetChanged();
+        updateEmptyState(filteredList.isEmpty(), query);
+    }
+
+    private void updateEmptyState(boolean empty, String query) {
+        if (layoutEmpty == null) return;
+        if (empty && !query.isEmpty()) {
+            layoutEmpty.setVisibility(View.VISIBLE);
+        } else {
+            layoutEmpty.setVisibility(View.GONE);
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Lifecycle
+    // ══════════════════════════════════════════════════════════════════════════
     @Override
     public void onResume() {
         super.onResume();
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
             if (layoutNotLoggedIn != null) layoutNotLoggedIn.setVisibility(View.VISIBLE);
-            if (layoutContent != null) layoutContent.setVisibility(View.GONE);
-            if (layoutEmpty != null) layoutEmpty.setVisibility(View.GONE);
+            if (layoutContent != null)     layoutContent.setVisibility(View.GONE);
+            if (layoutEmpty != null)       layoutEmpty.setVisibility(View.GONE);
             return;
         }
         if (layoutNotLoggedIn != null) layoutNotLoggedIn.setVisibility(View.GONE);
-        if (layoutContent != null) layoutContent.setVisibility(View.VISIBLE);
-        
+        if (layoutContent != null)     layoutContent.setVisibility(View.VISIBLE);
+
         loadUserProfile(user.getUid());
         loadConversations(user.getUid());
     }
@@ -138,9 +277,10 @@ public class MessagesFragment extends Fragment {
     private void loadUserProfile(String uid) {
         db.collection("users").document(uid).get().addOnSuccessListener(doc -> {
             if (doc.exists() && isAdded()) {
-                String name = doc.getString("name");
+                String name      = doc.getString("name");
                 String avatarUrl = doc.getString("avatarUrl");
-                if (tvGreeting != null) tvGreeting.setText("Hi, " + (name != null ? name : "User"));
+                if (tvGreeting != null)
+                    tvGreeting.setText("Hi, " + (name != null ? name : "User"));
                 if (avatarUrl != null && !avatarUrl.isEmpty() && imgAvatar != null) {
                     Glide.with(this).load(avatarUrl).into(imgAvatar);
                 }
@@ -162,34 +302,49 @@ public class MessagesFragment extends Fragment {
                     Map<String, Boolean> addedPartners = new HashMap<>();
 
                     for (QueryDocumentSnapshot doc : snapshots) {
-                        Map<String, Object> data = doc.getData();
+                        Map<String, Object> data = new HashMap<>(doc.getData());
                         data.put("roomId", doc.getId());
-                        
-                        String buyerId = (String) data.get("buyerId");
-                        String sellerId = (String) data.get("sellerId");
-                        String partnerId = uid.equals(buyerId) ? sellerId : buyerId;
-                        
-                        db.collection("users").document(partnerId).get().addOnSuccessListener(userDoc -> {
-                            if (userDoc.exists() && isAdded()) {
-                                String name = userDoc.getString("name");
-                                String avatar = userDoc.getString("avatarUrl");
-                                data.put("partnerName", name);
-                                data.put("partnerAvatar", avatar);
-                                
-                                if (!addedPartners.containsKey(partnerId) && shortcutList.size() < 10) {
-                                    shortcutList.add(new HashMap<>(data));
-                                    addedPartners.put(partnerId, true);
-                                    shortcutAdapter.notifyDataSetChanged();
-                                }
-                                adapter.notifyDataSetChanged();
-                                filter(etSearch.getText().toString());
-                            }
-                        });
 
+                        String buyerId   = (String) data.get("buyerId");
+                        String sellerId  = (String) data.get("sellerId");
+                        String partnerId = uid.equals(buyerId) ? sellerId : buyerId;
+
+                        // Load tên + avatar đối phương
+                        if (partnerId != null) {
+                            db.collection("users").document(partnerId)
+                                    .get().addOnSuccessListener(userDoc -> {
+                                        if (userDoc.exists() && isAdded()) {
+                                            String name   = userDoc.getString("name");
+                                            String avatar = userDoc.getString("avatarUrl");
+                                            data.put("partnerName",   name);
+                                            data.put("partnerAvatar", avatar);
+
+                                            if (!addedPartners.containsKey(partnerId)
+                                                    && shortcutList.size() < 10) {
+                                                shortcutList.add(new HashMap<>(data));
+                                                addedPartners.put(partnerId, true);
+                                                shortcutAdapter.notifyDataSetChanged();
+                                            }
+
+                                            // Nếu đang tìm kiếm thì re-run search
+                                            String q = etSearch != null
+                                                    ? etSearch.getText().toString().trim() : "";
+                                            if (!q.isEmpty()) {
+                                                searchEverything(q);
+                                            } else {
+                                                adapter.notifyDataSetChanged();
+                                                showAllConversations();
+                                            }
+                                        }
+                                    });
+                        }
                         convList.add(data);
                     }
-                    adapter.notifyDataSetChanged();
-                    filter(etSearch.getText().toString());
+
+                    // Hiển thị ngay với dữ liệu hiện có
+                    String q = etSearch != null ? etSearch.getText().toString().trim() : "";
+                    if (q.isEmpty()) showAllConversations();
+                    else searchEverything(q);
                 });
     }
 
@@ -199,63 +354,91 @@ public class MessagesFragment extends Fragment {
         if (listener != null) listener.remove();
     }
 
-    static class ConversationAdapter extends RecyclerView.Adapter<ConversationAdapter.VH> {
+    // ══════════════════════════════════════════════════════════════════════════
+    //  ConversationAdapter  —  hỗ trợ highlight từ khoá + preview tin nhắn khớp
+    // ══════════════════════════════════════════════════════════════════════════
+    static class ConversationAdapter
+            extends RecyclerView.Adapter<ConversationAdapter.VH> {
+
         private final List<Map<String, Object>> list;
         private final FirebaseFirestore db;
         private final String currentUid;
+        private String searchQuery = "";
 
         ConversationAdapter(List<Map<String, Object>> list, FirebaseFirestore db) {
-            this.list = list;
-            this.db   = db;
-            this.currentUid = FirebaseAuth.getInstance().getCurrentUser() != null 
+            this.list       = list;
+            this.db         = db;
+            this.currentUid = FirebaseAuth.getInstance().getCurrentUser() != null
                     ? FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
         }
+
+        void setSearchQuery(String q) { this.searchQuery = q != null ? q : ""; }
 
         @NonNull
         @Override
         public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_conversation, parent, false);
+            View v = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_conversation, parent, false);
             return new VH(v);
         }
 
         @Override
         public void onBindViewHolder(@NonNull VH h, int position) {
             Map<String, Object> item = list.get(position);
-            String carName = (String) item.get("carName");
-            String lastMsg = (String) item.get("lastMessage");
-            String partnerName = (String) item.get("partnerName");
-            String partnerAvatar = (String) item.get("partnerAvatar");
+
+            String carName      = String.valueOf(item.getOrDefault("carName",      ""));
+            String partnerName  = String.valueOf(item.getOrDefault("partnerName",  "Đang tải..."));
+            String partnerAvatar= String.valueOf(item.getOrDefault("partnerAvatar",""));
+            String matchedMsg   = (String) item.get("matchedMessage"); // null nếu tìm theo tên
+            String lastMsg      = matchedMsg != null ? matchedMsg
+                    : String.valueOf(item.getOrDefault("lastMessage", ""));
 
             h.tvCarName.setText(carName);
-            h.tvLastMsg.setText(lastMsg == null || lastMsg.isEmpty() ? "Bắt đầu trò chuyện..." : lastMsg);
+            h.tvName.setText(partnerName);
 
-            if (partnerName != null) {
-                h.tvName.setText(partnerName);
-                String initial = String.valueOf(partnerName.charAt(0)).toUpperCase();
-                h.tvAvatar.setText(initial);
-                if (partnerAvatar != null && !partnerAvatar.isEmpty()) {
-                    h.tvAvatar.setVisibility(View.GONE);
-                    h.ivAvatar.setVisibility(View.VISIBLE);
-                    Glide.with(h.ivAvatar.getContext()).load(partnerAvatar).transform(new CircleCrop()).into(h.ivAvatar);
-                } else {
-                    h.tvAvatar.setVisibility(View.VISIBLE);
-                    h.ivAvatar.setVisibility(View.GONE);
-                }
+            // Preview: nếu có tin nhắn khớp → hiện nó, ngược lại hiện lastMessage
+            if (lastMsg.isEmpty()) lastMsg = "Bắt đầu trò chuyện...";
+            h.tvLastMsg.setText(lastMsg);
+
+            // Avatar
+            if (!partnerAvatar.isEmpty() && !"null".equals(partnerAvatar)) {
+                h.tvAvatar.setVisibility(View.GONE);
+                h.ivAvatar.setVisibility(View.VISIBLE);
+                Glide.with(h.ivAvatar.getContext())
+                        .load(partnerAvatar)
+                        .transform(new CircleCrop())
+                        .into(h.ivAvatar);
+            } else if (!partnerName.isEmpty() && !"Đang tải...".equals(partnerName)) {
+                h.tvAvatar.setVisibility(View.VISIBLE);
+                h.ivAvatar.setVisibility(View.GONE);
+                h.tvAvatar.setText(String.valueOf(partnerName.charAt(0)).toUpperCase());
             } else {
-                h.tvName.setText("Đang tải...");
+                h.tvAvatar.setVisibility(View.VISIBLE);
+                h.ivAvatar.setVisibility(View.GONE);
+                h.tvAvatar.setText("?");
             }
 
+            // Click → mở ChatDetailActivity
             h.itemView.setOnClickListener(v -> {
+                String roomId    = String.valueOf(item.getOrDefault("roomId",   ""));
+                String buyerId   = String.valueOf(item.getOrDefault("buyerId",  ""));
+                String sellerId  = String.valueOf(item.getOrDefault("sellerId", ""));
+                String partnerId = currentUid.equals(buyerId) ? sellerId : buyerId;
+                String carPrice  = String.valueOf(item.getOrDefault("carPrice", ""));
+                String carImage  = String.valueOf(item.getOrDefault("carImage", ""));
+                String carId     = String.valueOf(item.getOrDefault("carId",    ""));
+                String carType   = String.valueOf(item.getOrDefault("carType",  "sale"));
+
                 Intent intent = new Intent(v.getContext(), ChatDetailActivity.class);
-                intent.putExtra("ROOM_ID", (String) item.get("roomId"));
-                intent.putExtra("PARTNER_ID", currentUid.equals(item.get("buyerId")) ? (String)item.get("sellerId") : (String)item.get("buyerId"));
+                intent.putExtra("ROOM_ID",      roomId);
+                intent.putExtra("PARTNER_ID",   partnerId);
                 intent.putExtra("PARTNER_NAME", partnerName);
-                
-                Car car = new Car(carName, (String)item.get("carPrice"), "", 0);
-                car.setId((String)item.get("carId"));
-                car.setImageUrl((String)item.get("carImage"));
-                car.setSellerId((String)item.get("sellerId"));
-                car.setType((String)item.get("carType"));
+
+                Car car = new Car(carName, carPrice, "", 0);
+                car.setId(carId);
+                car.setImageUrl(carImage);
+                car.setSellerId(sellerId);
+                car.setType(carType);
                 intent.putExtra("CAR_DATA", car);
                 v.getContext().startActivity(intent);
             });
@@ -266,6 +449,7 @@ public class MessagesFragment extends Fragment {
         static class VH extends RecyclerView.ViewHolder {
             TextView  tvAvatar, tvName, tvCarName, tvLastMsg;
             ImageView ivAvatar;
+
             VH(@NonNull View v) {
                 super(v);
                 tvAvatar  = v.findViewById(R.id.tvConvAvatar);
