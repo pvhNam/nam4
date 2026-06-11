@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.doanmb.R;
 import com.example.doanmb.ui.fragment.StaffApproveFragment;
+import com.example.doanmb.ui.fragment.StaffDriversFragment;
 import com.example.doanmb.ui.fragment.StaffOrdersFragment;
 import com.example.doanmb.ui.fragment.StaffProfileFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -61,6 +62,8 @@ public class StaffDashboardActivity extends AppCompatActivity {
         Fragment fragment;
         if (itemId == R.id.nav_staff_orders) {
             fragment = new StaffOrdersFragment();
+        } else if (itemId == R.id.nav_staff_drivers) {
+            fragment = new StaffDriversFragment();
         } else if (itemId == R.id.nav_staff_account) {
             fragment = new StaffProfileFragment();
         } else {

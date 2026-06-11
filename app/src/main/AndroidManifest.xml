@@ -37,6 +37,8 @@
         <activity android:name="com.example.doanmb.ui.activity.ForgotPassActivity" />
         <activity android:name="com.example.doanmb.ui.activity.AdminDashboardActivity" />
         <activity android:name="com.example.doanmb.ui.activity.StaffDashboardActivity" />
+        <activity android:name="com.example.doanmb.ui.activity.DriverDashboardActivity" />
+        <activity android:name="com.example.doanmb.ui.activity.DriverRegisterActivity" />
         <activity android:name="com.example.doanmb.ui.activity.AdminRevenueDetailActivity" />
         <activity
             android:name="com.example.doanmb.ui.activity.ChatDetailActivity"

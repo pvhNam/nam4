@@ -8,6 +8,15 @@ public class User {
     private String role;
     private String avatarUrl;
 
+    // ----- Hồ sơ tài xế -----
+    private String driverStatus;   // null | "pending" | "approved" | "rejected"
+    private String cccd;           // Số CCCD
+    private String licenseNumber;  // Số bằng lái xe
+    private String cccdImageUrl;   // Ảnh CCCD (Cloudinary)
+    private String licenseImageUrl;// Ảnh bằng lái (Cloudinary)
+    private String driverCarType;  // Loại xe tài xế có thể lái, vd "4 chỗ"
+    private boolean driverOnline;  // Tài xế đang online hay offline
+
     public User() {}
 
     public String getUid() { return uid; }
@@ -22,4 +31,19 @@ public class User {
     public void setRole(String role) { this.role = role; }
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+
+    public String getDriverStatus() { return driverStatus; }
+    public void setDriverStatus(String driverStatus) { this.driverStatus = driverStatus; }
+    public String getCccd() { return cccd; }
+    public void setCccd(String cccd) { this.cccd = cccd; }
+    public String getLicenseNumber() { return licenseNumber; }
+    public void setLicenseNumber(String licenseNumber) { this.licenseNumber = licenseNumber; }
+    public String getCccdImageUrl() { return cccdImageUrl; }
+    public void setCccdImageUrl(String cccdImageUrl) { this.cccdImageUrl = cccdImageUrl; }
+    public String getLicenseImageUrl() { return licenseImageUrl; }
+    public void setLicenseImageUrl(String licenseImageUrl) { this.licenseImageUrl = licenseImageUrl; }
+    public String getDriverCarType() { return driverCarType; }
+    public void setDriverCarType(String driverCarType) { this.driverCarType = driverCarType; }
+    public boolean isDriverOnline() { return driverOnline; }
+    public void setDriverOnline(boolean driverOnline) { this.driverOnline = driverOnline; }
 }
