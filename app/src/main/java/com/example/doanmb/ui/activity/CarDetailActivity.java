@@ -77,6 +77,12 @@ public class CarDetailActivity extends AppCompatActivity {
         sellerId = getIntent().getStringExtra("SELLER_ID");
         carType = getIntent().getStringExtra("CAR_TYPE");
 
+        // Thời gian đón do người dùng chọn ở màn Danh mục (xe có tài xế / xe tự lái)
+        String pickupTime = getIntent().getStringExtra("PICKUP_TIME");
+        if (pickupTime != null && !pickupTime.isEmpty() && etRentStartDate != null) {
+            etRentStartDate.setText(pickupTime);
+        }
+
         tvCarFuelBadge.setVisibility(View.GONE);
         tvCarConditionBadge.setVisibility(View.GONE);
 
@@ -362,12 +368,14 @@ public class CarDetailActivity extends AppCompatActivity {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         boolean isOwner = currentUser != null && currentUser.getUid().equals(sellerId);
 
+        boolean driver = isDriverType(type);
+        boolean rental = isRentalType(type);
+
         if (isOwner) {
             layoutBuyForm.setVisibility(View.GONE);
             layoutRentForm.setVisibility(View.GONE);
             if (tvReportCar != null) tvReportCar.setVisibility(View.GONE);
-            tvCarTypeBadge.setText("rental".equals(type) ? "Cho Thuê" : "Cần Bán");
-            tvCarTypeBadge.setBackgroundColor("rental".equals(type) ? 0xFF1976D2 : 0xFF4CAF50);
+            applyTypeBadge(driver, rental);
             if (tvOwnerNote != null) tvOwnerNote.setVisibility(View.VISIBLE);
             if (btnMenuDetail != null) {
                 btnMenuDetail.setVisibility(View.VISIBLE);
@@ -383,17 +391,43 @@ public class CarDetailActivity extends AppCompatActivity {
             tvReportCar.setOnClickListener(v -> showReportDialog());
         }
 
-        if ("rental".equals(type)) {
-            tvCarTypeBadge.setText("Cho Thuê");
-            tvCarTypeBadge.setBackgroundColor(0xFF1976D2);
+        applyTypeBadge(driver, rental);
+
+        // Xe có tài xế và xe thuê tự lái đều dùng form đặt/thuê (nhập thời gian, người thuê...),
+        // chỉ xe bán mới dùng form mua.
+        if (driver || rental) {
             layoutBuyForm.setVisibility(View.GONE);
             layoutRentForm.setVisibility(View.VISIBLE);
         } else {
-            tvCarTypeBadge.setText("Cần Bán");
-            tvCarTypeBadge.setBackgroundColor(0xFF4CAF50);
             layoutBuyForm.setVisibility(View.VISIBLE);
             layoutRentForm.setVisibility(View.GONE);
         }
+    }
+
+    /** Gán nhãn loại xe: Có tài xế (xanh ngọc) / Cho Thuê (xanh dương) / Cần Bán (xanh lá). */
+    private void applyTypeBadge(boolean driver, boolean rental) {
+        if (driver) {
+            tvCarTypeBadge.setText("Có tài xế");
+            tvCarTypeBadge.setBackgroundColor(0xFF00897B);
+        } else if (rental) {
+            tvCarTypeBadge.setText("Cho Thuê");
+            tvCarTypeBadge.setBackgroundColor(0xFF1976D2);
+        } else {
+            tvCarTypeBadge.setText("Cần Bán");
+            tvCarTypeBadge.setBackgroundColor(0xFF4CAF50);
+        }
+    }
+
+    private static boolean isDriverType(String type) {
+        if (type == null) return false;
+        String t = type.toLowerCase();
+        return t.contains("driver") || t.contains("tai xe") || t.contains("tài xế");
+    }
+
+    private static boolean isRentalType(String type) {
+        if (type == null) return false;
+        String t = type.toLowerCase();
+        return t.contains("rental") || t.contains("rent") || t.contains("thue") || t.contains("thuê") || t.contains("tu lai");
     }
 
     /** Menu 3 gạch (chỉ chủ bài đăng): chỉnh sửa, ẩn/hiện, xóa bài viết. */

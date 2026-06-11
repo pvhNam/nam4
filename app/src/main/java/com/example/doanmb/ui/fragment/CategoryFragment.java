@@ -1,6 +1,7 @@
 package com.example.doanmb.ui.fragment;
 
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -28,7 +29,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.Normalizer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
@@ -69,10 +72,16 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
     private final List<String> brandFilters = new ArrayList<>();
     private ProfileCarAdapter carAdapter;
     private TextView tvSearchLocation;
+    private LinearLayout layoutTimeFilter;
+    private TextView tvTimeLabel;
+    private TextView tvSearchTime;
     private String currentCategory = CATEGORY_SALE;
     private String currentTitle = "Xe đang bán";
     private String selectedBrand = BRAND_ALL;
     private String selectedLocation = ""; // rỗng = tất cả khu vực
+    private Calendar pickupTime;  // null = chưa chọn giờ đón
+    private Calendar returnTime;  // null = chưa chọn giờ trả
+    private final SimpleDateFormat timeFmt = new SimpleDateFormat("dd/MM/yyyy", new Locale("vi"));
 
     @Nullable
     @Override
@@ -106,6 +115,9 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
             intent.putExtra("CAR_ID", car.getId());
             intent.putExtra("SELLER_ID", car.getSellerId());
             intent.putExtra("CAR_TYPE", car.getType());
+            // Mang thời gian người dùng đã chọn ở Category sang form đặt xe có tài xế / thuê xe
+            if (pickupTime != null) intent.putExtra("PICKUP_TIME", timeFmt.format(pickupTime.getTime()));
+            if (returnTime != null) intent.putExtra("RETURN_TIME", timeFmt.format(returnTime.getTime()));
             startActivity(intent);
         });
         rvCategoryCars.setAdapter(carAdapter);
@@ -119,6 +131,13 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         if (tvSearchLocation != null) {
             tvSearchLocation.setText(LOCATION_ALL);
             tvSearchLocation.setOnClickListener(v -> showLocationPicker());
+        }
+
+        layoutTimeFilter = view.findViewById(R.id.layout_time_filter);
+        tvTimeLabel = view.findViewById(R.id.tv_time_label);
+        tvSearchTime = view.findViewById(R.id.tv_search_time);
+        if (tvSearchTime != null) {
+            tvSearchTime.setOnClickListener(v -> showTimePicker());
         }
 
         setupCategoryActions();
@@ -179,6 +198,71 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         setTabSelected(tabSellCarContent, tvTabSellCar, currentCategory.equals(CATEGORY_SELL));
         setTabSelected(tabSelfDriveContent, tvTabSelfDrive, currentCategory.equals(CATEGORY_RENTAL));
         setTabSelected(tabWithDriverContent, tvTabWithDriver, currentCategory.equals(CATEGORY_DRIVER));
+
+        updateTimeFilterVisibility();
+    }
+
+    /**
+     * Ô "Thời gian" chỉ có ý nghĩa với xe thuê tự lái và xe có tài xế.
+     * Tab Mua xe / Bán xe không cần thời gian thuê nên ẩn đi cho gọn.
+     */
+    private void updateTimeFilterVisibility() {
+        boolean show = currentCategory.equals(CATEGORY_DRIVER) || currentCategory.equals(CATEGORY_RENTAL);
+        if (layoutTimeFilter != null) {
+            layoutTimeFilter.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+        if (tvTimeLabel != null) {
+            tvTimeLabel.setText(currentCategory.equals(CATEGORY_DRIVER)
+                    ? "Thời gian cần tài xế" : "Thời gian thuê");
+        }
+    }
+
+    /** Chọn ngày đón, rồi tiếp tục chọn ngày trả. */
+    private void showTimePicker() {
+        if (getContext() == null) return;
+        final Calendar now = Calendar.getInstance();
+        DatePickerDialog dateDialog = new DatePickerDialog(requireContext(), (dp, year, month, day) -> {
+            final Calendar pick = Calendar.getInstance();
+            pick.set(year, month, day, 0, 0, 0);
+            pick.set(Calendar.MILLISECOND, 0);
+            pickupTime = pick;
+            promptReturnTime();
+        }, now.get(Calendar.YEAR), now.get(Calendar.MONTH), now.get(Calendar.DAY_OF_MONTH));
+        dateDialog.getDatePicker().setMinDate(now.getTimeInMillis());
+        dateDialog.show();
+    }
+
+    /** Chọn ngày trả; không cho trả trước ngày đón. */
+    private void promptReturnTime() {
+        if (getContext() == null || pickupTime == null) return;
+        final Calendar start = (Calendar) pickupTime.clone();
+        DatePickerDialog dateDialog = new DatePickerDialog(requireContext(), (dp, year, month, day) -> {
+            final Calendar ret = Calendar.getInstance();
+            ret.set(year, month, day, 0, 0, 0);
+            ret.set(Calendar.MILLISECOND, 0);
+            if (ret.before(pickupTime)) {
+                Toast.makeText(getContext(), "Ngày trả phải từ ngày đón trở đi", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            returnTime = ret;
+            updateTimeDisplay();
+            applyFilter();
+        }, start.get(Calendar.YEAR), start.get(Calendar.MONTH), start.get(Calendar.DAY_OF_MONTH));
+        dateDialog.getDatePicker().setMinDate(start.getTimeInMillis());
+        dateDialog.show();
+    }
+
+    private void updateTimeDisplay() {
+        if (tvSearchTime == null) return;
+        if (pickupTime == null) {
+            tvSearchTime.setText("Chọn thời gian");
+            return;
+        }
+        String text = timeFmt.format(pickupTime.getTime());
+        if (returnTime != null) {
+            text += "  →  " + timeFmt.format(returnTime.getTime());
+        }
+        tvSearchTime.setText(text);
     }
 
     private void setTabSelected(LinearLayout tabContent, TextView tabLabel, boolean selected) {
@@ -302,7 +386,16 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
 
         carAdapter.updateList(filteredCars);
         tvResultTitle.setText(currentTitle);
-        tvCategoryCount.setText(filteredCars.size() + " tin phù hợp");
+
+        String countText = filteredCars.size() + " tin phù hợp";
+        boolean timeRelevant = currentCategory.equals(CATEGORY_DRIVER) || currentCategory.equals(CATEGORY_RENTAL);
+        if (timeRelevant && pickupTime != null) {
+            countText += "  ·  " + timeFmt.format(pickupTime.getTime());
+            if (returnTime != null) {
+                countText += " → " + timeFmt.format(returnTime.getTime());
+            }
+        }
+        tvCategoryCount.setText(countText);
 
         boolean isEmpty = filteredCars.isEmpty();
         rvCategoryCars.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
