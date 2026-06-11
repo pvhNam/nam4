@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F6F8"
+    android:fitsSystemWindows="true">
+
+    <!-- Header -->
+    <LinearLayout
+        android:id="@+id/dr_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/driver_primary"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <ImageView
+            android:id="@+id/btn_dr_back"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:padding="6dp"
+            android:src="@android:drawable/ic_menu_revert"
+            app:tint="#FFFFFF" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Đăng ký làm tài xế"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/dr_header"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Banner trạng thái (ẩn mặc định) -->
+            <TextView
+                android:id="@+id/tv_dr_status_banner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#FFF3E0"
+                android:padding="12dp"
+                android:text="Hồ sơ của bạn đang chờ duyệt."
+                android:textColor="#E65100"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Điền thông tin để trở thành tài xế. Admin sẽ duyệt hồ sơ của bạn."
+                android:textColor="#757575"
+                android:textSize="13sp"
+                android:layout_marginBottom="16dp" />
+
+            <TextView style="@style/DriverFieldLabel" android:text="Số CCCD/CMND" />
+            <EditText
+                android:id="@+id/edt_dr_cccd"
+                style="@style/DriverInput"
+                android:hint="Nhập số CCCD"
+                android:inputType="number" />
+
+            <TextView style="@style/DriverFieldLabel" android:text="Số bằng lái xe" />
+            <EditText
+                android:id="@+id/edt_dr_license"
+                style="@style/DriverInput"
+                android:hint="Nhập số GPLX"
+                android:inputType="text" />
+
+            <TextView style="@style/DriverFieldLabel" android:text="Loại xe bạn có thể lái" />
+            <Spinner
+                android:id="@+id/spinner_dr_cartype"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="16dp"
+                android:background="@android:drawable/editbox_background" />
+
+            <!-- Ảnh CCCD -->
+            <TextView style="@style/DriverFieldLabel" android:text="Ảnh CCCD (tuỳ chọn)" />
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_dr_cccd_img"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="1dp"
+                android:clickable="true"
+                android:focusable="true">
+                <ImageView
+                    android:id="@+id/iv_dr_cccd_img"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#ECEFF1"
+                    android:scaleType="centerCrop"
+                    android:src="@android:drawable/ic_menu_camera"
+                    android:padding="40dp"
+                    app:tint="#90A4AE" />
+            </androidx.cardview.widget.CardView>
+
+            <!-- Ảnh bằng lái -->
+            <TextView style="@style/DriverFieldLabel" android:text="Ảnh bằng lái (tuỳ chọn)" />
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_dr_license_img"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="20dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="1dp"
+                android:clickable="true"
+                android:focusable="true">
+                <ImageView
+                    android:id="@+id/iv_dr_license_img"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#ECEFF1"
+                    android:scaleType="centerCrop"
+                    android:src="@android:drawable/ic_menu_camera"
+                    android:padding="40dp"
+                    app:tint="#90A4AE" />
+            </androidx.cardview.widget.CardView>
+
+            <Button
+                android:id="@+id/btn_dr_submit"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:backgroundTint="@color/driver_primary"
+                android:text="Gửi đăng ký"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                app:cornerRadius="12dp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</RelativeLayout>
