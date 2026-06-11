@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!--
+        PhotoView hỗ trợ pinch-to-zoom, double-tap zoom.
+        Thêm dependency: implementation 'com.github.chrisbanes:PhotoView:2.3.0'
+        vào build.gradle.kts
+    -->
+    <com.github.chrisbanes.photoview.PhotoView
+        android:id="@+id/photo_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitCenter" />
+
+    <!-- Nút đóng góc trên phải -->
+    <ImageView
+        android:id="@+id/btn_close_fullscreen"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="16dp"
+        android:background="@drawable/bg_circle_blue"
+        android:padding="10dp"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="Đóng" />
+
+</FrameLayout>

@@ -206,20 +206,18 @@ public class ChatDetailActivity extends AppCompatActivity {
 
     /** Mở ảnh/video của tin nhắn bằng trình xem ngoài (video phát được). */
     private void openMedia(ChatMessage msg) {
-        String url = msg.isVideo() ? msg.getVideoUrl() : msg.getImageUrl();
-        if (url == null || url.isEmpty()) return;
-
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(Uri.parse(url), msg.isVideo() ? "video/*" : "image/*");
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        try {
+        if (msg.isVideo()) {
+            String videoUrl = msg.getVideoUrl();
+            if (videoUrl == null || videoUrl.isEmpty()) return;
+            Intent intent = new Intent(this, VideoPlayerActivity.class);
+            intent.putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, videoUrl);
             startActivity(intent);
-        } catch (Exception e) {
-            try {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-            } catch (Exception ex) {
-                Toast.makeText(this, "Không mở được nội dung", Toast.LENGTH_SHORT).show();
-            }
+        } else {
+            String imageUrl = msg.getImageUrl();
+            if (imageUrl == null || imageUrl.isEmpty()) return;
+            Intent intent = new Intent(this, FullscreenImageActivity.class);
+            intent.putExtra(FullscreenImageActivity.EXTRA_IMAGE_URL, imageUrl);
+            startActivity(intent);
         }
     }
 
