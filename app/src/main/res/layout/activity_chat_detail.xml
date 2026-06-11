@@ -117,17 +117,138 @@
         </androidx.cardview.widget.CardView>
     </LinearLayout>
 
+    <!-- ── Media Picker Panel ── -->
+    <LinearLayout
+        android:id="@+id/layout_media_picker"
+        android:layout_width="match_parent"
+        android:layout_height="320dp"
+        android:layout_alignParentBottom="true"
+        android:background="#FFFFFF"
+        android:elevation="12dp"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <!-- Header bar: icon ảnh | icon video | spacer | icon đóng -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="#F5F5F5"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
+
+            <!-- Nút chọn ảnh (icon send_pic) -->
+            <LinearLayout
+                android:id="@+id/btn_picker_image"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_alignParentStart="true"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingStart="4dp"
+                android:paddingEnd="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless">
+
+                <ImageView
+                    android:id="@+id/iv_tab_image"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/send_pic" />
+
+                <View
+                    android:id="@+id/indicator_image"
+                    android:layout_width="3dp"
+                    android:layout_height="16dp"
+                    android:layout_marginStart="4dp"
+                    android:background="#1976D2"
+                    android:visibility="visible" />
+            </LinearLayout>
+
+            <!-- Nút chọn video (icon video_content) -->
+            <LinearLayout
+                android:id="@+id/btn_picker_video"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_toEndOf="@id/btn_picker_image"
+                android:layout_marginStart="4dp"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingStart="4dp"
+                android:paddingEnd="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless">
+
+                <ImageView
+                    android:id="@+id/iv_tab_video"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/video_content"
+                    android:alpha="0.45" />
+
+                <View
+                    android:id="@+id/indicator_video"
+                    android:layout_width="3dp"
+                    android:layout_height="16dp"
+                    android:layout_marginStart="4dp"
+                    android:background="#1976D2"
+                    android:visibility="invisible" />
+            </LinearLayout>
+
+            <!-- Nút đóng (icon ic_cross_bl) ở bên phải -->
+            <ImageView
+                android:id="@+id/tv_picker_close"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_cross_bl"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="4dp" />
+        </RelativeLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_media_picker"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false" />
+
+        <!-- Nút gửi: ẩn khi chưa chọn, hiện + đổi text theo số lượng -->
+        <Button
+            android:id="@+id/btn_picker_send"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="#1976D2"
+            android:text="Gửi"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            android:clickable="true"
+            android:focusable="true" />
+
+    </LinearLayout>
+
     <!-- ── Input area (bottom) ── -->
     <LinearLayout
         android:id="@+id/layout_input_area"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
+        android:layout_above="@id/layout_media_picker"
         android:background="#FFFFFF"
         android:elevation="8dp"
         android:orientation="vertical">
 
-        <!-- Media preview strip (ẩn khi chưa chọn) -->
+        <!-- Media preview strip -->
         <HorizontalScrollView
             android:id="@+id/scroll_image_preview"
             android:layout_width="match_parent"
@@ -159,9 +280,10 @@
                 android:id="@+id/btn_add_image"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
+                android:padding="6dp"
+                android:scaleType="fitCenter"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_gallery"
-                app:tint="#1976D2" />
+                android:src="@drawable/ic_add_pictures" />
 
             <EditText
                 android:id="@+id/et_message"

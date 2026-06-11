@@ -43,6 +43,14 @@
         <activity
             android:name="com.example.doanmb.ui.activity.ChatDetailActivity"
             android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".ui.activity.FullscreenImageActivity"
+               android:screenOrientation="fullSensor"
+               android:theme="@style/Theme.MaterialComponents.NoActionBar" />
+
+           <activity android:name=".ui.activity.VideoPlayerActivity"
+               android:screenOrientation="fullSensor"
+               android:configChanges="orientation|screenSize"
+               android:theme="@style/Theme.MaterialComponents.NoActionBar" />
 
     </application>
 </manifest>
