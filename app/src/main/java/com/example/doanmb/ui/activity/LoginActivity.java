@@ -108,8 +108,10 @@ public class LoginActivity extends AppCompatActivity {
                                 Toast.makeText(this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
                                 if ("ADMIN".equals(role)) {
                                     startActivity(new Intent(this, AdminDashboardActivity.class));
-                                } else if ("DRIVER".equals(role)) {
+                                } else if ("STAFF".equals(role)) {
                                     startActivity(new Intent(this, StaffDashboardActivity.class));
+                                } else if ("DRIVER".equals(role)) {
+                                    startActivity(new Intent(this, DriverDashboardActivity.class));
                                 } else {
                                     startActivity(new Intent(this, MainActivity.class));
                                 }

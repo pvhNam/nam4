@@ -51,12 +51,17 @@ public class ProfileFragment extends Fragment {
     private CardView cardUserProfile;
     private TextView tvProfileNameMain, tvPhoneVerifiedBadge;
     private ImageView ivAvatarMain,ivVerifiedIcon,ivFavouriteCar,ivRegRentCar,ivLocation;
-    private Button btnLogin, btnRegister, btnLogout;
+    private Button btnLogin, btnRegister, btnLogout, btnSwitchDriver;
 
     // Views màn 2
     private ImageView ivAvatarSettings;
     private CardView ivChangeAvatarTrigger;
     private RelativeLayout menuPersonalInfoClick;
+    private RelativeLayout menuRegisterDriver;
+    private TextView tvDriverStatusHint;
+    private TextView tvRegisterDriverLabel;
+    // Trạng thái hồ sơ tài xế của user hiện tại: "" / pending / approved / rejected
+    private String driverStatus = "";
     private ImageView btnBackToMain; // Đã đổi sang ImageView để tránh lỗi theme
 
     // Views màn 3
@@ -94,6 +99,7 @@ public class ProfileFragment extends Fragment {
         btnLogin = view.findViewById(R.id.btn_login);
         btnRegister = view.findViewById(R.id.btn_register);
         btnLogout = view.findViewById(R.id.btn_logout);
+        btnSwitchDriver = view.findViewById(R.id.btn_switch_driver);
         cardUserProfile = view.findViewById(R.id.card_user_profile);
         tvProfileNameMain = view.findViewById(R.id.tv_profile_name_main);
         tvPhoneVerifiedBadge = view.findViewById(R.id.tv_phone_verified_badge);
@@ -102,6 +108,9 @@ public class ProfileFragment extends Fragment {
         ivAvatarSettings = view.findViewById(R.id.iv_avatar_settings);
         ivChangeAvatarTrigger = view.findViewById(R.id.iv_change_avatar_trigger);
         menuPersonalInfoClick = view.findViewById(R.id.menu_personal_info);
+        menuRegisterDriver = view.findViewById(R.id.menu_register_driver);
+        tvDriverStatusHint = view.findViewById(R.id.tv_driver_status_hint);
+        tvRegisterDriverLabel = view.findViewById(R.id.tv_register_driver_label);
         btnBackToMain = view.findViewById(R.id.btn_back_to_main);
 
         btnBackToSettings = view.findViewById(R.id.btn_back_to_settings);
@@ -125,6 +134,16 @@ public class ProfileFragment extends Fragment {
         cardUserProfile.setOnClickListener(v -> switchSubScreen(2));
         btnBackToMain.setOnClickListener(v -> switchSubScreen(1));
         menuPersonalInfoClick.setOnClickListener(v -> switchSubScreen(3));
+        // Đã được duyệt làm tài xế → chuyển sang giao diện tài xế, chưa thì mở form đăng ký
+        menuRegisterDriver.setOnClickListener(v -> {
+            if ("approved".equals(driverStatus)) {
+                openDriverDashboard();
+            } else {
+                startActivity(new Intent(getActivity(),
+                        com.example.doanmb.ui.activity.DriverRegisterActivity.class));
+            }
+        });
+        btnSwitchDriver.setOnClickListener(v -> openDriverDashboard());
         btnBackToSettings.setOnClickListener(v -> switchSubScreen(2));
 
         ivChangeAvatarTrigger.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
@@ -146,6 +165,12 @@ public class ProfileFragment extends Fragment {
             );
             datePickerDialog.show();
         });
+    }
+
+    private void openDriverDashboard() {
+        startActivity(new Intent(getActivity(),
+                com.example.doanmb.ui.activity.DriverDashboardActivity.class));
+        if (getActivity() != null) getActivity().finish();
     }
 
     private void switchSubScreen(int screenId) {
@@ -184,6 +209,40 @@ public class ProfileFragment extends Fragment {
                     String gender = doc.getString("gender");
                     String avatarUrl = doc.getString("avatarUrl");
                     Boolean phoneVerified = doc.getBoolean("phoneVerified");
+                    String status = doc.getString("driverStatus");
+                    driverStatus = status != null ? status : "";
+
+                    // Có tài khoản tài xế đã duyệt → hiện nút chuyển đổi ở màn hình chính
+                    if (btnSwitchDriver != null) {
+                        btnSwitchDriver.setVisibility(
+                                "approved".equals(driverStatus) ? View.VISIBLE : View.GONE);
+                    }
+
+                    if (tvRegisterDriverLabel != null) {
+                        tvRegisterDriverLabel.setText("approved".equals(driverStatus)
+                                ? "Chuyển sang chế độ tài xế"
+                                : "Đăng ký làm tài xế");
+                    }
+
+                    if (tvDriverStatusHint != null) {
+                        if ("pending".equals(driverStatus)) {
+                            tvDriverStatusHint.setText("Chờ duyệt");
+                            tvDriverStatusHint.setTextSize(13);
+                            tvDriverStatusHint.setTextColor(android.graphics.Color.parseColor("#EF6C00"));
+                        } else if ("approved".equals(driverStatus)) {
+                            tvDriverStatusHint.setText("Đã duyệt");
+                            tvDriverStatusHint.setTextSize(13);
+                            tvDriverStatusHint.setTextColor(android.graphics.Color.parseColor("#2E7D32"));
+                        } else if ("rejected".equals(driverStatus)) {
+                            tvDriverStatusHint.setText("Bị từ chối");
+                            tvDriverStatusHint.setTextSize(13);
+                            tvDriverStatusHint.setTextColor(android.graphics.Color.parseColor("#C62828"));
+                        } else {
+                            tvDriverStatusHint.setText("›");
+                            tvDriverStatusHint.setTextSize(24);
+                            tvDriverStatusHint.setTextColor(android.graphics.Color.parseColor("#2A70DE"));
+                        }
+                    }
 
                     tvProfileNameMain.setText(name != null ? name : "Chưa đặt tên");
                     if (phoneVerified != null && phoneVerified) {
