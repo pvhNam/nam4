@@ -6,16 +6,14 @@
     <!-- Brand colors (không đổi theo dark/light) -->
     <color name="admin_primary">#C62828</color>
     <color name="admin_dark">#B71C1C</color>
-    <color name="staff_primary">#00695C</color>
-    <color name="staff_dark">#004D40</color>
     <color name="driver_primary">#EF6C00</color>
     <color name="driver_dark">#E65100</color>
 
     <!-- Role badge colors -->
     <color name="role_admin_bg">#FFCDD2</color>
     <color name="role_admin_text">#B71C1C</color>
-    <color name="role_staff_bg">#B2DFDB</color>
-    <color name="role_staff_text">#004D40</color>
+    <color name="role_driver_bg">#FFE0B2</color>
+    <color name="role_driver_text">#E65100</color>
     <color name="role_customer_bg">#BBDEFB</color>
     <color name="role_customer_text">#0D47A1</color>
 
