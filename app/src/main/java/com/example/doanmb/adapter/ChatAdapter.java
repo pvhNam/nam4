@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -45,15 +46,21 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
         void onMediaClick(ChatMessage message);
     }
 
-    public interface OnMessageLongClickListener {
-        void onMessageLongClick(String messageId, ChatMessage message);
+    /** Menu hành động trên 1 tin nhắn: Gỡ / Chuyển tiếp / Báo cáo */
+    public interface OnMessageActionListener {
+        /** Thu hồi tin nhắn (chỉ tin của mình) */
+        void onRecall(String messageId, ChatMessage message);
+        /** Chuyển tiếp tin nhắn sang cuộc trò chuyện khác */
+        void onForward(ChatMessage message);
+        /** Báo cáo tin nhắn (chỉ tin của người khác) */
+        void onReportMessage(ChatMessage message);
     }
 
     private OnMediaClickListener mediaClickListener;
-    private OnMessageLongClickListener messageLongClickListener;
+    private OnMessageActionListener messageActionListener;
 
-    public void setOnMediaClickListener(OnMediaClickListener l)           { this.mediaClickListener = l; }
-    public void setOnMessageLongClickListener(OnMessageLongClickListener l) { this.messageLongClickListener = l; }
+    public void setOnMediaClickListener(OnMediaClickListener l) { this.mediaClickListener = l; }
+    public void setOnMessageActionListener(OnMessageActionListener l) { this.messageActionListener = l; }
 
     /** Đặt từ khoá tìm kiếm để highlight trong bubble tin nhắn */
     public void setSearchQuery(String query) {
@@ -98,6 +105,11 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ChatMessage msg = getItem(position);
 
+        android.util.Log.d("MSG_DEBUG", "Message ID: " + msg.getMessageId() +
+                " | imageUrl=" + msg.getImageUrl() +
+                " | videoUrl=" + msg.getVideoUrl() +
+                " | isVideo=" + msg.isVideo());
+
         String time = msg.getTimestamp() != null
                 ? dateFormat.format(msg.getTimestamp().toDate())
                 : dateFormat.format(new Date());
@@ -120,7 +132,7 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
             h.tvMessage.setVisibility(View.VISIBLE);
             h.tvStatus.setText("");
             h.cardImage.setVisibility(View.GONE);
-            h.itemView.setOnLongClickListener(null);
+            h.btnMore.setVisibility(View.GONE); // tin đã thu hồi không cần menu nữa
         } else {
             // ── Bình thường ──
             h.tvMessage.setTypeface(null, Typeface.NORMAL);
@@ -153,15 +165,9 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
             }
             bindMediaClick(h.cardImage, msg);
 
-            // Long-press thu hồi (chỉ tin mình gửi)
-            if (messageLongClickListener != null && msg.getMessageId() != null) {
-                h.itemView.setOnLongClickListener(v -> {
-                    messageLongClickListener.onMessageLongClick(msg.getMessageId(), msg);
-                    return true;
-                });
-            } else {
-                h.itemView.setOnLongClickListener(null);
-            }
+            // Menu 3 chấm: Gỡ + Chuyển tiếp
+            h.btnMore.setVisibility(View.VISIBLE);
+            h.btnMore.setOnClickListener(v -> showSentMenu(v, msg));
         }
     }
 
@@ -175,16 +181,16 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
             h.tvMessage.setTextColor(0xFF9E9E9E);
             h.tvMessage.setVisibility(View.VISIBLE);
             h.cardImage.setVisibility(View.GONE);
-            h.itemView.setOnLongClickListener(null);
+            h.btnMore.setVisibility(View.GONE);
         } else {
             // ── Bình thường ──
             h.tvMessage.setTypeface(null, Typeface.NORMAL);
-            h.tvMessage.setTextColor(0xFF1A1A2E); // màu mặc định nhận
+            h.tvMessage.setTextColor(0xFF1A1A2E);
 
             String content = msg.getContent();
             if (content != null && !content.isEmpty()) {
                 h.tvMessage.setVisibility(View.VISIBLE);
-                h.tvMessage.setText(highlightText(content, 0xFFFFEB3B)); // vàng đậm hơn cho nền sáng
+                h.tvMessage.setText(highlightText(content, 0xFFFFEB3B));
             } else {
                 h.tvMessage.setVisibility(View.GONE);
             }
@@ -198,16 +204,61 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
                 loadMedia(h.cardImage, h.ivImage, h.ivPlayIcon, msg.getImageUrl(), false);
             }
             bindMediaClick(h.cardImage, msg);
-            h.itemView.setOnLongClickListener(null);
+
+            // Menu 3 chấm: Chuyển tiếp + Báo cáo
+            h.btnMore.setVisibility(View.VISIBLE);
+            h.btnMore.setOnClickListener(v -> showReceivedMenu(v, msg));
         }
+    }
+
+    // ── Menu cho tin nhắn của mình: Gỡ / Chuyển tiếp ─────────────────────────
+
+    private void showSentMenu(View anchor, ChatMessage msg) {
+        PopupMenu menu = new PopupMenu(anchor.getContext(), anchor);
+        menu.getMenu().add(0, 1, 0, "Gỡ");
+        menu.getMenu().add(0, 2, 1, "Chuyển tiếp");
+        menu.setOnMenuItemClickListener(item -> {
+            if (messageActionListener == null) return true;
+            switch (item.getItemId()) {
+                case 1:
+                    if (msg.getMessageId() != null) {
+                        messageActionListener.onRecall(msg.getMessageId(), msg);
+                    }
+                    return true;
+                case 2:
+                    messageActionListener.onForward(msg);
+                    return true;
+                default:
+                    return false;
+            }
+        });
+        menu.show();
+    }
+
+    // ── Menu cho tin nhắn của đối phương: Chuyển tiếp / Báo cáo ──────────────
+
+    private void showReceivedMenu(View anchor, ChatMessage msg) {
+        PopupMenu menu = new PopupMenu(anchor.getContext(), anchor);
+        menu.getMenu().add(0, 1, 0, "Chuyển tiếp");
+        menu.getMenu().add(0, 2, 1, "Báo cáo");
+        menu.setOnMenuItemClickListener(item -> {
+            if (messageActionListener == null) return true;
+            switch (item.getItemId()) {
+                case 1:
+                    messageActionListener.onForward(msg);
+                    return true;
+                case 2:
+                    messageActionListener.onReportMessage(msg);
+                    return true;
+                default:
+                    return false;
+            }
+        });
+        menu.show();
     }
 
     // ── Highlight từ khoá tìm kiếm trong text ────────────────────────────────
 
-    /**
-     * Bọc các từ khớp với searchQuery bằng BackgroundColorSpan màu highlightColor.
-     * Nếu searchQuery rỗng trả về text gốc.
-     */
     private CharSequence highlightText(String text, int highlightColor) {
         if (searchQuery == null || searchQuery.isEmpty()) return text;
 
@@ -251,35 +302,56 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
 
     private void loadMedia(CardView card, ImageView iv, ImageView playIcon,
                            String url, boolean isVideo) {
-        if (url != null && !url.isEmpty()) {
-            card.setVisibility(View.VISIBLE);
-            String optimized = url.contains("cloudinary.com")
-                    ? url.replace("/upload/", "/upload/w_400,c_scale,q_auto,f_auto/") : url;
-            Glide.with(iv.getContext())
-                    .load(optimized)
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .override(400)
-                    .placeholder(android.R.drawable.ic_menu_gallery)
-                    .thumbnail(0.1f)
-                    .into(iv);
-            if (playIcon != null) playIcon.setVisibility(isVideo ? View.VISIBLE : View.GONE);
-        } else {
+        if (url == null || url.isEmpty()) {
             card.setVisibility(View.GONE);
             if (playIcon != null) playIcon.setVisibility(View.GONE);
+            return;
+        }
+
+        card.setVisibility(View.VISIBLE);
+        String loadUrl = url;
+
+        if (url.contains("cloudinary.com")) {
+            if (isVideo) {
+                // Chỉ tạo thumbnail nếu chưa có transform
+                if (!url.contains("/upload/so_0") && !url.contains("/upload/w_")) {
+                    loadUrl = url.replace("/upload/", "/upload/so_0,w_420,c_fill,q_80/")
+                            .replaceAll("\\.(mp4|mov|avi|mkv|webm)$", ".jpg");
+                }
+            } else {
+                // ✅ Xóa hết transform cũ trước khi thêm mới để tránh double transform
+                loadUrl = url.replace("/upload/", "/upload/w_600,c_limit,q_85,f_auto/");
+            }
+        }
+
+        Glide.with(iv.getContext())
+                .load(loadUrl)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .override(420, 420)
+                .placeholder(android.R.drawable.ic_menu_gallery)
+                .error(R.drawable.ic_broken_image) // ← đổi error icon để phân biệt với placeholder
+                .centerCrop()
+                .into(iv);
+
+        if (playIcon != null) {
+            playIcon.setVisibility(isVideo ? View.VISIBLE : View.GONE);
         }
     }
 
     private String cloudinaryThumbnail(String videoUrl) {
-        if (videoUrl == null || !videoUrl.contains("cloudinary.com")) return null;
+        if (videoUrl == null || !videoUrl.contains("cloudinary.com")) {
+            return null;
+        }
+        // Tạo thumbnail một lần, không chồng transform
         return videoUrl
-                .replace("/upload/", "/upload/so_0,w_400,c_fill,q_auto/")
+                .replace("/upload/", "/upload/so_0,w_420,c_fill,q_80/")
                 .replaceAll("\\.(mp4|mov|avi|mkv|webm)$", ".jpg");
     }
 
     // ── ViewHolders ───────────────────────────────────────────────────────────
 
     static class SentVH extends RecyclerView.ViewHolder {
-        TextView  tvMessage, tvTime, tvStatus;
+        TextView  tvMessage, tvTime, tvStatus, btnMore;
         ImageView ivImage, ivPlayIcon;
         CardView  cardImage;
 
@@ -291,11 +363,12 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
             ivImage    = v.findViewById(R.id.iv_message_image);
             ivPlayIcon = v.findViewById(R.id.iv_play_icon);
             cardImage  = v.findViewById(R.id.card_image);
+            btnMore    = v.findViewById(R.id.btn_message_more);
         }
     }
 
     static class ReceivedVH extends RecyclerView.ViewHolder {
-        TextView  tvMessage, tvTime;
+        TextView  tvMessage, tvTime, btnMore;
         ImageView ivImage, ivPlayIcon;
         CardView  cardImage;
 
@@ -306,6 +379,7 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
             ivImage    = v.findViewById(R.id.iv_message_image);
             ivPlayIcon = v.findViewById(R.id.iv_play_icon);
             cardImage  = v.findViewById(R.id.card_image);
+            btnMore    = v.findViewById(R.id.btn_message_more);
         }
     }
 
@@ -314,17 +388,20 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
     static class MessageDiffCallback extends DiffUtil.ItemCallback<ChatMessage> {
         @Override
         public boolean areItemsTheSame(@NonNull ChatMessage a, @NonNull ChatMessage b) {
-            if (a.getMessageId() != null && b.getMessageId() != null)
+            if (a.getMessageId() != null && b.getMessageId() != null) {
                 return a.getMessageId().equals(b.getMessageId());
-            return a.getContent() != null && a.getContent().equals(b.getContent())
-                    && a.getSenderId().equals(b.getSenderId());
+            }
+            return false;
         }
 
         @Override
         public boolean areContentsTheSame(@NonNull ChatMessage a, @NonNull ChatMessage b) {
             return a.getStatus() == b.getStatus()
                     && a.isRecalled() == b.isRecalled()
-                    && (a.getTimestamp() != null && a.getTimestamp().equals(b.getTimestamp()));
+                    && (a.getTimestamp() != null && a.getTimestamp().equals(b.getTimestamp()))
+                    && (a.getImageUrl() != null ? a.getImageUrl().equals(b.getImageUrl()) : b.getImageUrl() == null)
+                    && (a.getVideoUrl() != null ? a.getVideoUrl().equals(b.getVideoUrl()) : b.getVideoUrl() == null)
+                    && (a.getThumbnailUrl() != null ? a.getThumbnailUrl().equals(b.getThumbnailUrl()) : b.getThumbnailUrl() == null);
         }
     }
 }

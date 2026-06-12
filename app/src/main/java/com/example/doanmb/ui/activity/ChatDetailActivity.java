@@ -25,6 +25,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import com.bumptech.glide.Glide;
 import com.example.doanmb.R;
@@ -96,6 +97,12 @@ public class ChatDetailActivity extends AppCompatActivity {
     private boolean      isVideoMode = false;
 
     private final List<MediaPickerAdapter.MediaItem> pendingMedia = new ArrayList<>();
+
+    // ── Media overlay (xem ảnh/video ngay trong Activity) ────────────────────
+    private View layoutMediaOverlay;
+    private com.github.chrisbanes.photoview.PhotoView photoViewOverlay;
+    private android.widget.VideoView videoViewOverlay;
+    private android.widget.ProgressBar progressVideoOverlay;
 
     private final ActivityResultLauncher<String[]> permissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
@@ -233,6 +240,14 @@ public class ChatDetailActivity extends AppCompatActivity {
         }
 
         findViewById(R.id.btn_menu_more).setOnClickListener(this::showPopupMenu);
+
+        // ── Media overlay ──────────────────────────────────────────────────
+        layoutMediaOverlay   = findViewById(R.id.layout_media_overlay);
+        photoViewOverlay     = findViewById(R.id.photo_view_overlay);
+        videoViewOverlay     = findViewById(R.id.video_view_overlay);
+        progressVideoOverlay = findViewById(R.id.progress_video_overlay);
+        View btnCloseOverlay = findViewById(R.id.btn_close_overlay);
+        if (btnCloseOverlay != null) btnCloseOverlay.setOnClickListener(v -> closeMediaOverlay());
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -441,10 +456,21 @@ public class ChatDetailActivity extends AppCompatActivity {
         // Mở media toàn màn hình
         chatAdapter.setOnMediaClickListener(this::openFullscreenMedia);
 
-        // Long-press → thu hồi tin nhắn (chỉ tin của mình)
-        chatAdapter.setOnMessageLongClickListener((messageId, message) -> {
-            if (message.getSenderId().equals(currentUserId)) {
+        // Menu 3 chấm: Gỡ / Chuyển tiếp / Báo cáo
+        chatAdapter.setOnMessageActionListener(new ChatAdapter.OnMessageActionListener() {
+            @Override
+            public void onRecall(String messageId, ChatMessage message) {
                 recallMessage(messageId, message);
+            }
+
+            @Override
+            public void onForward(ChatMessage message) {
+                forwardMessage(message);
+            }
+
+            @Override
+            public void onReportMessage(ChatMessage message) {
+                reportMessage(message);
             }
         });
 
@@ -456,29 +482,44 @@ public class ChatDetailActivity extends AppCompatActivity {
     }
 
     private void openFullscreenMedia(ChatMessage clickedMsg) {
-        ArrayList<String>  urls     = new ArrayList<>();
+        ArrayList<String> urls = new ArrayList<>();
         ArrayList<Boolean> isVideos = new ArrayList<>();
-        int startPos = 0;
+        int startPosition = 0;
 
-        for (ChatMessage msg : allMessages) {
+        // Quét toàn bộ tin nhắn để gom Media (ảnh/video) lại thành 1 danh sách
+        for (int i = 0; i < allMessages.size(); i++) {
+            ChatMessage msg = allMessages.get(i);
             if (msg.isRecalled()) continue;
+
             if (msg.isVideo() && msg.getVideoUrl() != null && !msg.getVideoUrl().isEmpty()) {
-                if (msg.getVideoUrl().equals(clickedMsg.getVideoUrl())) startPos = urls.size();
                 urls.add(msg.getVideoUrl());
                 isVideos.add(true);
-            } else if (!msg.isVideo() && msg.getImageUrl() != null && !msg.getImageUrl().isEmpty()) {
-                if (msg.getImageUrl().equals(clickedMsg.getImageUrl())) startPos = urls.size();
+                if (msg.getMessageId() != null && msg.getMessageId().equals(clickedMsg.getMessageId())) {
+                    startPosition = urls.size() - 1;
+                }
+            } else if (msg.getImageUrl() != null && !msg.getImageUrl().isEmpty()) {
                 urls.add(msg.getImageUrl());
                 isVideos.add(false);
+                if (msg.getMessageId() != null && msg.getMessageId().equals(clickedMsg.getMessageId())) {
+                    startPosition = urls.size() - 1;
+                }
             }
         }
+
         if (urls.isEmpty()) return;
 
+        // Chuyển sang màn hình FullscreenMediaActivity để lướt
         Intent intent = new Intent(this, FullscreenMediaActivity.class);
         intent.putStringArrayListExtra(FullscreenMediaActivity.EXTRA_URLS, urls);
         intent.putExtra(FullscreenMediaActivity.EXTRA_IS_VIDEOS, isVideos);
-        intent.putExtra(FullscreenMediaActivity.EXTRA_START_POS, startPos);
+        intent.putExtra(FullscreenMediaActivity.EXTRA_START_POS, startPosition);
         startActivity(intent);
+    }
+
+    private void closeMediaOverlay() {
+        if (layoutMediaOverlay == null) return;
+        if (videoViewOverlay != null) videoViewOverlay.stopPlayback();
+        layoutMediaOverlay.setVisibility(View.GONE);
     }
 
     private void listenForMessages() {
@@ -729,57 +770,220 @@ public class ChatDetailActivity extends AppCompatActivity {
     }
 
     // ══════════════════════════════════════════════════════════════════════════
-    //  Menu (Chặn / Báo cáo)
+    //  Menu (Chặn)
     // ══════════════════════════════════════════════════════════════════════════
     private void showPopupMenu(View v) {
-        String[] options = iBlockedPartner
-                ? new String[]{"Bỏ chặn", "Báo cáo"}
-                : new String[]{"Chặn người này", "Báo cáo"};
+        String blockLabel = iBlockedPartner ? "Bỏ chặn " + partnerName : "Chặn " + partnerName;
 
-        new AlertDialog.Builder(this).setItems(options, (dialog, which) -> {
-            if (which == 0) {
-                if (iBlockedPartner) {
-                    // Bỏ chặn
-                    db.collection("blocks").document(currentUserId + "_" + partnerId)
-                            .delete()
-                            .addOnSuccessListener(aVoid ->
-                                    Toast.makeText(this, "Đã bỏ chặn " + partnerName,
-                                            Toast.LENGTH_SHORT).show());
-                } else {
-                    // Chặn
-                    Map<String, Object> b = new HashMap<>();
-                    b.put("blockerId", currentUserId);
-                    b.put("blockedId", partnerId);
-                    b.put("timestamp", FieldValue.serverTimestamp());
-                    db.collection("blocks").document(currentUserId + "_" + partnerId)
-                            .set(b)
-                            .addOnSuccessListener(aVoid ->
-                                    Toast.makeText(this, "Đã chặn " + partnerName,
-                                            Toast.LENGTH_SHORT).show());
-                }
-            } else {
-                showReportDialog();
-            }
-        }).show();
+        // Thay đổi 1: Chỉ truyền mảng có 1 phần tử duy nhất là blockLabel, bỏ "Báo cáo"
+        new AlertDialog.Builder(this)
+                .setItems(new String[]{blockLabel}, (dialog, which) -> {
+                    // Thay đổi 2: Vì chỉ còn 1 item nên không cần check `if (which == 0)` hay loại bỏ nhánh `else` cũ.
+                    // Thực hiện trực tiếp logic Chặn / Bỏ chặn luôn.
+                    if (iBlockedPartner) {
+                        db.collection("blocks").document(currentUserId + "_" + partnerId)
+                                .delete()
+                                .addOnSuccessListener(aVoid ->
+                                        Toast.makeText(this, "Đã bỏ chặn " + partnerName,
+                                                Toast.LENGTH_SHORT).show());
+                    } else {
+                        new AlertDialog.Builder(this)
+                                .setTitle("Chặn " + partnerName + "?")
+                                .setMessage("Người này sẽ không thể gửi tin nhắn cho bạn. Bạn có thể bỏ chặn bất cứ lúc nào.")
+                                .setPositiveButton("Chặn", (d, w) -> {
+                                    Map<String, Object> b = new HashMap<>();
+                                    b.put("blockerId", currentUserId);
+                                    b.put("blockedId", partnerId);
+                                    b.put("timestamp", FieldValue.serverTimestamp());
+                                    db.collection("blocks")
+                                            .document(currentUserId + "_" + partnerId)
+                                            .set(b)
+                                            .addOnSuccessListener(aVoid ->
+                                                    Toast.makeText(this, "Đã chặn " + partnerName,
+                                                            Toast.LENGTH_SHORT).show());
+                                })
+                                .setNegativeButton("Hủy", null)
+                                .show();
+                    }
+                })
+                .show();
     }
 
-    private void showReportDialog() {
-        String[] reasons = {"Lừa đảo", "Spam", "Khác"};
-        new AlertDialog.Builder(this).setTitle("Báo cáo")
-                .setItems(reasons, (dialog, which) -> {
-                    Map<String, Object> report = new HashMap<>();
-                    report.put("reporterId", currentUserId);
-                    report.put("targetId",   partnerId);
-                    report.put("reason",     reasons[which]);
-                    report.put("timestamp",  FieldValue.serverTimestamp());
-                    db.collection("reports").add(report);
-                    Toast.makeText(this, "Đã gửi báo cáo", Toast.LENGTH_SHORT).show();
-                }).show();
+    // ── 2. showReportDialog — kiểu Facebook, chỉ 2 lý do ─────────────────────
+    private void showReportDialog(ChatMessage message) {
+        // Inflate layout tùy chỉnh kiểu Facebook
+        android.view.View dialogView = getLayoutInflater().inflate(R.layout.dialog_report_fb, null);
+
+        // Tạo BottomSheetDialog để hiện từ dưới lên
+        com.google.android.material.bottomsheet.BottomSheetDialog bottomSheet =
+                new com.google.android.material.bottomsheet.BottomSheetDialog(this, R.style.ReportBottomSheetTheme);
+        bottomSheet.setContentView(dialogView);
+
+        // Nút đóng (✕)
+        dialogView.findViewById(R.id.btn_report_close).setOnClickListener(close -> bottomSheet.dismiss());
+
+        // Option 1 — Giả mạo người khác
+        dialogView.findViewById(R.id.option_impersonation).setOnClickListener(opt -> {
+            bottomSheet.dismiss();
+            submitMessageReport(message, "Giả mạo người khác");
+        });
+
+        // Option 2 — Lừa đảo hoặc gian lận
+        dialogView.findViewById(R.id.option_fraud).setOnClickListener(opt -> {
+            bottomSheet.dismiss();
+            submitMessageReport(message, "Lừa đảo hoặc gian lận");
+        });
+
+        bottomSheet.show();
+    }
+
+    // ── Helper: gửi báo cáo lên Firestore ────────────────────────────────────
+    private void submitReport(String reason) {
+        Map<String, Object> report = new HashMap<>();
+        report.put("reporterId", currentUserId);
+        report.put("targetId",   partnerId);
+        report.put("roomId",     roomId);
+        report.put("reason",     reason);
+        report.put("status",     "pending");
+        report.put("timestamp",  FieldValue.serverTimestamp());
+
+        db.collection("reports").add(report)
+                .addOnSuccessListener(ref -> {
+                    // Hiện thông báo xác nhận kiểu FB
+                    new AlertDialog.Builder(this)
+                            .setTitle("Đã gửi báo cáo")
+                            .setMessage("Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xem xét và xử lý sớm nhất có thể.")
+                            .setPositiveButton("OK", null)
+                            .show();
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Lỗi gửi báo cáo: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
     // ══════════════════════════════════════════════════════════════════════════
     //  Lifecycle
     // ══════════════════════════════════════════════════════════════════════════
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Chuyển tiếp tin nhắn
+    // ══════════════════════════════════════════════════════════════════════════
+    private void forwardMessage(ChatMessage message) {
+        db.collection("chat_rooms")
+                .whereArrayContains("participants", currentUserId)
+                .orderBy("lastTimestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    if (snapshots.isEmpty()) {
+                        Toast.makeText(this, "Không có cuộc trò chuyện nào để chuyển tiếp", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    List<String> targetRoomIds = new ArrayList<>();
+                    List<String> displayNames  = new ArrayList<>();
+
+                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                        String rid = doc.getId();
+                        if (rid.equals(roomId)) continue; // bỏ qua phòng hiện tại
+
+                        String carName = doc.getString("carName");
+                        String lastMsg = doc.getString("lastMessage");
+
+                        String label = (carName != null && !carName.isEmpty() ? "🚗 " + carName : "Cuộc trò chuyện");
+                        if (lastMsg != null && !lastMsg.isEmpty()) {
+                            label += "\n   " + (lastMsg.length() > 40 ? lastMsg.substring(0, 40) + "..." : lastMsg);
+                        }
+                        targetRoomIds.add(rid);
+                        displayNames.add(label);
+                    }
+
+                    if (targetRoomIds.isEmpty()) {
+                        Toast.makeText(this, "Không có cuộc trò chuyện nào khác", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    new androidx.appcompat.app.AlertDialog.Builder(this)
+                            .setTitle("Chuyển tiếp đến...")
+                            .setItems(displayNames.toArray(new String[0]),
+                                    (d, which) -> sendForwardedMessage(targetRoomIds.get(which), message))
+                            .setNegativeButton("Hủy", null)
+                            .show();
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Lỗi tải danh sách: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
+    private void sendForwardedMessage(String targetRoomId, ChatMessage message) {
+        Map<String, Object> msg = new HashMap<>();
+        msg.put("senderId",  currentUserId);
+        msg.put("timestamp", FieldValue.serverTimestamp());
+        msg.put("status",    0);
+        msg.put("recalled",  false);
+
+        String lastPreview;
+        if (message.isVideo() && message.getVideoUrl() != null && !message.getVideoUrl().isEmpty()) {
+            msg.put("videoUrl",     message.getVideoUrl());
+            msg.put("thumbnailUrl", message.getThumbnailUrl() != null ? message.getThumbnailUrl() : "");
+            msg.put("messageType",  ChatMessage.TYPE_VIDEO);
+            msg.put("content",      "");
+            lastPreview = "📩 [Video]";
+        } else if (message.getImageUrl() != null && !message.getImageUrl().isEmpty()) {
+            msg.put("imageUrl",    message.getImageUrl());
+            msg.put("messageType", ChatMessage.TYPE_IMAGE);
+            msg.put("content",     "");
+            lastPreview = "📩 [Hình ảnh]";
+        } else {
+            String content = message.getContent() != null ? message.getContent() : "";
+            msg.put("content",     content);
+            msg.put("messageType", ChatMessage.TYPE_TEXT);
+            lastPreview = "📩 " + content;
+        }
+
+        final String preview = lastPreview;
+        db.collection("chat_rooms").document(targetRoomId)
+                .collection("messages").add(msg)
+                .addOnSuccessListener(ref -> {
+                    db.collection("chat_rooms").document(targetRoomId)
+                            .update("lastMessage",   preview,
+                                    "lastTimestamp", FieldValue.serverTimestamp());
+                    Toast.makeText(this, "✅ Đã chuyển tiếp tin nhắn!", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Lỗi chuyển tiếp: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Báo cáo tin nhắn cụ thể (lưu vào collection message_reports)
+    // ══════════════════════════════════════════════════════════════════════════
+    private void reportMessage(ChatMessage message) {
+        showReportDialog(message);
+    }
+
+    private void submitMessageReport(ChatMessage message, String reason) {
+        Map<String, Object> report = new HashMap<>();
+        report.put("reporterId",      currentUserId);
+        report.put("targetMessageId", message.getMessageId() != null ? message.getMessageId() : "");
+        report.put("targetSenderId",  message.getSenderId());
+        report.put("targetRoomId",    roomId);
+        report.put("reason",          reason);
+        report.put("messageContent",  message.getContent() != null ? message.getContent() : "");
+        report.put("messageType",     message.getMessageType() != null ? message.getMessageType() : "text");
+        if (message.getImageUrl() != null && !message.getImageUrl().isEmpty())
+            report.put("imageUrl", message.getImageUrl());
+        if (message.getVideoUrl() != null && !message.getVideoUrl().isEmpty())
+            report.put("videoUrl", message.getVideoUrl());
+        report.put("status",    "pending");
+        report.put("timestamp", FieldValue.serverTimestamp());
+
+        db.collection("message_reports").add(report)
+                .addOnSuccessListener(ref ->
+                        new androidx.appcompat.app.AlertDialog.Builder(this)
+                                .setTitle("Đã gửi báo cáo")
+                                .setMessage("Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xem xét và xử lý sớm nhất có thể.\n\nNếu ai đó đang gặp nguy hiểm, hãy liên hệ dịch vụ khẩn cấp tại địa phương.")
+                                .setPositiveButton("OK", null)
+                                .show())
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Lỗi gửi báo cáo: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
     @Override
     public void onBackPressed() {
         if (layoutSearchBar != null && layoutSearchBar.getVisibility() == View.VISIBLE) {
