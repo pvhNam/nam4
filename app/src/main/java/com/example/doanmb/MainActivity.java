@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -15,6 +16,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -141,6 +144,21 @@ public class MainActivity extends AppCompatActivity {
         etSearch             = findViewById(R.id.et_search);
         tvGreeting           = findViewById(R.id.tv_greeting);
         bottomNavigationView = findViewById(R.id.bottom_navigation);
+        // BottomNavigationView tự cộng inset thanh điều hướng hệ thống vào padding đáy,
+        // làm icon lệch lên trên; thanh này dạng nổi nên không cần né inset
+        ViewCompat.setOnApplyWindowInsetsListener(bottomNavigationView, (v, insets) -> insets);
+        // Né thanh điều hướng: cộng chiều cao thanh hệ thống vào margin đáy của khung menu
+        View navContainer = findViewById(R.id.bottom_nav_container);
+        int baseNavMargin = ((ViewGroup.MarginLayoutParams) navContainer.getLayoutParams()).bottomMargin;
+        ViewCompat.setOnApplyWindowInsetsListener(navContainer, (v, insets) -> {
+            int navBarHeight = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+            ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            if (lp.bottomMargin != baseNavMargin + navBarHeight) {
+                lp.bottomMargin = baseNavMargin + navBarHeight;
+                v.setLayoutParams(lp);
+            }
+            return insets;
+        });
         fragmentContainer    = findViewById(R.id.fragment_container);
         homeLayout           = findViewById(R.id.home_layout);
         swipeRefreshLayout   = findViewById(R.id.swipe_refresh);
