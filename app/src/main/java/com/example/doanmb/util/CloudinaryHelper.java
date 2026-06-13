@@ -76,32 +76,59 @@ public class CloudinaryHelper {
 
     // ── Upload ảnh ───────────────────────────────────────────────────────────
 
+    // ── Upload ảnh ───────────────────────────────────────────────────────────
+
     public static void uploadImage(Context context, Uri imageUri, OnUploadCallback callback) {
         new Thread(() -> {
             File tempFile = null;
             try {
                 tempFile = compressAndRotateImage(context, imageUri);
-                if (tempFile == null) { callback.onFailure("Lỗi xử lý ảnh"); return; }
+                if (tempFile == null) {
+                    callback.onFailure("Lỗi xử lý ảnh");
+                    return;
+                }
 
-                final File fileToUpload = tempFile;
+                final File fileToUpload = tempFile;   // Phải final/effectively final
+
                 MediaManager.get().upload(fileToUpload.getAbsolutePath())
                         .unsigned(UPLOAD_PRESET)
                         .option("resource_type", "image")
+                        .option("timeout", 60000)           // 60 giây
+                        .option("chunk_size", 4_000_000)
                         .callback(new UploadCallback() {
-                            @Override public void onStart(String requestId) {}
-                            @Override public void onProgress(String requestId, long bytes, long totalBytes) {}
+                            @Override
+                            public void onStart(String requestId) {
+                                // Có thể thêm callback tiến độ nếu cần
+                            }
+
+                            @Override
+                            public void onProgress(String requestId, long bytes, long totalBytes) {
+                                // Có thể cập nhật progress bar nếu muốn
+                            }
+
                             @Override
                             public void onSuccess(String requestId, java.util.Map resultData) {
                                 fileToUpload.delete();
-                                callback.onSuccess((String) resultData.get("secure_url"));
+                                String url = (String) resultData.get("secure_url");
+                                if (url != null) {
+                                    callback.onSuccess(url);
+                                } else {
+                                    callback.onFailure("Không lấy được URL");
+                                }
                             }
+
                             @Override
                             public void onError(String requestId, ErrorInfo error) {
                                 fileToUpload.delete();
-                                callback.onFailure(error.getDescription());
+                                callback.onFailure(error != null ? error.getDescription() : "Lỗi upload không xác định");
                             }
-                            @Override public void onReschedule(String requestId, ErrorInfo error) {}
+
+                            @Override
+                            public void onReschedule(String requestId, ErrorInfo error) {
+                                // Thử lại nếu cần
+                            }
                         }).dispatch(context);
+
             } catch (Exception e) {
                 if (tempFile != null) tempFile.delete();
                 callback.onFailure("Lỗi hệ thống: " + e.getMessage());
@@ -123,6 +150,7 @@ public class CloudinaryHelper {
                         .unsigned(UPLOAD_PRESET)
                         .option("resource_type", "video")
                         .option("chunk_size", 6_000_000)
+                        .option("eager", "so_0,w_420,c_fill,q_80/e_preview:duration_3")
                         .callback(new UploadCallback() {
                             @Override public void onStart(String requestId) {}
                             @Override public void onProgress(String requestId, long bytes, long totalBytes) {}
@@ -193,12 +221,16 @@ public class CloudinaryHelper {
             BitmapFactory.decodeStream(input, null, options);
         }
 
+        // Tối ưu kích thước
+        int maxSide = 1080; // Sửa từ 1280 thành 1080
         int sampleSize = 1;
-        while (Math.max(options.outWidth, options.outHeight) / sampleSize > MAX_SIDE)
+        while (Math.max(options.outWidth, options.outHeight) / sampleSize > maxSide) {
             sampleSize *= 2;
+        }
 
         options.inJustDecodeBounds = false;
         options.inSampleSize = sampleSize;
+
         Bitmap bitmap;
         try (InputStream input = context.getContentResolver().openInputStream(uri)) {
             bitmap = BitmapFactory.decodeStream(input, null, options);
@@ -206,21 +238,32 @@ public class CloudinaryHelper {
 
         if (bitmap == null) return null;
 
+        // Rotate nếu cần
         if (rotation != 0) {
             Matrix matrix = new Matrix();
             matrix.postRotate(rotation);
-            Bitmap rotated = Bitmap.createBitmap(
-                    bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+            Bitmap rotated = Bitmap.createBitmap(bitmap, 0, 0,
+                    bitmap.getWidth(), bitmap.getHeight(), matrix, true);
             bitmap.recycle();
             bitmap = rotated;
         }
 
         File file = File.createTempFile("upload_", ".jpg", context.getCacheDir());
         try (FileOutputStream out = new FileOutputStream(file)) {
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out);
+            // Sửa chất lượng từ 78 xuống 70
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 70, out);
         } finally {
             bitmap.recycle();
         }
         return file;
+    }
+
+    /** URL video đã tối ưu (q_auto,f_auto) giúp load nhanh hơn và tương thích codec tốt hơn. */
+    public static String getOptimizedVideoUrl(String videoUrl) {
+        if (videoUrl == null || !videoUrl.contains("cloudinary.com")) return videoUrl;
+
+        if (videoUrl.contains("/upload/q_auto")) return videoUrl;
+
+        return videoUrl.replace("/upload/", "/upload/q_auto:good,f_auto,vc_auto,dl_2,so_0/");
     }
 }

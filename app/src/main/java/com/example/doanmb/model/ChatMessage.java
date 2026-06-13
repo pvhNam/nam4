@@ -18,6 +18,7 @@ public class ChatMessage {
     private String messageType;
     private Timestamp timestamp;
     private int status; // 0: Sent, 1: Delivered, 2: Read
+    private boolean recalled; // Thu hồi tin nhắn
 
     public ChatMessage() {}
 
@@ -27,6 +28,7 @@ public class ChatMessage {
         this.timestamp   = timestamp;
         this.status      = status;
         this.messageType = TYPE_TEXT;
+        this.recalled    = false;
     }
 
     @Exclude
@@ -57,9 +59,14 @@ public class ChatMessage {
     public int getStatus() { return status; }
     public void setStatus(int status) { this.status = status; }
 
+    public boolean isRecalled() { return recalled; }
+    public void setRecalled(boolean recalled) { this.recalled = recalled; }
+
     @Exclude
     public boolean isVideo() { return TYPE_VIDEO.equals(messageType); }
 
     @Exclude
-    public boolean isImage() { return TYPE_IMAGE.equals(messageType) || (imageUrl != null && !imageUrl.isEmpty()); }
+    public boolean isImage() {
+        return TYPE_IMAGE.equals(messageType) || (imageUrl != null && !imageUrl.isEmpty());
+    }
 }
