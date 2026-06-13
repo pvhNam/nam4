@@ -1,5 +1,6 @@
 package com.example.doanmb.adapter;
 
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -62,16 +63,16 @@ public class ProfileCarAdapter extends RecyclerView.Adapter<ProfileCarAdapter.Vi
         String type = normalizeText(car.getType());
         if (isSaleType(type)) {
             holder.tvType.setText("Cần bán");
-            holder.tvType.setBackgroundColor(Color.parseColor("#1976D2"));
+            holder.tvType.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#1976D2")));
         } else if (isDriverType(type)) {
             holder.tvType.setText("Có tài xế");
-            holder.tvType.setBackgroundColor(Color.parseColor("#00897B"));
+            holder.tvType.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#00897B")));
         } else if (isRentalType(type)) {
             holder.tvType.setText("Cho thuê");
-            holder.tvType.setBackgroundColor(Color.parseColor("#4CAF50"));
+            holder.tvType.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
         } else {
             holder.tvType.setText("Khác");
-            holder.tvType.setBackgroundColor(Color.parseColor("#757575"));
+            holder.tvType.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#757575")));
         }
 
         holder.itemView.setOnClickListener(listener != null ? v -> listener.onItemClick(car) : null);
