@@ -1,6 +1,7 @@
 package com.example.doanmb.ui.fragment;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -30,6 +31,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import androidx.transition.AutoTransition;
+import androidx.transition.TransitionManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,6 +64,13 @@ public class MessagesFragment extends Fragment {
     // mỗi item = map hội thoại + thêm key "matchedMessage" (nội dung tin nhắn khớp)
     private final List<Map<String, Object>> messageSearchResults = new ArrayList<>();
 
+    private android.widget.FrameLayout frameMsgContent;
+    private LinearLayout layoutChatTabContent, layoutNotificationTabContent;
+    private androidx.cardview.widget.CardView tabChat, tabNotification;
+    private LinearLayout contentTabChat, contentTabNotification;
+    private TextView tvTabChat, tvTabNotification;
+    private boolean isChatTabActive = true;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -81,16 +91,31 @@ public class MessagesFragment extends Fragment {
 
         rvConversations = view.findViewById(R.id.rv_conversations);
         rvConversations.setLayoutManager(new LinearLayoutManager(getContext()));
+        rvConversations.setNestedScrollingEnabled(false);
         adapter = new ConversationAdapter(filteredList, db);
         rvConversations.setAdapter(adapter);
 
         rvShortcuts = view.findViewById(R.id.rv_shortcuts);
         rvShortcuts.setLayoutManager(
                 new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        rvShortcuts.setNestedScrollingEnabled(false);
         shortcutAdapter = new ShortcutAdapter(shortcutList);
         rvShortcuts.setAdapter(shortcutAdapter);
 
         setupSearch();
+
+        frameMsgContent              = view.findViewById(R.id.frame_msg_content);
+        layoutChatTabContent         = view.findViewById(R.id.layout_chat_tab_content);
+        layoutNotificationTabContent = view.findViewById(R.id.layout_notification_tab_content);
+        tabChat                       = view.findViewById(R.id.tab_chat);
+        tabNotification               = view.findViewById(R.id.tab_notification);
+        contentTabChat                = view.findViewById(R.id.content_tab_chat);
+        contentTabNotification        = view.findViewById(R.id.content_tab_notification);
+        tvTabChat                      = view.findViewById(R.id.tv_tab_chat);
+        tvTabNotification              = view.findViewById(R.id.tv_tab_notification);
+
+        tabChat.setOnClickListener(v -> selectTab(true));
+        tabNotification.setOnClickListener(v -> selectTab(false));
         return view;
     }
 
@@ -460,4 +485,33 @@ public class MessagesFragment extends Fragment {
             }
         }
     }
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Xử lý chuyển Tab: Trò chuyện / Thông báo
+    // ══════════════════════════════════════════════════════════════════════════
+    private void selectTab(boolean chatSelected) {
+        if (chatSelected == isChatTabActive) return;
+        isChatTabActive = chatSelected;
+
+        TransitionManager.beginDelayedTransition(
+                frameMsgContent,
+                new AutoTransition().setDuration(200));
+
+        layoutChatTabContent.setVisibility(chatSelected ? View.VISIBLE : View.GONE);
+        layoutNotificationTabContent.setVisibility(chatSelected ? View.GONE : View.VISIBLE);
+
+        int activeColor   = Color.parseColor("#2F54D4");
+        int inactiveColor = Color.WHITE;
+
+        if (chatSelected) {
+            contentTabChat.setBackgroundResource(R.drawable.bg_tab_active_pill);
+            contentTabNotification.setBackground(null);
+        } else {
+            contentTabNotification.setBackgroundResource(R.drawable.bg_tab_active_pill);
+            contentTabChat.setBackground(null);
+        }
+
+        tvTabChat.setTextColor(chatSelected ? activeColor : inactiveColor);
+        tvTabNotification.setTextColor(!chatSelected ? activeColor : inactiveColor);
+    }
+
 }
