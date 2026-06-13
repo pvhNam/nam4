@@ -33,6 +33,11 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import androidx.transition.AutoTransition;
 import androidx.transition.TransitionManager;
+import androidx.transition.TransitionSet;
+import androidx.transition.Slide;
+import android.view.Gravity;
+import android.animation.ArgbEvaluator;
+import android.animation.ValueAnimator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -70,6 +75,8 @@ public class MessagesFragment extends Fragment {
     private LinearLayout contentTabChat, contentTabNotification;
     private TextView tvTabChat, tvTabNotification;
     private boolean isChatTabActive = true;
+    private ImageView ivTabIconChat, ivTabIconNotification;
+    private String selectedShortcutPartnerId = null;
 
     @Nullable
     @Override
@@ -88,6 +95,8 @@ public class MessagesFragment extends Fragment {
         tvEmptyHint       = view.findViewById(R.id.layout_msg_empty) != null
                 ? view.findViewById(R.id.layout_msg_empty).findViewById(android.R.id.text1)
                 : null;
+        ivTabIconChat = view.findViewById(R.id.iv_tab_icon_chat);
+        ivTabIconNotification = view.findViewById(R.id.iv_tab_icon_notification);
 
         rvConversations = view.findViewById(R.id.rv_conversations);
         rvConversations.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -99,7 +108,10 @@ public class MessagesFragment extends Fragment {
         rvShortcuts.setLayoutManager(
                 new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         rvShortcuts.setNestedScrollingEnabled(false);
-        shortcutAdapter = new ShortcutAdapter(shortcutList);
+        shortcutAdapter = new ShortcutAdapter(shortcutList, partnerId -> {
+            // Khi người dùng bấm vào Avatar, Adapter sẽ trả partnerId về đây
+            onShortcutClicked(partnerId);
+        });
         rvShortcuts.setAdapter(shortcutAdapter);
 
         setupSearch();
@@ -129,6 +141,10 @@ public class MessagesFragment extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (selectedShortcutPartnerId != null) {
+                    selectedShortcutPartnerId = null;
+                    shortcutAdapter.setSelectedPartnerId(null);
+                }
                 String query = s.toString().trim();
                 if (query.isEmpty()) {
                     // Quay lại hiển thị tất cả hội thoại
@@ -333,7 +349,7 @@ public class MessagesFragment extends Fragment {
                         String buyerId   = (String) data.get("buyerId");
                         String sellerId  = (String) data.get("sellerId");
                         String partnerId = uid.equals(buyerId) ? sellerId : buyerId;
-
+                        data.put("partnerId", partnerId);
                         // Load tên + avatar đối phương
                         if (partnerId != null) {
                             db.collection("users").document(partnerId)
@@ -492,26 +508,111 @@ public class MessagesFragment extends Fragment {
         if (chatSelected == isChatTabActive) return;
         isChatTabActive = chatSelected;
 
-        TransitionManager.beginDelayedTransition(
-                frameMsgContent,
-                new AutoTransition().setDuration(200));
+        // ── 1. ANIMATION TRƯỢT NGANG (NỘI DUNG) ──
+        TransitionSet transitionSet = new TransitionSet();
+        transitionSet.setOrdering(TransitionSet.ORDERING_TOGETHER);
+        transitionSet.setDuration(250);
 
+        Slide slideChat = new Slide();
+        slideChat.addTarget(layoutChatTabContent);
+
+        Slide slideNotif = new Slide();
+        slideNotif.addTarget(layoutNotificationTabContent);
+
+        if (chatSelected) {
+            slideChat.setSlideEdge(Gravity.START);
+            slideNotif.setSlideEdge(Gravity.END);
+        } else {
+            slideChat.setSlideEdge(Gravity.START);
+            slideNotif.setSlideEdge(Gravity.END);
+        }
+
+        transitionSet.addTransition(slideChat);
+        transitionSet.addTransition(slideNotif);
+        TransitionManager.beginDelayedTransition(frameMsgContent, transitionSet);
+
+        // ── 2. ĐỔI TRẠNG THÁI HIỂN THỊ NỘI DUNG ──
         layoutChatTabContent.setVisibility(chatSelected ? View.VISIBLE : View.GONE);
         layoutNotificationTabContent.setVisibility(chatSelected ? View.GONE : View.VISIBLE);
 
-        int activeColor   = Color.parseColor("#2F54D4");
-        int inactiveColor = Color.WHITE;
+        // ── 3. ANIMATION CHUYỂN MÀU (TAB HEADER) ──
+        int activeColor   = android.graphics.Color.parseColor("#2F54D4"); // Xanh
+        int inactiveColor = android.graphics.Color.WHITE; // Trắng (sẽ tiệp màu với background xung quanh, tạo cảm giác "mất chữ")
 
         if (chatSelected) {
+            // Tab Chat được chọn
             contentTabChat.setBackgroundResource(R.drawable.bg_tab_active_pill);
+            tvTabChat.setTextColor(activeColor);
+
+            // Tab Thông báo bị bỏ chọn
             contentTabNotification.setBackground(null);
+            tvTabNotification.setTextColor(inactiveColor); // Chữ lập tức thành trắng (biến mất)
         } else {
+            // Tab Thông báo được chọn
             contentTabNotification.setBackgroundResource(R.drawable.bg_tab_active_pill);
+            tvTabNotification.setTextColor(activeColor);
+
+            // Tab Chat bị bỏ chọn
             contentTabChat.setBackground(null);
+            tvTabChat.setTextColor(inactiveColor); // Chữ lập tức thành trắng (biến mất)
         }
 
-        tvTabChat.setTextColor(chatSelected ? activeColor : inactiveColor);
-        tvTabNotification.setTextColor(!chatSelected ? activeColor : inactiveColor);
+        // Animator cho chữ Tab Trò chuyện
+        ValueAnimator colorAnimChat = ValueAnimator.ofObject(new ArgbEvaluator(),
+                chatSelected ? inactiveColor : activeColor,
+                chatSelected ? activeColor : inactiveColor);
+        colorAnimChat.setDuration(250);
+        colorAnimChat.addUpdateListener(animator ->
+                tvTabChat.setTextColor((int) animator.getAnimatedValue()));
+        colorAnimChat.start();
+
+        // Animator cho chữ Tab Thông báo
+        ValueAnimator colorAnimNotif = ValueAnimator.ofObject(new ArgbEvaluator(),
+                chatSelected ? activeColor : inactiveColor,
+                chatSelected ? inactiveColor : activeColor);
+        colorAnimNotif.setDuration(250);
+        colorAnimNotif.addUpdateListener(animator ->
+                tvTabNotification.setTextColor((int) animator.getAnimatedValue()));
+        colorAnimNotif.start();
+
+        // (Lưu ý: Không gán colorFilter cho ivTabIconChat và ivTabIconNotification ở đây để chúng luôn giữ màu xanh mặc định)
+    }
+
+    public void onShortcutClicked(String partnerId) {
+        if (partnerId.equals(selectedShortcutPartnerId)) {
+            // Trạng thái: Bấm lại lần 2 vào cùng 1 người -> TẮT LỌC
+            selectedShortcutPartnerId = null;
+
+            // Cập nhật lại UI Adapter của phần "Gần đây" để tắt viền sáng (nếu có)
+            shortcutAdapter.setSelectedPartnerId(null);
+
+            // Hiển thị lại toàn bộ danh sách (có tính đến việc thanh Search có đang gõ chữ không)
+            String currentSearch = etSearch.getText().toString().trim();
+            if (currentSearch.isEmpty()) {
+                showAllConversations();
+            } else {
+                searchEverything(currentSearch);
+            }
+
+        } else {
+            // Trạng thái: Bấm vào 1 người mới -> BẬT LỌC
+            selectedShortcutPartnerId = partnerId;
+
+            // Cập nhật UI cho ShortcutAdapter biết ai đang được chọn
+            shortcutAdapter.setSelectedPartnerId(partnerId);
+
+            // Tiến hành lọc convList
+            List<Map<String, Object>> userSpecificList = new ArrayList<>();
+            for (Map<String, Object> conv : convList) {
+                String pId = (String) conv.get("partnerId");
+                if (partnerId.equals(pId)) {
+                    userSpecificList.add(conv);
+                }
+            }
+
+            // Ép danh sách dưới hiển thị kết quả đã lọc
+            showFiltered(userSpecificList, "");
+        }
     }
 
 }

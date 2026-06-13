@@ -115,12 +115,12 @@
                         android:layout_height="56dp"
                         android:background="@drawable/bg_tab_icon_circle">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                        <ImageView
+                            android:id="@+id/iv_tab_icon_chat"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
                             android:layout_gravity="center"
-                            android:text="💬"
-                            android:textSize="24sp" />
+                            android:src="@drawable/ic_nav_message" app:tint="#2F54D4" />
                     </FrameLayout>
 
                     <TextView
@@ -161,13 +161,13 @@
                         android:layout_height="56dp"
                         android:background="@drawable/bg_tab_icon_circle">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                        <ImageView
+                            android:id="@+id/iv_tab_icon_notification"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
                             android:layout_gravity="center"
-                            android:text="🔔"
-                            android:textSize="24sp" />
-                    </FrameLayout>
+                            android:src="@drawable/ic_notification"
+                            app:tint="#2F54D4" /> </FrameLayout>
 
                     <TextView
                         android:id="@+id/tv_tab_notification"
@@ -210,7 +210,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:visibility="visible">
+                    android:visibility="visible"
+                    android:background="#FFFFFF">
 
                     <LinearLayout
                         android:id="@+id/layout_msg_not_logged_in"
@@ -300,7 +301,8 @@
                     android:layout_height="300dp"
                     android:gravity="center"
                     android:orientation="vertical"
-                    android:visibility="gone">
+                    android:visibility="gone"
+                    android:background="#FFFFFF">
 
                     <ImageView
                         android:layout_width="150dp"
