@@ -1,6 +1,7 @@
 package com.example.doanmb.adapter;
 
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.BackgroundColorSpan;
@@ -37,7 +38,6 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
     private final SimpleDateFormat dateFormat =
             new SimpleDateFormat("HH:mm", Locale.getDefault());
 
-    // Query tìm kiếm hiện tại (dùng để highlight)
     private String searchQuery = "";
 
     // ── Listeners ─────────────────────────────────────────────────────────────
@@ -46,23 +46,25 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
         void onMediaClick(ChatMessage message);
     }
 
-    /** Menu hành động trên 1 tin nhắn: Gỡ / Chuyển tiếp / Báo cáo */
     public interface OnMessageActionListener {
-        /** Thu hồi tin nhắn (chỉ tin của mình) */
         void onRecall(String messageId, ChatMessage message);
-        /** Chuyển tiếp tin nhắn sang cuộc trò chuyện khác */
         void onForward(ChatMessage message);
-        /** Báo cáo tin nhắn (chỉ tin của người khác) */
         void onReportMessage(ChatMessage message);
     }
 
-    private OnMediaClickListener mediaClickListener;
-    private OnMessageActionListener messageActionListener;
+    /** Callback khi user bấm "Thử lại" trên tin nhắn upload thất bại */
+    public interface OnRetryUploadListener {
+        void onRetry(ChatMessage failedMessage);
+    }
 
-    public void setOnMediaClickListener(OnMediaClickListener l) { this.mediaClickListener = l; }
-    public void setOnMessageActionListener(OnMessageActionListener l) { this.messageActionListener = l; }
+    private OnMediaClickListener      mediaClickListener;
+    private OnMessageActionListener   messageActionListener;
+    private OnRetryUploadListener     retryUploadListener;
 
-    /** Đặt từ khoá tìm kiếm để highlight trong bubble tin nhắn */
+    public void setOnMediaClickListener(OnMediaClickListener l)          { this.mediaClickListener = l; }
+    public void setOnMessageActionListener(OnMessageActionListener l)    { this.messageActionListener = l; }
+    public void setOnRetryUploadListener(OnRetryUploadListener l)        { this.retryUploadListener = l; }
+
     public void setSearchQuery(String query) {
         this.searchQuery = query != null ? query : "";
     }
@@ -105,11 +107,6 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ChatMessage msg = getItem(position);
 
-        android.util.Log.d("MSG_DEBUG", "Message ID: " + msg.getMessageId() +
-                " | imageUrl=" + msg.getImageUrl() +
-                " | videoUrl=" + msg.getVideoUrl() +
-                " | isVideo=" + msg.isVideo());
-
         String time = msg.getTimestamp() != null
                 ? dateFormat.format(msg.getTimestamp().toDate())
                 : dateFormat.format(new Date());
@@ -132,86 +129,123 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
             h.tvMessage.setVisibility(View.VISIBLE);
             h.tvStatus.setText("");
             h.cardImage.setVisibility(View.GONE);
-            h.btnMore.setVisibility(View.GONE); // tin đã thu hồi không cần menu nữa
+            h.btnMore.setVisibility(View.GONE);
+            hideUploadOverlays(h);
+            return;
+        }
+
+        // ── Bình thường ──
+        h.tvMessage.setTypeface(null, Typeface.NORMAL);
+        h.tvMessage.setTextColor(0xFFFFFFFF);
+
+        String content = msg.getContent();
+        if (content != null && !content.isEmpty()) {
+            h.tvMessage.setVisibility(View.VISIBLE);
+            h.tvMessage.setText(highlightText(content, 0xFFFFFF00));
         } else {
-            // ── Bình thường ──
-            h.tvMessage.setTypeface(null, Typeface.NORMAL);
-            h.tvMessage.setTextColor(0xFFFFFFFF);
+            h.tvMessage.setVisibility(View.GONE);
+        }
 
-            String content = msg.getContent();
-            if (content != null && !content.isEmpty()) {
-                h.tvMessage.setVisibility(View.VISIBLE);
-                h.tvMessage.setText(highlightText(content, 0xFFFFFF00)); // vàng
+        // ── Trạng thái gửi ──
+        if (msg.isUploading()) {
+            h.tvStatus.setText("• Đang gửi...");
+        } else if (msg.isUploadFailed()) {
+            h.tvStatus.setText("• Gửi thất bại");
+        } else if (msg.getTimestamp() == null) {
+            h.tvStatus.setText("• Đang gửi...");
+        } else {
+            if      (msg.getStatus() == 0) h.tvStatus.setText("• Đã gửi");
+            else if (msg.getStatus() == 1) h.tvStatus.setText("• Đã nhận");
+            else if (msg.getStatus() == 2) h.tvStatus.setText("• Đã xem");
+        }
+
+        // ── Media: ưu tiên localUri khi đang/chưa upload xong ──
+        if (msg.isUploading() || msg.isUploadFailed()) {
+            // Dùng ảnh/video local để preview ngay
+            String localUri = msg.getLocalUri();
+            if (localUri != null && !localUri.isEmpty()) {
+                loadMedia(h.cardImage, h.ivImage, h.ivPlayIcon, localUri, msg.isVideo());
             } else {
-                h.tvMessage.setVisibility(View.GONE);
+                h.cardImage.setVisibility(View.GONE);
             }
+        } else if (msg.isVideo()) {
+            loadMedia(h.cardImage, h.ivImage, h.ivPlayIcon,
+                    msg.getThumbnailUrl() != null ? msg.getThumbnailUrl()
+                            : cloudinaryThumbnail(msg.getVideoUrl()), true);
+        } else {
+            loadMedia(h.cardImage, h.ivImage, h.ivPlayIcon, msg.getImageUrl(), false);
+        }
 
-            // Trạng thái gửi
-            if (msg.getTimestamp() == null) {
-                h.tvStatus.setText("• Đang gửi...");
-            } else {
-                if      (msg.getStatus() == 0) h.tvStatus.setText("• Đã gửi");
-                else if (msg.getStatus() == 1) h.tvStatus.setText("• Đã nhận");
-                else if (msg.getStatus() == 2) h.tvStatus.setText("• Đã xem");
+        // ── Overlay: Đang tải / Thất bại ──
+        if (msg.isUploading()) {
+            h.layoutUploading.setVisibility(View.VISIBLE);
+            h.layoutUploadFailed.setVisibility(View.GONE);
+        } else if (msg.isUploadFailed()) {
+            h.layoutUploading.setVisibility(View.GONE);
+            h.layoutUploadFailed.setVisibility(View.VISIBLE);
+            // Nút thử lại
+            if (h.btnRetry != null) {
+                h.btnRetry.setOnClickListener(v -> {
+                    if (retryUploadListener != null) retryUploadListener.onRetry(msg);
+                });
             }
+        } else {
+            hideUploadOverlays(h);
+        }
 
-            // Media
-            if (msg.isVideo()) {
-                loadMedia(h.cardImage, h.ivImage, h.ivPlayIcon,
-                        msg.getThumbnailUrl() != null ? msg.getThumbnailUrl()
-                                : cloudinaryThumbnail(msg.getVideoUrl()), true);
-            } else {
-                loadMedia(h.cardImage, h.ivImage, h.ivPlayIcon, msg.getImageUrl(), false);
-            }
-            bindMediaClick(h.cardImage, msg);
+        bindMediaClick(h.cardImage, msg);
 
-            // Menu 3 chấm: Gỡ + Chuyển tiếp
-            h.btnMore.setVisibility(View.VISIBLE);
+        // Menu 3 chấm: ẩn khi đang upload (chưa có messageId thật)
+        boolean isTemp = msg.getMessageId() != null && msg.getMessageId().startsWith("local_");
+        h.btnMore.setVisibility(isTemp ? View.GONE : View.VISIBLE);
+        if (!isTemp) {
             h.btnMore.setOnClickListener(v -> showSentMenu(v, msg));
         }
+    }
+
+    private void hideUploadOverlays(SentVH h) {
+        h.layoutUploading.setVisibility(View.GONE);
+        h.layoutUploadFailed.setVisibility(View.GONE);
     }
 
     private void bindReceived(ReceivedVH h, ChatMessage msg, String time) {
         h.tvTime.setText(time);
 
         if (msg.isRecalled()) {
-            // ── Thu hồi ──
             h.tvMessage.setText("Tin nhắn đã bị thu hồi");
             h.tvMessage.setTypeface(null, Typeface.ITALIC);
             h.tvMessage.setTextColor(0xFF9E9E9E);
             h.tvMessage.setVisibility(View.VISIBLE);
             h.cardImage.setVisibility(View.GONE);
             h.btnMore.setVisibility(View.GONE);
-        } else {
-            // ── Bình thường ──
-            h.tvMessage.setTypeface(null, Typeface.NORMAL);
-            h.tvMessage.setTextColor(0xFF1A1A2E);
-
-            String content = msg.getContent();
-            if (content != null && !content.isEmpty()) {
-                h.tvMessage.setVisibility(View.VISIBLE);
-                h.tvMessage.setText(highlightText(content, 0xFFFFEB3B));
-            } else {
-                h.tvMessage.setVisibility(View.GONE);
-            }
-
-            // Media
-            if (msg.isVideo()) {
-                loadMedia(h.cardImage, h.ivImage, h.ivPlayIcon,
-                        msg.getThumbnailUrl() != null ? msg.getThumbnailUrl()
-                                : cloudinaryThumbnail(msg.getVideoUrl()), true);
-            } else {
-                loadMedia(h.cardImage, h.ivImage, h.ivPlayIcon, msg.getImageUrl(), false);
-            }
-            bindMediaClick(h.cardImage, msg);
-
-            // Menu 3 chấm: Chuyển tiếp + Báo cáo
-            h.btnMore.setVisibility(View.VISIBLE);
-            h.btnMore.setOnClickListener(v -> showReceivedMenu(v, msg));
+            return;
         }
+
+        h.tvMessage.setTypeface(null, Typeface.NORMAL);
+        h.tvMessage.setTextColor(0xFF1A1A2E);
+
+        String content = msg.getContent();
+        if (content != null && !content.isEmpty()) {
+            h.tvMessage.setVisibility(View.VISIBLE);
+            h.tvMessage.setText(highlightText(content, 0xFFFFEB3B));
+        } else {
+            h.tvMessage.setVisibility(View.GONE);
+        }
+
+        if (msg.isVideo()) {
+            loadMedia(h.cardImage, h.ivImage, h.ivPlayIcon,
+                    msg.getThumbnailUrl() != null ? msg.getThumbnailUrl()
+                            : cloudinaryThumbnail(msg.getVideoUrl()), true);
+        } else {
+            loadMedia(h.cardImage, h.ivImage, h.ivPlayIcon, msg.getImageUrl(), false);
+        }
+        bindMediaClick(h.cardImage, msg);
+
+        h.btnMore.setVisibility(View.VISIBLE);
+        h.btnMore.setOnClickListener(v -> showReceivedMenu(v, msg));
     }
 
-    // ── Menu cho tin nhắn của mình: Gỡ / Chuyển tiếp ─────────────────────────
+    // ── Menus ─────────────────────────────────────────────────────────────────
 
     private void showSentMenu(View anchor, ChatMessage msg) {
         PopupMenu menu = new PopupMenu(anchor.getContext(), anchor);
@@ -221,21 +255,17 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
             if (messageActionListener == null) return true;
             switch (item.getItemId()) {
                 case 1:
-                    if (msg.getMessageId() != null) {
+                    if (msg.getMessageId() != null)
                         messageActionListener.onRecall(msg.getMessageId(), msg);
-                    }
                     return true;
                 case 2:
                     messageActionListener.onForward(msg);
                     return true;
-                default:
-                    return false;
+                default: return false;
             }
         });
         menu.show();
     }
-
-    // ── Menu cho tin nhắn của đối phương: Chuyển tiếp / Báo cáo ──────────────
 
     private void showReceivedMenu(View anchor, ChatMessage msg) {
         PopupMenu menu = new PopupMenu(anchor.getContext(), anchor);
@@ -244,20 +274,15 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
         menu.setOnMenuItemClickListener(item -> {
             if (messageActionListener == null) return true;
             switch (item.getItemId()) {
-                case 1:
-                    messageActionListener.onForward(msg);
-                    return true;
-                case 2:
-                    messageActionListener.onReportMessage(msg);
-                    return true;
-                default:
-                    return false;
+                case 1: messageActionListener.onForward(msg);        return true;
+                case 2: messageActionListener.onReportMessage(msg);  return true;
+                default: return false;
             }
         });
         menu.show();
     }
 
-    // ── Highlight từ khoá tìm kiếm trong text ────────────────────────────────
+    // ── Highlight từ khoá ─────────────────────────────────────────────────────
 
     private CharSequence highlightText(String text, int highlightColor) {
         if (searchQuery == null || searchQuery.isEmpty()) return text;
@@ -282,7 +307,7 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
     // ── Media helpers ─────────────────────────────────────────────────────────
 
     private void bindMediaClick(CardView card, ChatMessage msg) {
-        if (msg.isRecalled()) {
+        if (msg.isRecalled() || msg.isUploading() || msg.isUploadFailed()) {
             card.setOnClickListener(null);
             card.setClickable(false);
             return;
@@ -300,6 +325,10 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
         });
     }
 
+    /**
+     * Load ảnh/thumbnail vào ImageView.
+     * Tự động nhận dạng local URI (content:// / file://) và Cloudinary URL.
+     */
     private void loadMedia(CardView card, ImageView iv, ImageView playIcon,
                            String url, boolean isVideo) {
         if (url == null || url.isEmpty()) {
@@ -309,40 +338,45 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
         }
 
         card.setVisibility(View.VISIBLE);
-        String loadUrl = url;
 
-        if (url.contains("cloudinary.com")) {
+        boolean isLocalUri = url.startsWith("content://") || url.startsWith("file://");
+        Object  glideSource;
+
+        if (isLocalUri) {
+            // URI local → Glide load trực tiếp, không dùng Cloudinary transform
+            glideSource = Uri.parse(url);
+        } else if (url.contains("cloudinary.com")) {
+            // Cloudinary URL → áp transform
             if (isVideo) {
-                // Chỉ tạo thumbnail nếu chưa có transform
-                if (!url.contains("/upload/so_0") && !url.contains("/upload/w_")) {
-                    loadUrl = url.replace("/upload/", "/upload/so_0,w_420,c_fill,q_80/")
-                            .replaceAll("\\.(mp4|mov|avi|mkv|webm)$", ".jpg");
-                }
+                String loadUrl = (!url.contains("/upload/so_0") && !url.contains("/upload/w_"))
+                        ? url.replace("/upload/", "/upload/so_0,w_420,c_fill,q_80/")
+                        .replaceAll("\\.(mp4|mov|avi|mkv|webm)$", ".jpg")
+                        : url;
+                glideSource = loadUrl;
             } else {
-                // ✅ Xóa hết transform cũ trước khi thêm mới để tránh double transform
-                loadUrl = url.replace("/upload/", "/upload/w_600,c_limit,q_85,f_auto/");
+                glideSource = url.replace("/upload/", "/upload/w_600,c_limit,q_85,f_auto/");
             }
+        } else {
+            glideSource = url;
         }
 
         Glide.with(iv.getContext())
-                .load(loadUrl)
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .load(glideSource)
+                .diskCacheStrategy(isLocalUri ? DiskCacheStrategy.NONE : DiskCacheStrategy.ALL)
                 .override(420, 420)
                 .placeholder(android.R.drawable.ic_menu_gallery)
-                .error(R.drawable.ic_broken_image) // ← đổi error icon để phân biệt với placeholder
+                .error(R.drawable.ic_broken_image)
                 .centerCrop()
                 .into(iv);
 
+        // Icon play chỉ hiện khi đã upload xong (không phải local temp)
         if (playIcon != null) {
-            playIcon.setVisibility(isVideo ? View.VISIBLE : View.GONE);
+            playIcon.setVisibility(isVideo && !isLocalUri ? View.VISIBLE : View.GONE);
         }
     }
 
     private String cloudinaryThumbnail(String videoUrl) {
-        if (videoUrl == null || !videoUrl.contains("cloudinary.com")) {
-            return null;
-        }
-        // Tạo thumbnail một lần, không chồng transform
+        if (videoUrl == null || !videoUrl.contains("cloudinary.com")) return null;
         return videoUrl
                 .replace("/upload/", "/upload/so_0,w_420,c_fill,q_80/")
                 .replaceAll("\\.(mp4|mov|avi|mkv|webm)$", ".jpg");
@@ -354,16 +388,21 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
         TextView  tvMessage, tvTime, tvStatus, btnMore;
         ImageView ivImage, ivPlayIcon;
         CardView  cardImage;
+        View      layoutUploading, layoutUploadFailed;
+        TextView  btnRetry;
 
         SentVH(@NonNull View v) {
             super(v);
-            tvMessage  = v.findViewById(R.id.tv_message);
-            tvTime     = v.findViewById(R.id.tv_time);
-            tvStatus   = v.findViewById(R.id.tv_status);
-            ivImage    = v.findViewById(R.id.iv_message_image);
-            ivPlayIcon = v.findViewById(R.id.iv_play_icon);
-            cardImage  = v.findViewById(R.id.card_image);
-            btnMore    = v.findViewById(R.id.btn_message_more);
+            tvMessage          = v.findViewById(R.id.tv_message);
+            tvTime             = v.findViewById(R.id.tv_time);
+            tvStatus           = v.findViewById(R.id.tv_status);
+            ivImage            = v.findViewById(R.id.iv_message_image);
+            ivPlayIcon         = v.findViewById(R.id.iv_play_icon);
+            cardImage          = v.findViewById(R.id.card_image);
+            btnMore            = v.findViewById(R.id.btn_message_more);
+            layoutUploading    = v.findViewById(R.id.layout_uploading);
+            layoutUploadFailed = v.findViewById(R.id.layout_upload_failed);
+            btnRetry           = v.findViewById(R.id.btn_retry_upload);
         }
     }
 
@@ -396,11 +435,16 @@ public class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolde
 
         @Override
         public boolean areContentsTheSame(@NonNull ChatMessage a, @NonNull ChatMessage b) {
+            // Tin nhắn temp (timestamp null) luôn re-bind để phản ánh trạng thái upload
+            if (a.getTimestamp() == null || b.getTimestamp() == null) return false;
+
             return a.getStatus() == b.getStatus()
                     && a.isRecalled() == b.isRecalled()
-                    && (a.getTimestamp() != null && a.getTimestamp().equals(b.getTimestamp()))
-                    && (a.getImageUrl() != null ? a.getImageUrl().equals(b.getImageUrl()) : b.getImageUrl() == null)
-                    && (a.getVideoUrl() != null ? a.getVideoUrl().equals(b.getVideoUrl()) : b.getVideoUrl() == null)
+                    && a.isUploading() == b.isUploading()
+                    && a.isUploadFailed() == b.isUploadFailed()
+                    && a.getTimestamp().equals(b.getTimestamp())
+                    && (a.getImageUrl()    != null ? a.getImageUrl().equals(b.getImageUrl())         : b.getImageUrl()    == null)
+                    && (a.getVideoUrl()    != null ? a.getVideoUrl().equals(b.getVideoUrl())         : b.getVideoUrl()    == null)
                     && (a.getThumbnailUrl() != null ? a.getThumbnailUrl().equals(b.getThumbnailUrl()) : b.getThumbnailUrl() == null);
         }
     }

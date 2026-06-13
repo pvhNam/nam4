@@ -38,13 +38,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
+                <!-- Ảnh / thumbnail -->
                 <ImageView
                     android:id="@+id/iv_message_image"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop" />
 
-                <!-- Icon ▶ hiện khi là video -->
+                <!-- Icon ▶ hiện khi là video (chỉ dùng khi đã upload xong) -->
                 <ImageView
                     android:id="@+id/iv_play_icon"
                     android:layout_width="40dp"
@@ -55,6 +56,70 @@
                     android:src="@android:drawable/ic_media_play"
                     android:visibility="gone"
                     app:tint="#FFFFFF" />
+
+                <!-- ── Overlay: ĐANG TẢI LÊN ── -->
+                <LinearLayout
+                    android:id="@+id/layout_uploading"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#99000000"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <ProgressBar
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:indeterminateTint="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Đang tải lên..."
+                        android:textColor="#FFFFFF"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <!-- ── Overlay: TẢI LÊN THẤT BẠI ── -->
+                <LinearLayout
+                    android:id="@+id/layout_upload_failed"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#CC000000"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@android:drawable/ic_dialog_alert"
+                        app:tint="#FF5252" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Gửi thất bại"
+                        android:textColor="#FFFFFF"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/btn_retry_upload"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="#44FFFFFF"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="5dp"
+                        android:text="Thử lại"
+                        android:textColor="#FFFFFF"
+                        android:textSize="12sp"
+                        android:clickable="true"
+                        android:focusable="true" />
+                </LinearLayout>
+
             </FrameLayout>
         </androidx.cardview.widget.CardView>
 
@@ -66,7 +131,6 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <!-- Nút menu 3 chấm: Gỡ / Chuyển tiếp -->
             <TextView
                 android:id="@+id/btn_message_more"
                 android:layout_width="28dp"
