@@ -16,6 +16,7 @@ import com.example.doanmb.ui.fragment.AdminOrdersFragment;
 import com.example.doanmb.ui.fragment.AdminOverviewFragment;
 import com.example.doanmb.ui.fragment.AdminReportsFragment;
 import com.example.doanmb.ui.fragment.AdminUsersFragment;
+import com.example.doanmb.ui.fragment.AdminProfileFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -89,6 +90,8 @@ public class AdminDashboardActivity extends AppCompatActivity implements AdminOv
             fragment = new AdminOrdersFragment();
         } else if (itemId == R.id.nav_admin_reports) {
             fragment = new AdminReportsFragment();
+        } else if (itemId == R.id.nav_admin_profile) {
+            fragment = new AdminProfileFragment();
         } else {
             fragment = new AdminOverviewFragment();
         }
