@@ -24,7 +24,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.doanmb.R;
 import com.example.doanmb.adapter.ProfileCarAdapter;
 import com.example.doanmb.model.Car;
+import com.example.doanmb.model.Place;
 import com.example.doanmb.ui.activity.CarDetailActivity;
+import com.example.doanmb.util.VietnamLocationApi;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -44,9 +46,6 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
     private static final String BRAND_ALL = "all";
     private static final String[] KNOWN_BRANDS = {"Toyota", "Honda", "Mazda", "Kia", "Ford", "Hyundai", "VinFast", "Khác"};
     private static final String LOCATION_ALL = "Tất cả khu vực";
-    private static final String[] KNOWN_LOCATIONS = {
-            "TP. Hồ Chí Minh", "Hà Nội", "Đà Nẵng", "Bình Dương",
-            "Đồng Nai", "Hải Phòng", "Cần Thơ", "Khánh Hòa"};
 
     private CardView cardBuyCar;
     private CardView cardSellCar;
@@ -82,6 +81,12 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
     private Calendar pickupTime;  // null = chưa chọn giờ đón
     private Calendar returnTime;  // null = chưa chọn giờ trả
     private final SimpleDateFormat timeFmt = new SimpleDateFormat("dd/MM/yyyy", new Locale("vi"));
+
+    // Bỏ qua các từ chỉ đơn vị hành chính khi so khớp khu vực (vd "Thành phố Hồ Chí Minh").
+    private static final List<String> LOCATION_STOPWORDS = java.util.Arrays.asList(
+            "thanh", "pho", "tinh", "quan", "huyen", "phuong", "xa", "thi", "viet", "nam");
+    // Danh sách tỉnh/thành lấy từ API, cache lại để khỏi gọi mạng mỗi lần mở.
+    private List<Place> provincesCache;
 
     @Nullable
     @Override
@@ -130,7 +135,7 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         tvSearchLocation = view.findViewById(R.id.tv_search_location);
         if (tvSearchLocation != null) {
             tvSearchLocation.setText(LOCATION_ALL);
-            tvSearchLocation.setOnClickListener(v -> showLocationPicker());
+            tvSearchLocation.setOnClickListener(v -> openLocationPicker());
         }
 
         layoutTimeFilter = view.findViewById(R.id.layout_time_filter);
@@ -342,23 +347,111 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         }
     }
 
-    /** Mở hộp thoại chọn khu vực để tìm xe theo địa điểm. */
-    private void showLocationPicker() {
+    /**
+     * Mở danh sách tỉnh/thành lấy từ API provinces.open-api.vn. Đã cache thì mở ngay,
+     * chưa có thì tải về; lỗi mạng thì báo Toast để người dùng thử lại.
+     */
+    private void openLocationPicker() {
         if (getContext() == null) return;
+        if (provincesCache != null) {
+            showProvinceDialog(provincesCache);
+            return;
+        }
+        if (tvSearchLocation != null) tvSearchLocation.setText("Đang tải khu vực...");
+        VietnamLocationApi.fetchProvinces(new VietnamLocationApi.Callback() {
+            @Override
+            public void onResult(List<Place> places) {
+                if (!isAdded()) return;
+                provincesCache = places;
+                restoreLocationLabel();
+                showProvinceDialog(places);
+            }
 
-        final String[] items = new String[KNOWN_LOCATIONS.length + 1];
+            @Override
+            public void onError(String message) {
+                if (!isAdded()) return;
+                restoreLocationLabel();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Lỗi tải khu vực: " + message, Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+    /** Đặt lại nhãn ô địa điểm về khu vực đang chọn (hoặc "Tất cả khu vực"). */
+    private void restoreLocationLabel() {
+        if (tvSearchLocation == null) return;
+        tvSearchLocation.setText(
+                (selectedLocation == null || selectedLocation.isEmpty()) ? LOCATION_ALL : selectedLocation);
+    }
+    /** Hộp thoại chọn tỉnh/thành từ dữ liệu API (kèm mục "Tất cả khu vực"). */
+    private void showProvinceDialog(List<Place> places) {
+        if (getContext() == null) return;
+        final String[] items = new String[places.size() + 1];
         items[0] = LOCATION_ALL;
-        System.arraycopy(KNOWN_LOCATIONS, 0, items, 1, KNOWN_LOCATIONS.length);
-
+        for (int i = 0; i < places.size(); i++) {
+            items[i + 1] = places.get(i).name;
+        }
         new AlertDialog.Builder(requireContext())
-                .setTitle("Chọn khu vực")
+                .setTitle("Chọn tỉnh/thành phố")
                 .setItems(items, (dialog, which) -> {
-                    selectedLocation = (which == 0) ? "" : items[which];
-                    if (tvSearchLocation != null) {
-                        tvSearchLocation.setText(which == 0 ? LOCATION_ALL : items[which]);
+                    if (which == 0) {
+                        selectedLocation = "";
+                        restoreLocationLabel();
+                        applyFilter();
+                    } else {
+                        // Đã chọn tỉnh → sang bước chọn phường/xã.
+                        openWardPicker(places.get(which - 1));
                     }
+                })
+                .show();
+    }
+
+    /** Bước 2: tải phường/xã của tỉnh đã chọn rồi hiện hộp thoại chọn. */
+    private void openWardPicker(Place province) {
+        if (getContext() == null) return;
+        if (tvSearchLocation != null) tvSearchLocation.setText("Đang tải phường/xã...");
+        VietnamLocationApi.fetchWards(province.code, new VietnamLocationApi.Callback() {
+            @Override
+            public void onResult(List<Place> wards) {
+                if (!isAdded()) return;
+                restoreLocationLabel();
+                if (wards.isEmpty()) {
+                    // Không có phường/xã → lọc theo nguyên tỉnh.
+                    selectedLocation = province.name;
+                    restoreLocationLabel();
+                    applyFilter();
+                    return;
+                }
+                showWardDialog(province, wards);
+            }
+            @Override
+            public void onError(String message) {
+                if (!isAdded()) return;
+                // Lỗi tải phường/xã → vẫn lọc được theo tỉnh.
+                selectedLocation = province.name;
+                restoreLocationLabel();
+                applyFilter();
+            }
+        });
+    }
+    /** Hộp thoại chọn phường/xã (kèm mục "Toàn tỉnh/thành"). */
+    private void showWardDialog(Place province, List<Place> wards) {
+        if (getContext() == null) return;
+        final String[] items = new String[wards.size() + 1];
+        items[0] = "Toàn " + province.name;
+        for (int i = 0; i < wards.size(); i++) {
+            items[i + 1] = wards.get(i).name;
+        }
+        new AlertDialog.Builder(requireContext())
+                .setTitle(province.name)
+                .setItems(items, (dialog, which) -> {
+                    selectedLocation = (which == 0)
+                            ? province.name
+                            : wards.get(which - 1).name + ", " + province.name;
+                    restoreLocationLabel();
                     applyFilter();
                 })
+                .setNegativeButton("Quay lại", (d, w) -> showProvinceDialog(provincesCache))
                 .show();
     }
 
@@ -366,7 +459,19 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         if (selectedLocation == null || selectedLocation.isEmpty()) return true;
         String haystack = normalizeText((car.getInfo() != null ? car.getInfo() : "")
                 + " " + (car.getName() != null ? car.getName() : ""));
-        return haystack.contains(normalizeText(selectedLocation));
+        String needle = normalizeText(selectedLocation);
+        if (needle.isEmpty()) return true;
+
+        // Khớp trực tiếp cả chuỗi.
+        if (haystack.contains(needle)) return true;
+        // Địa chỉ Google thường có dạng "Thành phố Hồ Chí Minh, Việt Nam":
+        // bỏ các từ hành chính rồi khớp theo từng từ khoá còn lại (Hồ, Chí, Minh...).
+        for (String token : needle.split("[\\s,]+")) {
+            if (token.length() >= 3 && !LOCATION_STOPWORDS.contains(token) && haystack.contains(token)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void applyFilter() {
