@@ -1,174 +1,325 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="#F5F7FA">
 
-    <androidx.core.widget.NestedScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:paddingBottom="100dp">
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_header_rounded"
+        android:orientation="vertical"
+        android:paddingBottom="34dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="40dp"
+            android:paddingBottom="20dp">
 
-            <!-- HEADER ĐỒNG BỘ TRANG CHỦ -->
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/img_msg_avatar"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:src="@mipmap/ic_launcher_round"
+                android:padding="2dp"
+                app:strokeColor="#FFFFFF"
+                app:strokeWidth="2dp"
+                app:shapeAppearanceOverlay="@style/CircleImageOverlay"/>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_header_rounded"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingStart="20dp"
-                android:paddingEnd="20dp"
-                android:paddingTop="40dp"
-                android:paddingBottom="50dp">
+                android:orientation="vertical"
+                android:layout_marginStart="16dp">
 
-                <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/img_msg_avatar"
-                    android:layout_width="70dp"
-                    android:layout_height="70dp"
-                    android:src="@mipmap/ic_launcher_round"
-                    android:padding="2dp"
-                    app:strokeColor="#FFFFFF"
-                    app:strokeWidth="2dp"
-                    app:shapeAppearanceOverlay="@style/CircleImageOverlay"/>
+                <TextView
+                    android:id="@+id/tv_msg_greeting"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hi, User"
+                    android:textColor="#1A1A2E"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginStart="16dp">
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_search"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp">
 
-                    <TextView
-                        android:id="@+id/tv_msg_greeting"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Hi, User"
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@android:drawable/ic_menu_search"
+                        app:tint="#2563EB"
+                        android:layout_marginEnd="8dp" />
+
+                    <EditText
+                        android:id="@+id/et_search_chat"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="Tìm theo tên xe hoặc người nhắn"
+                        android:inputType="text"
                         android:textColor="#1A1A2E"
-                        android:textSize="22sp"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="40dp"
-                        android:background="@drawable/bg_search"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:paddingStart="16dp"
-                        android:paddingEnd="16dp">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:src="@android:drawable/ic_menu_search"
-                            app:tint="#2563EB"
-                            android:layout_marginEnd="8dp" />
-
-                        <EditText
-                            android:id="@+id/et_search_chat"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:background="@null"
-                            android:hint="Tìm theo tên xe hoặc người nhắn"
-                            android:inputType="text"
-                            android:textColor="#1A1A2E"
-                            android:textSize="14sp" />
-                    </LinearLayout>
+                        android:textSize="14sp" />
                 </LinearLayout>
             </LinearLayout>
+        </LinearLayout>
 
-            <!-- TRẠNG THÁI CHƯA ĐĂNG NHẬP -->
-            <LinearLayout
-                android:id="@+id/layout_msg_not_logged_in"
-                android:layout_width="match_parent"
-                android:layout_height="300dp"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:visibility="gone">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="💬"
-                    android:textSize="64sp"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Đăng nhập để xem tin nhắn"
-                    android:textColor="#4B5563"
-                    android:textSize="16sp"
-                    android:layout_marginTop="16dp"/>
-            </LinearLayout>
+        <LinearLayout
+            android:id="@+id/layout_msg_tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:baselineAligned="false"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp">
 
-            <!-- PHẦN THÂN TIN NHẮN -->
-            <LinearLayout
-                android:id="@+id/layout_msg_content"
-                android:layout_width="match_parent"
+            <androidx.cardview.widget.CardView
+                android:id="@+id/tab_chat"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="0dp"
+                app:cardElevation="0dp"
+                app:cardUseCompatPadding="false">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="-25dp"
-                    android:text="Gần đây"
-                    android:textColor="#1A1A2E"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:elevation="8dp" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rv_shortcuts"
+                <LinearLayout
+                    android:id="@+id/content_tab_chat"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:clipToPadding="false"
-                    android:paddingHorizontal="16dp"
-                    android:orientation="horizontal" />
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_tab_active_pill"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="14dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="20dp"
-                    android:text="Hội thoại"
-                    android:textColor="#1A1A2E"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    <FrameLayout
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:background="@drawable/bg_tab_icon_circle">
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rv_conversations"
+                        <ImageView
+                            android:id="@+id/iv_tab_icon_chat"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_nav_message" app:tint="#2F54D4" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tv_tab_chat"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="7dp"
+                        android:text="Trò chuyện"
+                        android:textColor="#2F54D4"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/tab_notification"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="0dp"
+                app:cardElevation="0dp"
+                app:cardUseCompatPadding="false">
+
+                <LinearLayout
+                    android:id="@+id/content_tab_notification"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:clipToPadding="false"
-                    android:paddingHorizontal="16dp" />
-            </LinearLayout>
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="14dp">
 
-            <!-- EMPTY STATE -->
-            <LinearLayout
-                android:id="@+id/layout_msg_empty"
-                android:layout_width="match_parent"
-                android:layout_height="150dp"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:visibility="gone">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Không tìm thấy kết quả phù hợp"
-                    android:textColor="#9CA3AF"
-                    android:textSize="14sp"/>
-            </LinearLayout>
+                    <FrameLayout
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:background="@drawable/bg_tab_icon_circle">
+
+                        <ImageView
+                            android:id="@+id/iv_tab_icon_notification"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_notification"
+                            app:tint="#2F54D4" /> </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tv_tab_notification"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="7dp"
+                        android:text="Thông báo"
+                        android:textColor="@android:color/white"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
         </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+    </LinearLayout>
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+    <LinearLayout
+        android:id="@+id/layout_msg_content_panel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="-40dp"
+        android:background="@drawable/bg_category_content_panel"
+        android:orientation="vertical">
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="100dp">
+
+            <FrameLayout
+                android:id="@+id/frame_msg_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:id="@+id/layout_chat_tab_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="visible"
+                    android:background="#FFFFFF">
+
+                    <LinearLayout
+                        android:id="@+id/layout_msg_not_logged_in"
+                        android:layout_width="match_parent"
+                        android:layout_height="300dp"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="💬"
+                            android:textSize="64sp"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Đăng nhập để xem tin nhắn"
+                            android:textColor="#4B5563"
+                            android:textSize="16sp"
+                            android:layout_marginTop="16dp"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/layout_msg_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_marginTop="20dp"
+                            android:text="Gần đây"
+                            android:textColor="#1A1A2E"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rv_shortcuts"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:clipToPadding="false"
+                            android:paddingHorizontal="16dp"
+                            android:orientation="horizontal" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_marginTop="20dp"
+                            android:text="Hội thoại"
+                            android:textColor="#1A1A2E"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rv_conversations"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:clipToPadding="false"
+                            android:paddingHorizontal="16dp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/layout_msg_empty"
+                        android:layout_width="match_parent"
+                        android:layout_height="150dp"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Không tìm thấy kết quả phù hợp"
+                            android:textColor="#9CA3AF"
+                            android:textSize="14sp"/>
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/layout_notification_tab_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    android:background="#FFFFFF">
+
+                    <ImageView
+                        android:layout_width="150dp"
+                        android:layout_height="150dp"
+                        android:src="@drawable/ic_nav_message"
+                        android:alpha="0.3" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Chưa có thông báo nào"
+                        android:textColor="#9CA3AF"
+                        android:textSize="15sp" />
+                </LinearLayout>
+
+            </FrameLayout>
+        </androidx.core.widget.NestedScrollView>
+    </LinearLayout>
+</LinearLayout>

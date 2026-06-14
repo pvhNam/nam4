@@ -3,9 +3,11 @@ package com.example.doanmb.ui.fragment;
 import android.Manifest;
 import android.app.Activity;
 import android.content.ClipData;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
+import android.view.inputmethod.InputMethodManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -28,6 +30,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
@@ -36,7 +39,9 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.example.doanmb.R;
+import com.example.doanmb.model.Place;
 import com.example.doanmb.util.CloudinaryHelper;
+import com.example.doanmb.util.VietnamLocationApi;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -80,6 +85,10 @@ public class PostCarFragment extends Fragment {
                     Toast.makeText(requireContext(), "Bạn cần cấp quyền để chọn ảnh!", Toast.LENGTH_SHORT).show();
                 }
             });
+
+    private interface OnPlacePicked {
+        void pick(Place place);
+    }
 
     @Nullable
     @Override
@@ -142,6 +151,61 @@ public class PostCarFragment extends Fragment {
         btnSubmitPost.setOnClickListener(v -> submitPost());
     }
 
+    /**
+     * Biến ô "Khu vực" thành nút chọn địa chỉ: bấm để chọn Tỉnh/Thành → Phường/Xã
+     * lấy từ API miễn phí provinces.open-api.vn.
+     */
+    /** Bước 1: chọn tỉnh/thành phố. */
+    private void pickProvince() {
+        if (!isViewReady()) return;
+        Toast.makeText(requireContext(), "Đang tải danh sách tỉnh/thành...", Toast.LENGTH_SHORT).show();
+        VietnamLocationApi.fetchProvinces(new VietnamLocationApi.Callback() {
+            @Override
+            public void onResult(List<Place> places) {
+                if (!isViewReady() || places.isEmpty()) return;
+                showPickDialog("Chọn tỉnh / thành phố", places, PostCarFragment.this::pickWard);
+            }
+
+            @Override
+            public void onError(String message) {
+                if (!isViewReady()) return;
+                Toast.makeText(requireContext(), "Không tải được danh sách", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    /** Bước 2: chọn phường/xã trong tỉnh đã chọn. */
+    private void pickWard(Place province) {
+        if (!isViewReady()) return;
+        VietnamLocationApi.fetchWards(province.code, new VietnamLocationApi.Callback() {
+            @Override
+            public void onResult(List<Place> wards) {
+                if (!isViewReady()) return;
+                if (wards.isEmpty()) {
+                    etCarLocation.setText(province.name);
+                    return;
+                }
+                showPickDialog("Chọn phường / xã", wards,
+                        ward -> etCarLocation.setText(ward.name + ", " + province.name));
+            }
+            @Override
+            public void onError(String message) {
+                if (!isViewReady()) return;
+                // Không lấy được phường/xã: dùng tạm tên tỉnh để không chặn người dùng.
+                etCarLocation.setText(province.name);
+            }
+        });
+    }
+
+    private void showPickDialog(String title, List<Place> places, OnPlacePicked cb) {
+        if (!isViewReady()) return;
+        String[] items = new String[places.size()];
+        for (int i = 0; i < places.size(); i++) items[i] = places.get(i).name;
+        new AlertDialog.Builder(requireContext())
+                .setTitle(title)
+                .setItems(items, (d, which) -> cb.pick(places.get(which)))
+                .setNegativeButton("Huỷ", null)
+                .show();
+    }
     private void addImagesFromResult(Intent data) {
         ClipData clip = data.getClipData();
         if (clip != null) {

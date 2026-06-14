@@ -35,4 +35,21 @@
     <style name="CircleImageOverlay">
         <item name="cornerSize">50%</item>
     </style>
+    <style name="ReportBottomSheetTheme" parent="Theme.Design.Light.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/ReportBottomSheetStyle</item>
+        <item name="android:windowIsFloating">false</item>
+    </style>
+
+    <style name="ReportBottomSheetStyle" parent="Widget.Design.BottomSheet.Modal">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="backgroundTint">#2C2C2C</item>
+        <item name="shapeAppearance">@style/ReportBottomSheetShapeAppearance</item>
+    </style>
+
+    <style name="ReportBottomSheetShapeAppearance" parent="ShapeAppearance.Material3.Corner.Large">
+        <item name="cornerSizeTopLeft">16dp</item>
+        <item name="cornerSizeTopRight">16dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
 </resources>

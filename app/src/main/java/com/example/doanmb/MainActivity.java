@@ -7,16 +7,21 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -80,6 +85,16 @@ public class MainActivity extends AppCompatActivity {
     private boolean isHandlingBack = false;
     private final Deque<Integer> navBackStack = new ArrayDeque<>();
 
+    // Giữ lại fragment đã mở của từng tab để khi quay lại không phải dựng/tải lại từ đầu (tránh giật)
+    private final java.util.Map<Integer, Fragment> fragmentCache = new java.util.HashMap<>();
+    private Fragment activeFragment = null;
+
+    // Điều hướng Back (áp dụng cho cả vuốt lẫn nút back):
+    // - Còn điều hướng được → quay về tab/trang trước đó
+    // - Ở Home và hết lịch sử → nhấn lần đầu hiện thông báo, nhấn lần nữa trong 2 giây để thoát app
+    private long lastBackPressTime = 0L;
+    private static final long EXIT_CONFIRM_WINDOW_MS = 2000L;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -103,10 +118,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Vuốt/nhấn Back: luôn quay về tab trước đó thay vì thoát app.
-     * - Trong tab Danh mục đang mở form đăng xe → quay lại danh sách.
+     * Điều hướng Back (cả vuốt lẫn nút đều xử lý như nhau):
      * - Còn lịch sử tab → quay lại tab vừa rời đi.
-     * - Đang ở Home và hết lịch sử → mới thoát app.
+     * - Đang ở tab khác Home (hết lịch sử) → quay về Home.
+     * - Đang ở Home và hết lịch sử → nhấn lần đầu hiện "Nhấn quay lại lần nữa để thoát",
+     *   nhấn lần nữa trong 2 giây sẽ thoát app.
      */
     private void setupBackNavigation() {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -117,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
                     isHandlingBack = true;
                     bottomNavigationView.setSelectedItemId(prev);
                     isHandlingBack = false;
+                    lastBackPressTime = 0L; // còn điều hướng được thì huỷ trạng thái chờ thoát
                     return;
                 }
 
@@ -124,12 +141,19 @@ public class MainActivity extends AppCompatActivity {
                     isHandlingBack = true;
                     bottomNavigationView.setSelectedItemId(R.id.nav_home);
                     isHandlingBack = false;
+                    lastBackPressTime = 0L;
                     return;
                 }
 
-                // Đang ở Home, không còn trang trước → để hệ thống thoát app
-                setEnabled(false);
-                getOnBackPressedDispatcher().onBackPressed();
+                // Ở Home, hết lịch sử → nhấn 2 lần để thoát
+                long now = System.currentTimeMillis();
+                if (now - lastBackPressTime < EXIT_CONFIRM_WINDOW_MS) {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                } else {
+                    lastBackPressTime = now;
+                    Toast.makeText(MainActivity.this, "Nhấn quay lại lần nữa để thoát", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
@@ -141,6 +165,21 @@ public class MainActivity extends AppCompatActivity {
         etSearch             = findViewById(R.id.et_search);
         tvGreeting           = findViewById(R.id.tv_greeting);
         bottomNavigationView = findViewById(R.id.bottom_navigation);
+        // BottomNavigationView tự cộng inset thanh điều hướng hệ thống vào padding đáy,
+        // làm icon lệch lên trên; thanh này dạng nổi nên không cần né inset
+        ViewCompat.setOnApplyWindowInsetsListener(bottomNavigationView, (v, insets) -> insets);
+        // Né thanh điều hướng: cộng chiều cao thanh hệ thống vào margin đáy của khung menu
+        View navContainer = findViewById(R.id.bottom_nav_container);
+        int baseNavMargin = ((ViewGroup.MarginLayoutParams) navContainer.getLayoutParams()).bottomMargin;
+        ViewCompat.setOnApplyWindowInsetsListener(navContainer, (v, insets) -> {
+            int navBarHeight = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+            ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            if (lp.bottomMargin != baseNavMargin + navBarHeight) {
+                lp.bottomMargin = baseNavMargin + navBarHeight;
+                v.setLayoutParams(lp);
+            }
+            return insets;
+        });
         fragmentContainer    = findViewById(R.id.fragment_container);
         homeLayout           = findViewById(R.id.home_layout);
         swipeRefreshLayout   = findViewById(R.id.swipe_refresh);
@@ -445,41 +484,131 @@ public class MainActivity extends AppCompatActivity {
             if (!isHandlingBack && itemId != currentNavId) {
                 navBackStack.push(currentNavId);
             }
+            int prevNavId = currentNavId;
             currentNavId = itemId;
+            // Hướng trượt: sang tab bên phải (+1) thì trang mới vào từ phải, bên trái (-1) thì vào từ trái
+            int dir = Integer.signum(navIndex(itemId) - navIndex(prevNavId));
+
             if (itemId == R.id.nav_home) {
-                homeLayout.setVisibility(View.VISIBLE);
-                fragmentContainer.setVisibility(View.GONE);
-                resetHomeHeaderState();
-                // Reset scroll về đầu khi về Home
-                if (nestedScroll != null) nestedScroll.smoothScrollTo(0, 0);
+                goHome(prevNavId, dir);
                 return true;
-            } else if (itemId == R.id.nav_cataloge) {
-                homeLayout.setVisibility(View.GONE);
-                fragmentContainer.setVisibility(View.VISIBLE);
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, new CategoryFragment()).commit();
-                return true;
-            } else if (itemId == R.id.nav_manage) {
-                homeLayout.setVisibility(View.GONE);
-                fragmentContainer.setVisibility(View.VISIBLE);
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, new ManageFragment()).commit();
-                return true;
-            } else if (itemId == R.id.nav_messages) {
-                homeLayout.setVisibility(View.GONE);
-                fragmentContainer.setVisibility(View.VISIBLE);
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, new MessagesFragment()).commit();
-                return true;
-            } else if (itemId == R.id.nav_account) {
-                homeLayout.setVisibility(View.GONE);
-                fragmentContainer.setVisibility(View.VISIBLE);
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, new ProfileFragment()).commit();
+            } else if (itemId == R.id.nav_cataloge
+                    || itemId == R.id.nav_manage
+                    || itemId == R.id.nav_messages
+                    || itemId == R.id.nav_account) {
+                showFragment(itemId, prevNavId, dir);
                 return true;
             }
             return false;
         });
+    }
+
+    /** Vị trí của tab trên thanh menu, dùng để xác định chiều trượt trái/phải. */
+    private int navIndex(int itemId) {
+        if (itemId == R.id.nav_home)     return 0;
+        if (itemId == R.id.nav_cataloge) return 1;
+        if (itemId == R.id.nav_manage)   return 2;
+        if (itemId == R.id.nav_messages) return 3;
+        if (itemId == R.id.nav_account)  return 4;
+        return 0;
+    }
+
+    /** Quay về Home: trượt màn hình Home vào, đẩy fragment đang mở trượt ra cùng chiều. */
+    private void goHome(int prevNavId, int dir) {
+        homeLayout.setVisibility(View.VISIBLE);
+        if (prevNavId != R.id.nav_home) {
+            slideViewIn(homeLayout, dir);
+            hideActiveFragment(dir);
+        }
+        resetHomeHeaderState();
+        // Reset scroll về đầu khi về Home
+        if (nestedScroll != null) nestedScroll.smoothScrollTo(0, 0);
+    }
+
+    /**
+     * Hiện tab dạng fragment với hiệu ứng trượt ngang theo chiều di chuyển.
+     * Fragment được giữ lại trong cache: lần đầu mới tạo & add, các lần sau chỉ show/hide
+     * nên không phải dựng layout hay tải lại dữ liệu → chuyển tab mượt, không giật.
+     */
+    private void showFragment(int itemId, int prevNavId, int dir) {
+        fragmentContainer.setVisibility(View.VISIBLE);
+        // Từ Home chuyển sang tab: trượt Home ra rồi ẩn đi
+        if (prevNavId == R.id.nav_home) {
+            slideViewOut(homeLayout, dir);
+        }
+
+        int enter = dir >= 0 ? R.anim.nav_slide_in_right : R.anim.nav_slide_in_left;
+        int exit  = dir >= 0 ? R.anim.nav_slide_out_left : R.anim.nav_slide_out_right;
+
+        Fragment target = fragmentCache.get(itemId);
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        ft.setCustomAnimations(enter, exit);
+
+        if (target == null) {
+            target = createFragment(itemId);
+            fragmentCache.put(itemId, target);
+            ft.add(R.id.fragment_container, target);
+        } else {
+            ft.show(target);
+        }
+
+        if (activeFragment != null && activeFragment != target) {
+            ft.hide(activeFragment);
+        }
+        activeFragment = target;
+        ft.commit();
+    }
+
+    private Fragment createFragment(int itemId) {
+        if (itemId == R.id.nav_cataloge) return new CategoryFragment();
+        if (itemId == R.id.nav_manage)   return new ManageFragment();
+        if (itemId == R.id.nav_messages) return new MessagesFragment();
+        return new ProfileFragment();
+    }
+
+    /** Ẩn fragment đang hiện với hiệu ứng trượt ra (khi về Home). */
+    private void hideActiveFragment(int dir) {
+        if (activeFragment == null) return;
+        int enter = dir >= 0 ? R.anim.nav_slide_in_right : R.anim.nav_slide_in_left;
+        int exit  = dir >= 0 ? R.anim.nav_slide_out_left : R.anim.nav_slide_out_right;
+        getSupportFragmentManager().beginTransaction()
+                .setCustomAnimations(enter, exit)
+                .hide(activeFragment)
+                .commit();
+        activeFragment = null;
+    }
+
+    private static final int SLIDE_DURATION_MS = 280;
+
+    /** Trượt một View vào màn hình: dir>0 vào từ phải, dir<0 vào từ trái. */
+    private void slideViewIn(View v, int dir) {
+        int w = v.getWidth();
+        if (w <= 0) w = getResources().getDisplayMetrics().widthPixels;
+        v.animate().cancel();
+        v.setTranslationX(dir * w);
+        v.setAlpha(0.6f);
+        v.animate()
+                .translationX(0f).alpha(1f)
+                .setDuration(SLIDE_DURATION_MS)
+                .setInterpolator(new DecelerateInterpolator())
+                .start();
+    }
+
+    /** Trượt một View ra khỏi màn hình rồi ẩn: dir>0 ra bên trái, dir<0 ra bên phải. */
+    private void slideViewOut(View v, int dir) {
+        int w = v.getWidth();
+        if (w <= 0) w = getResources().getDisplayMetrics().widthPixels;
+        v.animate().cancel();
+        v.animate()
+                .translationX(-dir * w).alpha(0.6f)
+                .setDuration(SLIDE_DURATION_MS)
+                .setInterpolator(new DecelerateInterpolator())
+                .withEndAction(() -> {
+                    v.setVisibility(View.GONE);
+                    v.setTranslationX(0f);
+                    v.setAlpha(1f);
+                })
+                .start();
     }
 
     private void resetHomeHeaderState() {
