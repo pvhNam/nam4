@@ -150,7 +150,6 @@ public class CloudinaryHelper {
                         .unsigned(UPLOAD_PRESET)
                         .option("resource_type", "video")
                         .option("chunk_size", 6_000_000)
-                        .option("eager", "so_0,w_420,c_fill,q_80/e_preview:duration_3")
                         .callback(new UploadCallback() {
                             @Override public void onStart(String requestId) {}
                             @Override public void onProgress(String requestId, long bytes, long totalBytes) {}

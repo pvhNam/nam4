@@ -9,29 +9,29 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
-        android:layout_marginStart="60dp"
+        android:layout_marginStart="80dp"
         android:gravity="end"
         android:orientation="vertical">
 
-        <!-- Nội dung text -->
         <TextView
             android:id="@+id/tv_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_message_sent"
-            android:padding="12dp"
+            android:background="@drawable/bg_msg_sent"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp"
             android:text="Nội dung tin nhắn gửi đi"
             android:textColor="#FFFFFF"
-            android:textSize="15sp" />
+            android:textSize="15sp"
+            android:lineSpacingExtra="4dp" />
 
-        <!-- Ảnh / Thumbnail video đính kèm -->
         <androidx.cardview.widget.CardView
             android:id="@+id/card_image"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:layout_marginTop="2dp"
+            android:layout_width="220dp"
+            android:layout_height="220dp"
+            android:layout_marginTop="4dp"
             android:visibility="gone"
-            app:cardCornerRadius="12dp"
+            app:cardCornerRadius="16dp"
             app:cardElevation="0dp">
 
             <FrameLayout
@@ -44,60 +44,118 @@
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop" />
 
-                <!-- Icon ▶ hiện khi là video -->
                 <ImageView
                     android:id="@+id/iv_play_icon"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     android:layout_gravity="center"
                     android:background="@drawable/bg_circle_blue"
-                    android:padding="8dp"
+                    android:padding="10dp"
                     android:src="@android:drawable/ic_media_play"
                     android:visibility="gone"
                     app:tint="#FFFFFF" />
+
+                <LinearLayout
+                    android:id="@+id/layout_uploading"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#99000000"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <ProgressBar
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:indeterminateTint="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Đang tải lên..."
+                        android:textColor="#FFFFFF"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/layout_upload_failed"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#CC000000"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@android:drawable/ic_dialog_alert"
+                        app:tint="#FF5252" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Gửi thất bại"
+                        android:textColor="#FFFFFF"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/btn_retry_upload"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="#44FFFFFF"
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="6dp"
+                        android:text="Thử lại"
+                        android:textColor="#FFFFFF"
+                        android:textSize="12sp"
+                        android:clickable="true"
+                        android:focusable="true" />
+                </LinearLayout>
             </FrameLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Thời gian + trạng thái + menu 3 chấm -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="4dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
-
-            <!-- Nút menu 3 chấm: Gỡ / Chuyển tiếp -->
-            <TextView
-                android:id="@+id/btn_message_more"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:layout_marginEnd="2dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:gravity="center"
-                android:text="⋮"
-                android:textColor="@color/color_on_surface_tertiary"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:clickable="true"
-                android:focusable="true" />
 
             <TextView
                 android:id="@+id/tv_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="14:30"
-                android:textColor="@color/color_on_surface_tertiary"
+                android:textColor="#9CA3AF"
                 android:textSize="11sp" />
 
             <TextView
                 android:id="@+id/tv_status"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
+                android:layout_marginStart="6dp"
                 android:text="• Đã gửi"
-                android:textColor="@color/color_on_surface_tertiary"
+                android:textColor="#9CA3AF"
                 android:textSize="11sp" />
+
+            <TextView
+                android:id="@+id/btn_message_more"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:text="⋮"
+                android:textColor="#9CA3AF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:clickable="true"
+                android:focusable="true" />
         </LinearLayout>
     </LinearLayout>
-
 </RelativeLayout>

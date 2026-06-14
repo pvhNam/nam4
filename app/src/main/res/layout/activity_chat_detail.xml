@@ -359,40 +359,23 @@
         android:layout_alignParentBottom="true"
         android:layout_above="@id/layout_media_picker"
         android:background="#FFFFFF"
-        android:elevation="8dp"
+        android:elevation="12dp"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp"
         android:orientation="vertical">
-
-        <HorizontalScrollView
-            android:id="@+id/scroll_image_preview"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:scrollbars="none"
-            android:clipToPadding="false"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:paddingTop="8dp"
-            android:visibility="gone">
-
-            <LinearLayout
-                android:id="@+id/layout_image_previews"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical" />
-        </HorizontalScrollView>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
+            android:background="@drawable/bg_search" android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:padding="8dp">
+            android:paddingEnd="4dp">
 
             <ImageButton
                 android:id="@+id/btn_add_image"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:padding="6dp"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:padding="10dp"
                 android:scaleType="fitCenter"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_add_pictures" />
@@ -402,22 +385,32 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:background="@drawable/bg_input_field"
-                android:hint="Nhập tin nhắn..."
+                android:background="@null"
+                android:hint="Gõ tin nhắn..."
+                android:textColorHint="#9CA3AF"
+                android:textColor="#1A1A2E"
                 android:maxLines="4"
-                android:padding="10dp"
-                android:textSize="14sp" />
+                android:paddingVertical="12dp"
+                android:paddingHorizontal="4dp"
+                android:textSize="15sp" />
 
-            <ImageButton
-                android:id="@+id/btn_send"
+            <FrameLayout
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:layout_marginStart="4dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:enabled="false"
-                android:src="@drawable/ic_send"
-                app:tint="#1976D2" />
+                android:background="@drawable/bg_circle_blue"
+                android:layout_margin="4dp">
+
+                <ImageButton
+                    android:id="@+id/btn_send"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:enabled="false"
+                    android:src="@drawable/ic_send"
+                    android:padding="10dp"
+                    android:scaleType="fitCenter"
+                    app:tint="#FFFFFF" />
+            </FrameLayout>
         </LinearLayout>
     </LinearLayout>
 
