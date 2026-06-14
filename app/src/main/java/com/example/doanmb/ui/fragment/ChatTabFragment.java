@@ -41,10 +41,12 @@ public class ChatTabFragment extends Fragment {
     private ListenerRegistration listener;
     private ConversationAdapter adapter;
     private ShortcutAdapter shortcutAdapter;
+    private String selectedShortcutPartnerId = null;
 
     private final List<Map<String, Object>> convList = new ArrayList<>();
     private final List<Map<String, Object>> shortcutList = new ArrayList<>();
-
+    // THÊM DÒNG NÀY ĐỂ CHỨA DỮ LIỆU ĐÃ LỌC:
+    private final List<Map<String, Object>> filteredList = new ArrayList<>();
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -56,11 +58,14 @@ public class ChatTabFragment extends Fragment {
         layoutEmpty = view.findViewById(R.id.layout_msg_empty);
 
         rvConversations.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new ConversationAdapter(convList, db);
+        adapter = new ConversationAdapter(filteredList, db);
         rvConversations.setAdapter(adapter);
 
         rvShortcuts.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
-        shortcutAdapter = new ShortcutAdapter(shortcutList);
+        shortcutAdapter = new ShortcutAdapter(shortcutList, partnerId -> {
+            // Khi người dùng bấm vào Avatar, Adapter sẽ trả partnerId về đây
+            onShortcutClicked(partnerId);
+        });
         rvShortcuts.setAdapter(shortcutAdapter);
 
         return view;
@@ -92,6 +97,7 @@ public class ChatTabFragment extends Fragment {
                         Map<String, Object> data = doc.getData();
                         data.put("roomId", doc.getId());
                         convList.add(data);
+                        filteredList.add(data);
 
                         String buyerId = (String) data.get("buyerId");
                         String sellerId = (String) data.get("sellerId");
@@ -130,6 +136,42 @@ public class ChatTabFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         if (listener != null) listener.remove();
+    }
+
+    public void onShortcutClicked(String partnerId) {
+        if (partnerId.equals(selectedShortcutPartnerId)) {
+            // TẮT LỌC: Nếu bấm lại vào đúng người đó
+            selectedShortcutPartnerId = null;
+            shortcutAdapter.setSelectedPartnerId(null);
+
+            // Trả lại toàn bộ danh sách ban đầu
+            filteredList.clear();
+            filteredList.addAll(convList);
+            adapter.notifyDataSetChanged();
+
+            layoutEmpty.setVisibility(filteredList.isEmpty() ? View.VISIBLE : View.GONE);
+        } else {
+            // BẬT LỌC: Nếu bấm vào một người mới
+            selectedShortcutPartnerId = partnerId;
+            shortcutAdapter.setSelectedPartnerId(partnerId);
+
+            // Quét danh sách gốc và chỉ lấy tin nhắn của người này
+            filteredList.clear();
+            String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+            for (Map<String, Object> conv : convList) {
+                String buyerId = (String) conv.get("buyerId");
+                String sellerId = (String) conv.get("sellerId");
+                String pId = currentUid.equals(buyerId) ? sellerId : buyerId;
+
+                if (partnerId.equals(pId)) {
+                    filteredList.add(conv);
+                }
+            }
+            adapter.notifyDataSetChanged();
+
+            layoutEmpty.setVisibility(filteredList.isEmpty() ? View.VISIBLE : View.GONE);
+        }
     }
 
     // Reuse the ConversationAdapter logic here

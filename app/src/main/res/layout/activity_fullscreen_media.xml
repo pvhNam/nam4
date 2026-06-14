@@ -13,15 +13,15 @@
     <!-- Nút đóng góc trên phải -->
     <ImageView
         android:id="@+id/btn_close_media"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_gravity="top|end"
         android:layout_margin="16dp"
-        android:background="@drawable/bg_circle_blue"
-        android:padding="10dp"
-        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:padding="8dp"
+        android:src="@drawable/cancel"
         android:clickable="true"
-        android:focusable="true" />
+        android:focusable="true"
+        android:contentDescription="Đóng" />
 
     <!-- Bộ đếm "1 / 5" góc trên trái -->
     <TextView

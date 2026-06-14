@@ -14,6 +14,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.core.view.ViewCompat;
@@ -88,6 +89,12 @@ public class MainActivity extends AppCompatActivity {
     private final java.util.Map<Integer, Fragment> fragmentCache = new java.util.HashMap<>();
     private Fragment activeFragment = null;
 
+    // Điều hướng Back (áp dụng cho cả vuốt lẫn nút back):
+    // - Còn điều hướng được → quay về tab/trang trước đó
+    // - Ở Home và hết lịch sử → nhấn lần đầu hiện thông báo, nhấn lần nữa trong 2 giây để thoát app
+    private long lastBackPressTime = 0L;
+    private static final long EXIT_CONFIRM_WINDOW_MS = 2000L;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -111,10 +118,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Vuốt/nhấn Back: luôn quay về tab trước đó thay vì thoát app.
-     * - Trong tab Danh mục đang mở form đăng xe → quay lại danh sách.
+     * Điều hướng Back (cả vuốt lẫn nút đều xử lý như nhau):
      * - Còn lịch sử tab → quay lại tab vừa rời đi.
-     * - Đang ở Home và hết lịch sử → mới thoát app.
+     * - Đang ở tab khác Home (hết lịch sử) → quay về Home.
+     * - Đang ở Home và hết lịch sử → nhấn lần đầu hiện "Nhấn quay lại lần nữa để thoát",
+     *   nhấn lần nữa trong 2 giây sẽ thoát app.
      */
     private void setupBackNavigation() {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -125,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
                     isHandlingBack = true;
                     bottomNavigationView.setSelectedItemId(prev);
                     isHandlingBack = false;
+                    lastBackPressTime = 0L; // còn điều hướng được thì huỷ trạng thái chờ thoát
                     return;
                 }
 
@@ -132,12 +141,19 @@ public class MainActivity extends AppCompatActivity {
                     isHandlingBack = true;
                     bottomNavigationView.setSelectedItemId(R.id.nav_home);
                     isHandlingBack = false;
+                    lastBackPressTime = 0L;
                     return;
                 }
 
-                // Đang ở Home, không còn trang trước → để hệ thống thoát app
-                setEnabled(false);
-                getOnBackPressedDispatcher().onBackPressed();
+                // Ở Home, hết lịch sử → nhấn 2 lần để thoát
+                long now = System.currentTimeMillis();
+                if (now - lastBackPressTime < EXIT_CONFIRM_WINDOW_MS) {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                } else {
+                    lastBackPressTime = now;
+                    Toast.makeText(MainActivity.this, "Nhấn quay lại lần nữa để thoát", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
