@@ -456,6 +456,26 @@ public class ChatDetailActivity extends AppCompatActivity {
         // Mở media toàn màn hình
         chatAdapter.setOnMediaClickListener(this::openFullscreenMedia);
 
+        // Xử lý khi nhấn thử lại (Retry Upload)
+        chatAdapter.setOnRetryUploadListener(failedMsg -> {
+            String localId = failedMsg.getMessageId();
+            RetryData data = retryDataMap.remove(localId);
+            if (data == null) return;
+
+            // Reset về trạng thái đang tải
+            for (ChatMessage m : allMessages) {
+                if (localId.equals(m.getMessageId())) {
+                    m.setUploading(true);
+                    m.setUploadFailed(false);
+                    break;
+                }
+            }
+            chatAdapter.submitList(new ArrayList<>(allMessages));
+
+            // Retry upload
+            retryUpload(localId, data.item, data.text);
+        });
+
         // Menu 3 chấm: Gỡ / Chuyển tiếp / Báo cáo
         chatAdapter.setOnMessageActionListener(new ChatAdapter.OnMessageActionListener() {
             @Override
@@ -664,34 +684,58 @@ public class ChatDetailActivity extends AppCompatActivity {
     }
 
     private void sendMediaSequentially(List<MediaPickerAdapter.MediaItem> items, String textContent) {
-        layoutLoading.setVisibility(View.VISIBLE);
         btnSend.setEnabled(false);
+        // ❌ Xoá dòng: layoutLoading.setVisibility(View.VISIBLE);
+        // ✅ Không block UI nữa — mỗi ảnh tự hiển thị trạng thái riêng
+
         final int   total     = items.size();
         final int[] doneCount = {0};
 
         for (int i = 0; i < total; i++) {
-            final int index = i;
-            MediaPickerAdapter.MediaItem item = items.get(index);
+            final int    index   = i;
+            final MediaPickerAdapter.MediaItem item = items.get(index);
             final String msgText = (index == 0) ? textContent : "";
+
+            // ✅ Tạo ID tạm và hiện preview ngay lập tức
+            final String localId = "local_" + System.currentTimeMillis() + "_" + index;
+            addTempMessage(buildTempMessage(localId, item, msgText));
 
             if (item.isVideo) {
                 CloudinaryHelper.uploadVideo(getApplicationContext(), item.uri,
                         new CloudinaryHelper.OnUploadCallback() {
                             @Override public void onSuccess(String url) {
-                                runOnUiThread(() -> { performSendMessage(msgText, null, url); finishOneUpload(doneCount, total); });
+                                runOnUiThread(() -> {
+                                    removeTempMessage(localId);
+                                    performSendMessage(msgText, null, url);
+                                    finishOneUpload(doneCount, total);
+                                });
                             }
                             @Override public void onFailure(String error) {
-                                runOnUiThread(() -> { Toast.makeText(ChatDetailActivity.this, "Lỗi video: " + error, Toast.LENGTH_SHORT).show(); finishOneUpload(doneCount, total); });
+                                runOnUiThread(() -> {
+                                    markTempMessageFailed(localId, item, msgText);
+                                    Toast.makeText(ChatDetailActivity.this,
+                                            "Lỗi video: " + error, Toast.LENGTH_SHORT).show();
+                                    finishOneUpload(doneCount, total);
+                                });
                             }
                         });
             } else {
                 CloudinaryHelper.uploadImage(getApplicationContext(), item.uri,
                         new CloudinaryHelper.OnUploadCallback() {
                             @Override public void onSuccess(String url) {
-                                runOnUiThread(() -> { performSendMessage(msgText, url, null); finishOneUpload(doneCount, total); });
+                                runOnUiThread(() -> {
+                                    removeTempMessage(localId);
+                                    performSendMessage(msgText, url, null);
+                                    finishOneUpload(doneCount, total);
+                                });
                             }
                             @Override public void onFailure(String error) {
-                                runOnUiThread(() -> { Toast.makeText(ChatDetailActivity.this, "Lỗi ảnh: " + error, Toast.LENGTH_SHORT).show(); finishOneUpload(doneCount, total); });
+                                runOnUiThread(() -> {
+                                    markTempMessageFailed(localId, item, msgText);
+                                    Toast.makeText(ChatDetailActivity.this,
+                                            "Lỗi ảnh: " + error, Toast.LENGTH_SHORT).show();
+                                    finishOneUpload(doneCount, total);
+                                });
                             }
                         });
             }
@@ -701,7 +745,7 @@ public class ChatDetailActivity extends AppCompatActivity {
     private void finishOneUpload(int[] doneCount, int total) {
         doneCount[0]++;
         if (doneCount[0] >= total) {
-            layoutLoading.setVisibility(View.GONE);
+            // ❌ Xoá: layoutLoading.setVisibility(View.GONE);
             etMessage.setText("");
             updateSendButtonState();
         }
@@ -1003,5 +1047,102 @@ public class ChatDetailActivity extends AppCompatActivity {
         if (chatListener         != null) chatListener.remove();
         if (blockListenerMine    != null) blockListenerMine.remove();
         if (blockListenerPartner != null) blockListenerPartner.remove();
+    }
+    private final Map<String, RetryData> retryDataMap = new HashMap<>();
+
+    private static class RetryData {
+        final MediaPickerAdapter.MediaItem item;
+        final String text;
+        RetryData(MediaPickerAdapter.MediaItem item, String text) {
+            this.item = item; this.text = text;
+        }
+    }
+
+    private ChatMessage buildTempMessage(String localId,
+                                         MediaPickerAdapter.MediaItem item,
+                                         String text) {
+        ChatMessage msg = new ChatMessage();
+        msg.setMessageId(localId);
+        msg.setSenderId(currentUserId);
+        msg.setContent(text != null ? text : "");
+        msg.setLocalUri(item.uri.toString());
+        msg.setUploading(true);
+        msg.setUploadFailed(false);
+        // Nếu ChatMessage dùng field "video" boolean:
+        msg.setMessageType(item.isVideo ? ChatMessage.TYPE_VIDEO : ChatMessage.TYPE_IMAGE);
+        // Nếu ChatMessage dùng messageType String, đổi thành:
+        // msg.setMessageType(item.isVideo ? ChatMessage.TYPE_VIDEO : ChatMessage.TYPE_IMAGE);
+        return msg;
+    }
+
+    /** Thêm tin nhắn tạm vào list và cập nhật adapter ngay */
+    private void addTempMessage(ChatMessage msg) {
+        allMessages.add(msg);
+        chatAdapter.submitList(new ArrayList<>(allMessages));
+        scrollToBottom();
+    }
+
+    /** Xoá tin nhắn tạm sau khi upload thành công */
+    private void removeTempMessage(String localId) {
+        allMessages.removeIf(m -> localId.equals(m.getMessageId()));
+        chatAdapter.submitList(new ArrayList<>(allMessages));
+    }
+
+    /** Đổi tin nhắn tạm sang trạng thái thất bại, giữ preview + nút thử lại */
+    private void markTempMessageFailed(String localId,
+                                       MediaPickerAdapter.MediaItem item,
+                                       String msgText) {
+        for (ChatMessage m : allMessages) {
+            if (localId.equals(m.getMessageId())) {
+                m.setUploading(false);
+                m.setUploadFailed(true);
+                break;
+            }
+        }
+        chatAdapter.submitList(new ArrayList<>(allMessages));
+
+        // Lưu dữ liệu để retry sau
+        retryDataMap.put(localId, new RetryData(item, msgText));
+    }
+
+    /** Thực hiện lại upload khi user bấm "Thử lại" */
+    private void retryUpload(String localId,
+                             MediaPickerAdapter.MediaItem item,
+                             String msgText) {
+        if (item.isVideo) {
+            CloudinaryHelper.uploadVideo(getApplicationContext(), item.uri,
+                    new CloudinaryHelper.OnUploadCallback() {
+                        @Override public void onSuccess(String url) {
+                            runOnUiThread(() -> {
+                                removeTempMessage(localId);
+                                performSendMessage(msgText, null, url);
+                            });
+                        }
+                        @Override public void onFailure(String error) {
+                            runOnUiThread(() -> {
+                                markTempMessageFailed(localId, item, msgText);
+                                Toast.makeText(ChatDetailActivity.this,
+                                        "Thử lại thất bại: " + error, Toast.LENGTH_SHORT).show();
+                            });
+                        }
+                    });
+        } else {
+            CloudinaryHelper.uploadImage(getApplicationContext(), item.uri,
+                    new CloudinaryHelper.OnUploadCallback() {
+                        @Override public void onSuccess(String url) {
+                            runOnUiThread(() -> {
+                                removeTempMessage(localId);
+                                performSendMessage(msgText, url, null);
+                            });
+                        }
+                        @Override public void onFailure(String error) {
+                            runOnUiThread(() -> {
+                                markTempMessageFailed(localId, item, msgText);
+                                Toast.makeText(ChatDetailActivity.this,
+                                        "Thử lại thất bại: " + error, Toast.LENGTH_SHORT).show();
+                            });
+                        }
+                    });
+        }
     }
 }

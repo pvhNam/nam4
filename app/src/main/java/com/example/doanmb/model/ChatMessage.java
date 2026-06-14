@@ -20,6 +20,13 @@ public class ChatMessage {
     private int status; // 0: Sent, 1: Delivered, 2: Read
     private boolean recalled; // Thu hồi tin nhắn
 
+    @Exclude
+    private String localUri;       // URI local để preview ngay trước khi upload
+    @Exclude
+    private boolean uploading;     // Đang upload Cloudinary
+    @Exclude
+    private boolean uploadFailed;  // Upload thất bại
+
     public ChatMessage() {}
 
     public ChatMessage(String senderId, String content, Timestamp timestamp, int status) {
@@ -69,4 +76,15 @@ public class ChatMessage {
     public boolean isImage() {
         return TYPE_IMAGE.equals(messageType) || (imageUrl != null && !imageUrl.isEmpty());
     }
+    @Exclude
+    public String getLocalUri() { return localUri; }
+    public void setLocalUri(String localUri) { this.localUri = localUri; }
+
+    @Exclude
+    public boolean isUploading() { return uploading; }
+    public void setUploading(boolean uploading) { this.uploading = uploading; }
+
+    @Exclude
+    public boolean isUploadFailed() { return uploadFailed; }
+    public void setUploadFailed(boolean uploadFailed) { this.uploadFailed = uploadFailed; }
 }
