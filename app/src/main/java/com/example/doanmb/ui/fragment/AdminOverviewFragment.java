@@ -32,7 +32,6 @@ import java.util.List;
 
 public class AdminOverviewFragment extends Fragment {
 
-    private TextView tvTotalUsers, tvTotalCars, tvPendingOrders, tvActiveCars;
     private TextView tvTotalRevenue, tvMonthRevenue, tvConfirmedCount, tvSaleRevenue, tvRentalRevenue;
     private TextView tvPostingFeeRevenue, tvPostingCarCount;
     private View btnViewUsers, btnViewCars;
@@ -49,11 +48,6 @@ public class AdminOverviewFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_admin_overview, container, false);
         db = FirebaseFirestore.getInstance();
 
-        tvTotalUsers    = view.findViewById(R.id.tv_total_users);
-        tvTotalCars     = view.findViewById(R.id.tv_total_cars);
-        tvPendingOrders = view.findViewById(R.id.tv_pending_orders);
-        tvActiveCars    = view.findViewById(R.id.tv_active_cars);
-
         tvTotalRevenue      = view.findViewById(R.id.tv_total_revenue);
         tvMonthRevenue      = view.findViewById(R.id.tv_month_revenue);
         tvConfirmedCount    = view.findViewById(R.id.tv_confirmed_count);
@@ -68,7 +62,6 @@ public class AdminOverviewFragment extends Fragment {
         barChart = view.findViewById(R.id.bar_chart_revenue);
 
         setupChart();
-        loadStats();
         loadRevenue();
 
         view.findViewById(R.id.tv_view_revenue_detail).setOnClickListener(v ->
@@ -85,27 +78,6 @@ public class AdminOverviewFragment extends Fragment {
         if (getActivity() instanceof OnQuickNavListener) {
             ((OnQuickNavListener) getActivity()).navigateTo(itemId);
         }
-    }
-
-    private void loadStats() {
-        db.collection("users").get().addOnSuccessListener(snap -> {
-            if (!isAdded()) return;
-            tvTotalUsers.setText(String.valueOf(snap.size()));
-        });
-
-        db.collection("cars").get().addOnSuccessListener(snap -> {
-            if (!isAdded()) return;
-            tvTotalCars.setText(String.valueOf(snap.size()));
-            long active = snap.getDocuments().stream()
-                    .filter(d -> "active".equals(d.getString("status"))).count();
-            tvActiveCars.setText(String.valueOf(active));
-        });
-
-        db.collection("orders").whereEqualTo("status", "pending").get()
-                .addOnSuccessListener(snap -> {
-                    if (!isAdded()) return;
-                    tvPendingOrders.setText(String.valueOf(snap.size()));
-                });
     }
 
     private static final double SALE_COMMISSION   = 0.03;   // 3% giá xe
