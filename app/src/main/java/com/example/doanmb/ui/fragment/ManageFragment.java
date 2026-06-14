@@ -1,15 +1,17 @@
 package com.example.doanmb.ui.fragment;
 
+import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,6 +20,7 @@ import com.example.doanmb.R;
 import com.example.doanmb.adapter.ProfileCarAdapter;
 import com.example.doanmb.adapter.RequestAdapter;
 import com.example.doanmb.model.Car;
+import com.example.doanmb.ui.activity.CarDetailActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -30,8 +33,10 @@ import java.util.Map;
 
 public class ManageFragment extends Fragment {
 
-    // Tab buttons
-    private Button btnTabMyPosts, btnTabRequests;
+    // Tab pill (giống trang Danh mục)
+    private CardView cardTabPosts, cardTabRequests;
+    private LinearLayout tabPostsContent, tabRequestsContent;
+    private TextView tvTabPosts, tvTabRequests;
     private LinearLayout layoutMyPosts, layoutRequests;
 
     // Tab 1: Xe đã đăng
@@ -73,8 +78,12 @@ public class ManageFragment extends Fragment {
     }
 
     private void initViews(View view) {
-        btnTabMyPosts = view.findViewById(R.id.btnTabMyPosts);
-        btnTabRequests = view.findViewById(R.id.btnTabRequests);
+        cardTabPosts = view.findViewById(R.id.card_tab_posts);
+        cardTabRequests = view.findViewById(R.id.card_tab_requests);
+        tabPostsContent = view.findViewById(R.id.tab_posts_content);
+        tabRequestsContent = view.findViewById(R.id.tab_requests_content);
+        tvTabPosts = view.findViewById(R.id.tv_tab_posts);
+        tvTabRequests = view.findViewById(R.id.tv_tab_requests);
         layoutMyPosts = view.findViewById(R.id.layoutMyPosts);
         layoutRequests = view.findViewById(R.id.layoutRequests);
         rvMyPosts = view.findViewById(R.id.rvMyPosts);
@@ -86,32 +95,33 @@ public class ManageFragment extends Fragment {
     }
 
     private void setupTabs() {
-        btnTabMyPosts.setOnClickListener(v -> showTab(true));
-        btnTabRequests.setOnClickListener(v -> showTab(false));
+        cardTabPosts.setOnClickListener(v -> showTab(true));
+        cardTabRequests.setOnClickListener(v -> showTab(false));
+        showTab(true); // trạng thái ban đầu: đang xem "Xe đã đăng"
     }
 
     private void showTab(boolean showPosts) {
-        if (showPosts) {
-            layoutMyPosts.setVisibility(View.VISIBLE);
-            layoutRequests.setVisibility(View.GONE);
-            btnTabMyPosts.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF1976D2));
-            btnTabMyPosts.setTextColor(0xFFFFFFFF);
-            btnTabRequests.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFE3F2FD));
-            btnTabRequests.setTextColor(0xFF1976D2);
+        layoutMyPosts.setVisibility(showPosts ? View.VISIBLE : View.GONE);
+        layoutRequests.setVisibility(showPosts ? View.GONE : View.VISIBLE);
+        setTabSelected(tabPostsContent, tvTabPosts, showPosts);
+        setTabSelected(tabRequestsContent, tvTabRequests, !showPosts);
+    }
+
+    // Tab đang chọn = pill trắng + chữ xanh; tab còn lại = trong suốt + chữ trắng (giống trang Danh mục)
+    private void setTabSelected(LinearLayout tabContent, TextView tabLabel, boolean selected) {
+        if (selected) {
+            tabContent.setBackgroundResource(R.drawable.bg_tab_active_pill);
+            tabLabel.setTextColor(Color.parseColor("#2F54D4"));
         } else {
-            layoutMyPosts.setVisibility(View.GONE);
-            layoutRequests.setVisibility(View.VISIBLE);
-            btnTabRequests.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF1976D2));
-            btnTabRequests.setTextColor(0xFFFFFFFF);
-            btnTabMyPosts.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFE3F2FD));
-            btnTabMyPosts.setTextColor(0xFF1976D2);
+            tabContent.setBackground(null);
+            tabLabel.setTextColor(Color.WHITE);
         }
     }
 
     private void setupRecyclerViews() {
-        // Tab 1: Xe đã đăng
+        // Tab 1: Xe đã đăng — bấm vào item để xem chi tiết xe
         rvMyPosts.setLayoutManager(new LinearLayoutManager(getContext()));
-        myPostsAdapter = new ProfileCarAdapter(myCarList);
+        myPostsAdapter = new ProfileCarAdapter(myCarList, this::openCarDetail);
         rvMyPosts.setAdapter(myPostsAdapter);
 
         // Tab 2: Yêu cầu
@@ -130,6 +140,17 @@ public class ManageFragment extends Fragment {
         rvRequests.setAdapter(requestAdapter);
     }
 
+    // Mở màn hình chi tiết xe khi bấm vào tin đã đăng
+    private void openCarDetail(Car car) {
+        if (getActivity() == null) return;
+        Intent intent = new Intent(getActivity(), CarDetailActivity.class);
+        intent.putExtra("CAR_DATA", car);
+        intent.putExtra("CAR_ID", car.getId());
+        intent.putExtra("SELLER_ID", car.getSellerId());
+        intent.putExtra("CAR_TYPE", car.getType());
+        startActivity(intent);
+    }
+
     // Load xe mình đã đăng
     private void loadMyPosts() {
         db.collection("cars")
@@ -146,18 +167,19 @@ public class ManageFragment extends Fragment {
                         String info = doc.getString("info");
                         String type = doc.getString("type");
                         String status = doc.getString("status");
+                        String imageUrl = doc.getString("imageUrl");
+                        String sellerId = doc.getString("sellerId");
+                        if (sellerId == null) sellerId = doc.getString("userId");
                         if (name == null) continue;
 
                         Car car = new Car(name, price != null ? price : "", info != null ? info : "", android.R.drawable.ic_menu_gallery);
-                        car.setId(doc.getId());
-                        car.setType(type != null ? type : "");
-                        car.setImageUrl(doc.getString("imageUrl") != null ? doc.getString("imageUrl") : "");
-
                         if ("holding".equals(status)) {
                             car = new Car("⏳ " + name, price != null ? price : "", "Đang có người đặt cọc • " + (info != null ? info : ""), android.R.drawable.ic_menu_gallery);
-                            car.setId(doc.getId());
-                            car.setType(type != null ? type : "");
                         }
+                        car.setId(doc.getId());
+                        car.setType(type != null ? type : "");
+                        car.setImageUrl(imageUrl != null ? imageUrl : "");
+                        car.setSellerId(sellerId != null ? sellerId : "");
                         myCarList.add(car);
                     }
                     myPostsAdapter.updateList(myCarList);

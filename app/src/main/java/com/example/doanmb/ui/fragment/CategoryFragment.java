@@ -1,6 +1,7 @@
 package com.example.doanmb.ui.fragment;
 
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -23,12 +24,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.doanmb.R;
 import com.example.doanmb.adapter.ProfileCarAdapter;
 import com.example.doanmb.model.Car;
+import com.example.doanmb.model.Place;
 import com.example.doanmb.ui.activity.CarDetailActivity;
+import com.example.doanmb.util.VietnamLocationApi;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.Normalizer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
@@ -41,9 +46,6 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
     private static final String BRAND_ALL = "all";
     private static final String[] KNOWN_BRANDS = {"Toyota", "Honda", "Mazda", "Kia", "Ford", "Hyundai", "VinFast", "Khác"};
     private static final String LOCATION_ALL = "Tất cả khu vực";
-    private static final String[] KNOWN_LOCATIONS = {
-            "TP. Hồ Chí Minh", "Hà Nội", "Đà Nẵng", "Bình Dương",
-            "Đồng Nai", "Hải Phòng", "Cần Thơ", "Khánh Hòa"};
 
     private CardView cardBuyCar;
     private CardView cardSellCar;
@@ -69,10 +71,22 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
     private final List<String> brandFilters = new ArrayList<>();
     private ProfileCarAdapter carAdapter;
     private TextView tvSearchLocation;
+    private LinearLayout layoutTimeFilter;
+    private TextView tvTimeLabel;
+    private TextView tvSearchTime;
     private String currentCategory = CATEGORY_SALE;
     private String currentTitle = "Xe đang bán";
     private String selectedBrand = BRAND_ALL;
     private String selectedLocation = ""; // rỗng = tất cả khu vực
+    private Calendar pickupTime;  // null = chưa chọn giờ đón
+    private Calendar returnTime;  // null = chưa chọn giờ trả
+    private final SimpleDateFormat timeFmt = new SimpleDateFormat("dd/MM/yyyy", new Locale("vi"));
+
+    // Bỏ qua các từ chỉ đơn vị hành chính khi so khớp khu vực (vd "Thành phố Hồ Chí Minh").
+    private static final List<String> LOCATION_STOPWORDS = java.util.Arrays.asList(
+            "thanh", "pho", "tinh", "quan", "huyen", "phuong", "xa", "thi", "viet", "nam");
+    // Danh sách tỉnh/thành lấy từ API, cache lại để khỏi gọi mạng mỗi lần mở.
+    private List<Place> provincesCache;
 
     @Nullable
     @Override
@@ -106,6 +120,9 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
             intent.putExtra("CAR_ID", car.getId());
             intent.putExtra("SELLER_ID", car.getSellerId());
             intent.putExtra("CAR_TYPE", car.getType());
+            // Mang thời gian người dùng đã chọn ở Category sang form đặt xe có tài xế / thuê xe
+            if (pickupTime != null) intent.putExtra("PICKUP_TIME", timeFmt.format(pickupTime.getTime()));
+            if (returnTime != null) intent.putExtra("RETURN_TIME", timeFmt.format(returnTime.getTime()));
             startActivity(intent);
         });
         rvCategoryCars.setAdapter(carAdapter);
@@ -118,7 +135,14 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         tvSearchLocation = view.findViewById(R.id.tv_search_location);
         if (tvSearchLocation != null) {
             tvSearchLocation.setText(LOCATION_ALL);
-            tvSearchLocation.setOnClickListener(v -> showLocationPicker());
+            tvSearchLocation.setOnClickListener(v -> openLocationPicker());
+        }
+
+        layoutTimeFilter = view.findViewById(R.id.layout_time_filter);
+        tvTimeLabel = view.findViewById(R.id.tv_time_label);
+        tvSearchTime = view.findViewById(R.id.tv_search_time);
+        if (tvSearchTime != null) {
+            tvSearchTime.setOnClickListener(v -> showTimePicker());
         }
 
         setupCategoryActions();
@@ -179,6 +203,71 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         setTabSelected(tabSellCarContent, tvTabSellCar, currentCategory.equals(CATEGORY_SELL));
         setTabSelected(tabSelfDriveContent, tvTabSelfDrive, currentCategory.equals(CATEGORY_RENTAL));
         setTabSelected(tabWithDriverContent, tvTabWithDriver, currentCategory.equals(CATEGORY_DRIVER));
+
+        updateTimeFilterVisibility();
+    }
+
+    /**
+     * Ô "Thời gian" chỉ có ý nghĩa với xe thuê tự lái và xe có tài xế.
+     * Tab Mua xe / Bán xe không cần thời gian thuê nên ẩn đi cho gọn.
+     */
+    private void updateTimeFilterVisibility() {
+        boolean show = currentCategory.equals(CATEGORY_DRIVER) || currentCategory.equals(CATEGORY_RENTAL);
+        if (layoutTimeFilter != null) {
+            layoutTimeFilter.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+        if (tvTimeLabel != null) {
+            tvTimeLabel.setText(currentCategory.equals(CATEGORY_DRIVER)
+                    ? "Thời gian cần tài xế" : "Thời gian thuê");
+        }
+    }
+
+    /** Chọn ngày đón, rồi tiếp tục chọn ngày trả. */
+    private void showTimePicker() {
+        if (getContext() == null) return;
+        final Calendar now = Calendar.getInstance();
+        DatePickerDialog dateDialog = new DatePickerDialog(requireContext(), (dp, year, month, day) -> {
+            final Calendar pick = Calendar.getInstance();
+            pick.set(year, month, day, 0, 0, 0);
+            pick.set(Calendar.MILLISECOND, 0);
+            pickupTime = pick;
+            promptReturnTime();
+        }, now.get(Calendar.YEAR), now.get(Calendar.MONTH), now.get(Calendar.DAY_OF_MONTH));
+        dateDialog.getDatePicker().setMinDate(now.getTimeInMillis());
+        dateDialog.show();
+    }
+
+    /** Chọn ngày trả; không cho trả trước ngày đón. */
+    private void promptReturnTime() {
+        if (getContext() == null || pickupTime == null) return;
+        final Calendar start = (Calendar) pickupTime.clone();
+        DatePickerDialog dateDialog = new DatePickerDialog(requireContext(), (dp, year, month, day) -> {
+            final Calendar ret = Calendar.getInstance();
+            ret.set(year, month, day, 0, 0, 0);
+            ret.set(Calendar.MILLISECOND, 0);
+            if (ret.before(pickupTime)) {
+                Toast.makeText(getContext(), "Ngày trả phải từ ngày đón trở đi", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            returnTime = ret;
+            updateTimeDisplay();
+            applyFilter();
+        }, start.get(Calendar.YEAR), start.get(Calendar.MONTH), start.get(Calendar.DAY_OF_MONTH));
+        dateDialog.getDatePicker().setMinDate(start.getTimeInMillis());
+        dateDialog.show();
+    }
+
+    private void updateTimeDisplay() {
+        if (tvSearchTime == null) return;
+        if (pickupTime == null) {
+            tvSearchTime.setText("Chọn thời gian");
+            return;
+        }
+        String text = timeFmt.format(pickupTime.getTime());
+        if (returnTime != null) {
+            text += "  →  " + timeFmt.format(returnTime.getTime());
+        }
+        tvSearchTime.setText(text);
     }
 
     private void setTabSelected(LinearLayout tabContent, TextView tabLabel, boolean selected) {
@@ -258,23 +347,111 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         }
     }
 
-    /** Mở hộp thoại chọn khu vực để tìm xe theo địa điểm. */
-    private void showLocationPicker() {
+    /**
+     * Mở danh sách tỉnh/thành lấy từ API provinces.open-api.vn. Đã cache thì mở ngay,
+     * chưa có thì tải về; lỗi mạng thì báo Toast để người dùng thử lại.
+     */
+    private void openLocationPicker() {
         if (getContext() == null) return;
+        if (provincesCache != null) {
+            showProvinceDialog(provincesCache);
+            return;
+        }
+        if (tvSearchLocation != null) tvSearchLocation.setText("Đang tải khu vực...");
+        VietnamLocationApi.fetchProvinces(new VietnamLocationApi.Callback() {
+            @Override
+            public void onResult(List<Place> places) {
+                if (!isAdded()) return;
+                provincesCache = places;
+                restoreLocationLabel();
+                showProvinceDialog(places);
+            }
 
-        final String[] items = new String[KNOWN_LOCATIONS.length + 1];
+            @Override
+            public void onError(String message) {
+                if (!isAdded()) return;
+                restoreLocationLabel();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Lỗi tải khu vực: " + message, Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+    /** Đặt lại nhãn ô địa điểm về khu vực đang chọn (hoặc "Tất cả khu vực"). */
+    private void restoreLocationLabel() {
+        if (tvSearchLocation == null) return;
+        tvSearchLocation.setText(
+                (selectedLocation == null || selectedLocation.isEmpty()) ? LOCATION_ALL : selectedLocation);
+    }
+    /** Hộp thoại chọn tỉnh/thành từ dữ liệu API (kèm mục "Tất cả khu vực"). */
+    private void showProvinceDialog(List<Place> places) {
+        if (getContext() == null) return;
+        final String[] items = new String[places.size() + 1];
         items[0] = LOCATION_ALL;
-        System.arraycopy(KNOWN_LOCATIONS, 0, items, 1, KNOWN_LOCATIONS.length);
-
+        for (int i = 0; i < places.size(); i++) {
+            items[i + 1] = places.get(i).name;
+        }
         new AlertDialog.Builder(requireContext())
-                .setTitle("Chọn khu vực")
+                .setTitle("Chọn tỉnh/thành phố")
                 .setItems(items, (dialog, which) -> {
-                    selectedLocation = (which == 0) ? "" : items[which];
-                    if (tvSearchLocation != null) {
-                        tvSearchLocation.setText(which == 0 ? LOCATION_ALL : items[which]);
+                    if (which == 0) {
+                        selectedLocation = "";
+                        restoreLocationLabel();
+                        applyFilter();
+                    } else {
+                        // Đã chọn tỉnh → sang bước chọn phường/xã.
+                        openWardPicker(places.get(which - 1));
                     }
+                })
+                .show();
+    }
+
+    /** Bước 2: tải phường/xã của tỉnh đã chọn rồi hiện hộp thoại chọn. */
+    private void openWardPicker(Place province) {
+        if (getContext() == null) return;
+        if (tvSearchLocation != null) tvSearchLocation.setText("Đang tải phường/xã...");
+        VietnamLocationApi.fetchWards(province.code, new VietnamLocationApi.Callback() {
+            @Override
+            public void onResult(List<Place> wards) {
+                if (!isAdded()) return;
+                restoreLocationLabel();
+                if (wards.isEmpty()) {
+                    // Không có phường/xã → lọc theo nguyên tỉnh.
+                    selectedLocation = province.name;
+                    restoreLocationLabel();
+                    applyFilter();
+                    return;
+                }
+                showWardDialog(province, wards);
+            }
+            @Override
+            public void onError(String message) {
+                if (!isAdded()) return;
+                // Lỗi tải phường/xã → vẫn lọc được theo tỉnh.
+                selectedLocation = province.name;
+                restoreLocationLabel();
+                applyFilter();
+            }
+        });
+    }
+    /** Hộp thoại chọn phường/xã (kèm mục "Toàn tỉnh/thành"). */
+    private void showWardDialog(Place province, List<Place> wards) {
+        if (getContext() == null) return;
+        final String[] items = new String[wards.size() + 1];
+        items[0] = "Toàn " + province.name;
+        for (int i = 0; i < wards.size(); i++) {
+            items[i + 1] = wards.get(i).name;
+        }
+        new AlertDialog.Builder(requireContext())
+                .setTitle(province.name)
+                .setItems(items, (dialog, which) -> {
+                    selectedLocation = (which == 0)
+                            ? province.name
+                            : wards.get(which - 1).name + ", " + province.name;
+                    restoreLocationLabel();
                     applyFilter();
                 })
+                .setNegativeButton("Quay lại", (d, w) -> showProvinceDialog(provincesCache))
                 .show();
     }
 
@@ -282,7 +459,19 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         if (selectedLocation == null || selectedLocation.isEmpty()) return true;
         String haystack = normalizeText((car.getInfo() != null ? car.getInfo() : "")
                 + " " + (car.getName() != null ? car.getName() : ""));
-        return haystack.contains(normalizeText(selectedLocation));
+        String needle = normalizeText(selectedLocation);
+        if (needle.isEmpty()) return true;
+
+        // Khớp trực tiếp cả chuỗi.
+        if (haystack.contains(needle)) return true;
+        // Địa chỉ Google thường có dạng "Thành phố Hồ Chí Minh, Việt Nam":
+        // bỏ các từ hành chính rồi khớp theo từng từ khoá còn lại (Hồ, Chí, Minh...).
+        for (String token : needle.split("[\\s,]+")) {
+            if (token.length() >= 3 && !LOCATION_STOPWORDS.contains(token) && haystack.contains(token)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void applyFilter() {
@@ -302,7 +491,16 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
 
         carAdapter.updateList(filteredCars);
         tvResultTitle.setText(currentTitle);
-        tvCategoryCount.setText(filteredCars.size() + " tin phù hợp");
+
+        String countText = filteredCars.size() + " tin phù hợp";
+        boolean timeRelevant = currentCategory.equals(CATEGORY_DRIVER) || currentCategory.equals(CATEGORY_RENTAL);
+        if (timeRelevant && pickupTime != null) {
+            countText += "  ·  " + timeFmt.format(pickupTime.getTime());
+            if (returnTime != null) {
+                countText += " → " + timeFmt.format(returnTime.getTime());
+            }
+        }
+        tvCategoryCount.setText(countText);
 
         boolean isEmpty = filteredCars.isEmpty();
         rvCategoryCars.setVisibility(isEmpty ? View.GONE : View.VISIBLE);

@@ -1,5 +1,6 @@
 package com.example.doanmb.adapter;
 
+import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -58,9 +59,9 @@ public class RequestAdapter extends RecyclerView.Adapter<RequestAdapter.RequestV
         // Loại yêu cầu
         holder.tvRequestType.setText(type != null ? type : "Yêu cầu");
         if ("Thuê xe".equals(type)) {
-            holder.tvRequestType.setBackgroundColor(0xFF1976D2);
+            holder.tvRequestType.setBackgroundTintList(ColorStateList.valueOf(0xFF1976D2));
         } else {
-            holder.tvRequestType.setBackgroundColor(0xFF4CAF50);
+            holder.tvRequestType.setBackgroundTintList(ColorStateList.valueOf(0xFF4CAF50));
         }
 
         // Tên xe + giá
