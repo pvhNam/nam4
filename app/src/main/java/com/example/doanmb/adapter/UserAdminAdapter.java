@@ -28,6 +28,10 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
         void onDelete(String userId, String userName);
     }
 
+    public interface OnItemClickListener {
+        void onItemClick(String userId);
+    }
+
     private List<Map<String, Object>> allUsers = new ArrayList<>();
     private List<String> allUserIds = new ArrayList<>();
     private List<Map<String, Object>> filteredUsers = new ArrayList<>();
@@ -35,14 +39,17 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
 
     private OnRoleChangeListener roleListener;
     private OnDeleteListener deleteListener;
+    private OnItemClickListener itemClickListener;
 
     private String currentFilter = "ALL";
     private String currentSearch = "";
 
     public UserAdminAdapter(List<Map<String, Object>> users, List<String> userIds,
-                            OnRoleChangeListener roleListener, OnDeleteListener deleteListener) {
+                            OnRoleChangeListener roleListener, OnDeleteListener deleteListener,
+                            OnItemClickListener itemClickListener) {
         this.roleListener = roleListener;
         this.deleteListener = deleteListener;
+        this.itemClickListener = itemClickListener;
         updateList(users, userIds);
     }
 
@@ -129,7 +136,9 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
             holder.ivAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
         }
 
-        holder.itemView.setOnClickListener(v -> showRoleDialog(ctx, userId, role));
+        holder.itemView.setOnClickListener(v -> {
+            if (itemClickListener != null) itemClickListener.onItemClick(userId);
+        });
 
         holder.ivDelete.setOnClickListener(v -> {
             if (deleteListener != null) deleteListener.onDelete(userId, name);

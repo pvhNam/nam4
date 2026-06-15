@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,6 +21,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.doanmb.R;
 import com.example.doanmb.adapter.UserAdminAdapter;
+import com.example.doanmb.ui.activity.AdminDashboardActivity;
+import com.example.doanmb.ui.fragment.AdminUserDetailFragment;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -53,7 +56,14 @@ public class AdminUsersFragment extends Fragment {
         btnTabAdmin = view.findViewById(R.id.btn_tab_admin);
         btnTabCustomer = view.findViewById(R.id.btn_tab_customer);
 
-        adapter = new UserAdminAdapter(userList, userIds, this::changeUserRole, this::confirmDeleteUser);
+        ImageButton btnBack = view.findViewById(R.id.btn_back_users);
+        btnBack.setOnClickListener(v -> {
+            if (getActivity() instanceof AdminDashboardActivity) {
+                ((AdminDashboardActivity) getActivity()).navigateTo(R.id.nav_admin_overview);
+            }
+        });
+
+        adapter = new UserAdminAdapter(userList, userIds, this::changeUserRole, this::confirmDeleteUser, this::openUserDetail);
         rvUsers.setLayoutManager(new LinearLayoutManager(getContext()));
         rvUsers.setAdapter(adapter);
 
@@ -163,6 +173,13 @@ public class AdminUsersFragment extends Fragment {
                 .setPositiveButton("Xóa", (dialog, which) -> deleteUser(userId))
                 .setNegativeButton("Hủy", null)
                 .show();
+    }
+
+    private void openUserDetail(String userId) {
+        getParentFragmentManager().beginTransaction()
+                .replace(R.id.admin_fragment_container, AdminUserDetailFragment.newInstance(userId))
+                .addToBackStack(null)
+                .commit();
     }
 
     private void deleteUser(String userId) {
