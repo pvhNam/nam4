@@ -55,7 +55,6 @@ public class SplashActivity extends AppCompatActivity {
                     String role = doc.getString("role");
                     Intent intent;
                     if ("ADMIN".equals(role))       intent = new Intent(this, AdminDashboardActivity.class);
-                    else if ("STAFF".equals(role))  intent = new Intent(this, StaffDashboardActivity.class);
                     else if ("DRIVER".equals(role)) intent = new Intent(this, DriverDashboardActivity.class);
                     else                            intent = new Intent(this, MainActivity.class);
                     startActivity(intent);

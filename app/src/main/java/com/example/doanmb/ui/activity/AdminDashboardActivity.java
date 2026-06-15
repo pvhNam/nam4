@@ -5,15 +5,18 @@ import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.example.doanmb.R;
 import com.example.doanmb.ui.fragment.AdminCarsFragment;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.example.doanmb.ui.fragment.AdminOrdersFragment;
 import com.example.doanmb.ui.fragment.AdminOverviewFragment;
 import com.example.doanmb.ui.fragment.AdminReportsFragment;
 import com.example.doanmb.ui.fragment.AdminUsersFragment;
+import com.example.doanmb.ui.fragment.AdminProfileFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -47,6 +50,22 @@ public class AdminDashboardActivity extends AppCompatActivity implements AdminOv
         // Mở tab Tổng quan mặc định
         switchFragment(R.id.nav_admin_overview);
         bottomNav.setSelectedItemId(R.id.nav_admin_overview);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (bottomNav.getSelectedItemId() != R.id.nav_admin_overview) {
+                    bottomNav.setSelectedItemId(R.id.nav_admin_overview);
+                } else {
+                    new MaterialAlertDialogBuilder(AdminDashboardActivity.this)
+                            .setTitle("Thoát Admin")
+                            .setMessage("Bạn có muốn thoát khỏi trang quản trị không?")
+                            .setPositiveButton("Thoát", (d, w) -> finish())
+                            .setNegativeButton("Ở lại", null)
+                            .show();
+                }
+            }
+        });
     }
 
     private void loadAdminName() {
@@ -71,6 +90,8 @@ public class AdminDashboardActivity extends AppCompatActivity implements AdminOv
             fragment = new AdminOrdersFragment();
         } else if (itemId == R.id.nav_admin_reports) {
             fragment = new AdminReportsFragment();
+        } else if (itemId == R.id.nav_admin_profile) {
+            fragment = new AdminProfileFragment();
         } else {
             fragment = new AdminOverviewFragment();
         }

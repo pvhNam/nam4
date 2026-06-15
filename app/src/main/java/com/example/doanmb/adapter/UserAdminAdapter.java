@@ -102,8 +102,8 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
                 tv.setTextColor(ctx.getColor(R.color.role_admin_text));
                 break;
             case "DRIVER":
-                tv.setBackgroundColor(ctx.getColor(R.color.role_staff_bg));
-                tv.setTextColor(ctx.getColor(R.color.role_staff_text));
+                tv.setBackgroundColor(ctx.getColor(R.color.role_driver_bg));
+                tv.setTextColor(ctx.getColor(R.color.role_driver_text));
                 break;
             default:
                 tv.setBackgroundColor(ctx.getColor(R.color.role_customer_bg));
@@ -118,7 +118,6 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
     }
 
     private String normalizeRole(String role) {
-        if ("STAFF".equals(role)) return "DRIVER";
         return role;
     }
 
