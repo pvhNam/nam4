@@ -102,7 +102,13 @@ public class AdminDashboardActivity extends AppCompatActivity implements AdminOv
 
     @Override
     public void navigateTo(int itemId) {
-        bottomNav.setSelectedItemId(itemId);
+        if (itemId == R.id.nav_admin_users) {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.admin_fragment_container, new AdminUsersFragment())
+                    .commit();
+        } else {
+            bottomNav.setSelectedItemId(itemId);
+        }
     }
 
     private void logout() {

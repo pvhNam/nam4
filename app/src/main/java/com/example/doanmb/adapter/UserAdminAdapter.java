@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.doanmb.R;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -23,20 +24,75 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
         void onRoleChange(String userId, String newRole);
     }
 
-    private List<Map<String, Object>> users;
-    private List<String> userIds;
-    private OnRoleChangeListener listener;
+    public interface OnDeleteListener {
+        void onDelete(String userId, String userName);
+    }
 
-    public UserAdminAdapter(List<Map<String, Object>> users, List<String> userIds, OnRoleChangeListener listener) {
-        this.users = users;
-        this.userIds = userIds;
-        this.listener = listener;
+    private List<Map<String, Object>> allUsers = new ArrayList<>();
+    private List<String> allUserIds = new ArrayList<>();
+    private List<Map<String, Object>> filteredUsers = new ArrayList<>();
+    private List<String> filteredUserIds = new ArrayList<>();
+
+    private OnRoleChangeListener roleListener;
+    private OnDeleteListener deleteListener;
+
+    private String currentFilter = "ALL";
+    private String currentSearch = "";
+
+    public UserAdminAdapter(List<Map<String, Object>> users, List<String> userIds,
+                            OnRoleChangeListener roleListener, OnDeleteListener deleteListener) {
+        this.roleListener = roleListener;
+        this.deleteListener = deleteListener;
+        updateList(users, userIds);
     }
 
     public void updateList(List<Map<String, Object>> newUsers, List<String> newIds) {
-        this.users = newUsers;
-        this.userIds = newIds;
+        this.allUsers = new ArrayList<>(newUsers);
+        this.allUserIds = new ArrayList<>(newIds);
+        applyFilter();
+    }
+
+    public void setFilter(String filter) {
+        this.currentFilter = filter;
+        applyFilter();
+    }
+
+    public void setSearch(String query) {
+        this.currentSearch = query.trim().toLowerCase();
+        applyFilter();
+    }
+
+    private void applyFilter() {
+        filteredUsers.clear();
+        filteredUserIds.clear();
+
+        for (int i = 0; i < allUsers.size(); i++) {
+            Map<String, Object> user = allUsers.get(i);
+            String role = getStr(user, "role", "CUSTOMER").toUpperCase();
+
+            boolean matchRole = currentFilter.equals("ALL") || role.equals(currentFilter);
+
+            boolean matchSearch = true;
+            if (!currentSearch.isEmpty()) {
+                String name = getStr(user, "name", "").toLowerCase();
+                String email = getStr(user, "email", "").toLowerCase();
+                String phone = getStr(user, "phone", "").toLowerCase();
+                matchSearch = name.contains(currentSearch)
+                        || email.contains(currentSearch)
+                        || phone.contains(currentSearch);
+            }
+
+            if (matchRole && matchSearch) {
+                filteredUsers.add(user);
+                filteredUserIds.add(allUserIds.get(i));
+            }
+        }
+
         notifyDataSetChanged();
+    }
+
+    public int getFilteredCount() {
+        return filteredUsers.size();
     }
 
     @NonNull
@@ -48,14 +104,14 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Map<String, Object> user = users.get(position);
-        String userId = userIds.get(position);
+        Map<String, Object> user = filteredUsers.get(position);
+        String userId = filteredUserIds.get(position);
         Context ctx = holder.itemView.getContext();
 
         String name = getStr(user, "name", "Không có tên");
         String email = getStr(user, "email", "");
         String phone = getStr(user, "phone", "");
-        String role = normalizeRole(getStr(user, "role", "CUSTOMER"));
+        String role = getStr(user, "role", "CUSTOMER").toUpperCase();
         String avatarUrl = getStr(user, "avatarUrl", "");
 
         holder.tvName.setText(name);
@@ -74,11 +130,14 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
         }
 
         holder.itemView.setOnClickListener(v -> showRoleDialog(ctx, userId, role));
+
+        holder.ivDelete.setOnClickListener(v -> {
+            if (deleteListener != null) deleteListener.onDelete(userId, name);
+        });
     }
 
     private void showRoleDialog(Context ctx, String userId, String currentRole) {
-        currentRole = normalizeRole(currentRole);
-        String[] roles = {"ADMIN", "DRIVER", "CUSTOMER"};
+        String[] roles = {"ADMIN", "CUSTOMER"};
         int currentIndex = 0;
         for (int i = 0; i < roles.length; i++) {
             if (roles[i].equals(currentRole)) { currentIndex = i; break; }
@@ -89,26 +148,19 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
                 .setTitle("Đổi quyền người dùng")
                 .setSingleChoiceItems(roles, currentIndex, (dialog, which) -> selected[0] = which)
                 .setPositiveButton("Lưu", (dialog, which) -> {
-                    if (listener != null) listener.onRoleChange(userId, roles[selected[0]]);
+                    if (roleListener != null) roleListener.onRoleChange(userId, roles[selected[0]]);
                 })
                 .setNegativeButton("Hủy", null)
                 .show();
     }
 
     private void applyRoleStyle(Context ctx, TextView tv, String role) {
-        switch (role) {
-            case "ADMIN":
-                tv.setBackgroundColor(ctx.getColor(R.color.role_admin_bg));
-                tv.setTextColor(ctx.getColor(R.color.role_admin_text));
-                break;
-            case "DRIVER":
-                tv.setBackgroundColor(ctx.getColor(R.color.role_driver_bg));
-                tv.setTextColor(ctx.getColor(R.color.role_driver_text));
-                break;
-            default:
-                tv.setBackgroundColor(ctx.getColor(R.color.role_customer_bg));
-                tv.setTextColor(ctx.getColor(R.color.role_customer_text));
-                break;
+        if ("ADMIN".equals(role)) {
+            tv.setBackgroundColor(ctx.getColor(R.color.role_admin_bg));
+            tv.setTextColor(ctx.getColor(R.color.role_admin_text));
+        } else {
+            tv.setBackgroundColor(ctx.getColor(R.color.role_customer_bg));
+            tv.setTextColor(ctx.getColor(R.color.role_customer_text));
         }
     }
 
@@ -117,20 +169,17 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
         return (v != null) ? v.toString() : def;
     }
 
-    private String normalizeRole(String role) {
-        return role;
-    }
-
     @Override
-    public int getItemCount() { return users.size(); }
+    public int getItemCount() { return filteredUsers.size(); }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivAvatar;
+        ImageView ivAvatar, ivDelete;
         TextView tvName, tvEmail, tvPhone, tvRole;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             ivAvatar = itemView.findViewById(R.id.iv_user_avatar);
+            ivDelete = itemView.findViewById(R.id.iv_delete_user);
             tvName = itemView.findViewById(R.id.tv_user_name);
             tvEmail = itemView.findViewById(R.id.tv_user_email);
             tvPhone = itemView.findViewById(R.id.tv_user_phone);
