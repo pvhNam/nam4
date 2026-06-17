@@ -3,16 +3,19 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#F5F6F8"
     android:fitsSystemWindows="true">
 
     <LinearLayout
         android:id="@+id/driver_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/driver_primary"
+        android:background="@drawable/bg_driver_header"
+        android:elevation="4dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="16dp"
+        android:paddingHorizontal="18dp"
+        android:paddingVertical="18dp"
         app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
@@ -63,14 +66,22 @@
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_driver_logout"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/driver_dark"
+            android:layout_height="40dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:minWidth="0dp"
+            android:paddingHorizontal="14dp"
             android:text="Thoát"
             android:textColor="#FFFFFF"
-            android:textSize="13sp" />
+            android:textSize="13sp"
+            app:cornerRadius="20dp"
+            app:rippleColor="#33FFFFFF"
+            app:strokeColor="#80FFFFFF"
+            app:strokeWidth="1dp" />
     </LinearLayout>
 
     <FrameLayout
@@ -83,11 +94,14 @@
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/driver_bottom_nav"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="66dp"
         android:background="@android:color/white"
-        android:elevation="8dp"
-        app:itemIconTint="@color/driver_primary"
-        app:itemTextColor="@color/driver_primary"
+        android:elevation="12dp"
+        app:elevation="12dp"
+        app:itemIconTint="@color/driver_nav_selector"
+        app:itemRippleColor="@color/driver_nav_selector"
+        app:itemTextColor="@color/driver_nav_selector"
+        app:labelVisibilityMode="labeled"
         app:layout_constraintBottom_toBottomOf="parent"
         app:menu="@menu/bottom_nav_driver" />
 
