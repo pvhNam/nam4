@@ -22,6 +22,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import com.google.firebase.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -150,6 +151,7 @@ public class DriverRegisterActivity extends AppCompatActivity {
         data.put("licenseNumber", license);
         data.put("driverCarType", carType);
         data.put("driverStatus", "pending");
+        data.put("appliedAt", Timestamp.now());
         if (cccdImageUrl != null) data.put("cccdImageUrl", cccdImageUrl);
         if (licenseImageUrl != null) data.put("licenseImageUrl", licenseImageUrl);
 
