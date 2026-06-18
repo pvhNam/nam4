@@ -16,10 +16,13 @@ import androidx.fragment.app.Fragment;
 import com.bumptech.glide.Glide;
 import com.example.doanmb.R;
 import com.example.doanmb.model.User;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class AdminDriverDetailFragment extends Fragment {
 
@@ -105,6 +108,9 @@ public class AdminDriverDetailFragment extends Fragment {
                 .update("driverStatus", "approved", "role", "DRIVER")
                 .addOnSuccessListener(v -> {
                     if (!isAdded()) return;
+                    sendNotification(uid,
+                            "Đăng ký tài xế được duyệt ✅",
+                            "Hồ sơ của bạn đã được Admin duyệt. Đăng xuất và đăng nhập lại để vào giao diện tài xế.");
                     Toast.makeText(getContext(), "Đã duyệt tài xế!", Toast.LENGTH_SHORT).show();
                     if (getParentFragmentManager().getBackStackEntryCount() > 0) {
                         getParentFragmentManager().popBackStack();
@@ -126,6 +132,9 @@ public class AdminDriverDetailFragment extends Fragment {
                 .update("driverStatus", "rejected")
                 .addOnSuccessListener(v -> {
                     if (!isAdded()) return;
+                    sendNotification(uid,
+                            "Đăng ký tài xế bị từ chối ❌",
+                            "Hồ sơ của bạn chưa đáp ứng yêu cầu. Vui lòng cập nhật và gửi lại.");
                     Toast.makeText(getContext(), "Đã từ chối hồ sơ.", Toast.LENGTH_SHORT).show();
                     if (getParentFragmentManager().getBackStackEntryCount() > 0) {
                         getParentFragmentManager().popBackStack();
@@ -137,6 +146,16 @@ public class AdminDriverDetailFragment extends Fragment {
                     btnReject.setEnabled(true);
                     Toast.makeText(getContext(), "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    private void sendNotification(String userId, String title, String body) {
+        Map<String, Object> notif = new HashMap<>();
+        notif.put("userId", userId);
+        notif.put("title", title);
+        notif.put("body", body);
+        notif.put("createdAt", Timestamp.now());
+        notif.put("read", false);
+        db.collection("notifications").add(notif);
     }
 
     private void loadImg(ImageView iv, String url) {

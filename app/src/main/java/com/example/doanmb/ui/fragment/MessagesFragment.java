@@ -25,6 +25,7 @@ import com.example.doanmb.R;
 import com.example.doanmb.adapter.ShortcutAdapter;
 import com.example.doanmb.model.Car;
 import com.example.doanmb.ui.activity.ChatDetailActivity;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -49,7 +50,7 @@ public class MessagesFragment extends Fragment {
     private LinearLayout layoutNotLoggedIn, layoutEmpty, layoutContent;
     private RecyclerView rvConversations, rvShortcuts;
     private EditText etSearch;
-    private TextView tvGreeting, tvEmptyHint;
+    private TextView tvGreeting;
     private ImageView imgAvatar;
 
     private FirebaseFirestore db;
@@ -70,13 +71,19 @@ public class MessagesFragment extends Fragment {
     private final List<Map<String, Object>> messageSearchResults = new ArrayList<>();
 
     private android.widget.FrameLayout frameMsgContent;
-    private LinearLayout layoutChatTabContent, layoutNotificationTabContent;
+    private LinearLayout layoutChatTabContent;
+    private View layoutNotificationTabContent;
     private androidx.cardview.widget.CardView tabChat, tabNotification;
     private LinearLayout contentTabChat, contentTabNotification;
     private TextView tvTabChat, tvTabNotification;
     private boolean isChatTabActive = true;
-    private ImageView ivTabIconChat, ivTabIconNotification;
     private String selectedShortcutPartnerId = null;
+
+    // Notification tab
+    private RecyclerView rvNotifications;
+    private TextView tvNotifEmpty;
+    private NotifAdapter notifAdapter;
+    private final List<Map<String, Object>> notifList = new ArrayList<>();
 
     @Nullable
     @Override
@@ -92,11 +99,6 @@ public class MessagesFragment extends Fragment {
         etSearch          = view.findViewById(R.id.et_search_chat);
         tvGreeting        = view.findViewById(R.id.tv_msg_greeting);
         imgAvatar         = view.findViewById(R.id.img_msg_avatar);
-        tvEmptyHint       = view.findViewById(R.id.layout_msg_empty) != null
-                ? view.findViewById(R.id.layout_msg_empty).findViewById(android.R.id.text1)
-                : null;
-        ivTabIconChat = view.findViewById(R.id.iv_tab_icon_chat);
-        ivTabIconNotification = view.findViewById(R.id.iv_tab_icon_notification);
 
         rvConversations = view.findViewById(R.id.rv_conversations);
         rvConversations.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -125,6 +127,15 @@ public class MessagesFragment extends Fragment {
         contentTabNotification        = view.findViewById(R.id.content_tab_notification);
         tvTabChat                      = view.findViewById(R.id.tv_tab_chat);
         tvTabNotification              = view.findViewById(R.id.tv_tab_notification);
+
+        // Setup notification RecyclerView
+        rvNotifications = view.findViewById(R.id.rv_notifications);
+        tvNotifEmpty    = view.findViewById(R.id.tv_notif_empty);
+        if (rvNotifications != null) {
+            notifAdapter = new NotifAdapter();
+            rvNotifications.setLayoutManager(new LinearLayoutManager(getContext()));
+            rvNotifications.setAdapter(notifAdapter);
+        }
 
         tabChat.setOnClickListener(v -> selectTab(true));
         tabNotification.setOnClickListener(v -> selectTab(false));
@@ -534,6 +545,7 @@ public class MessagesFragment extends Fragment {
         // ── 2. ĐỔI TRẠNG THÁI HIỂN THỊ NỘI DUNG ──
         layoutChatTabContent.setVisibility(chatSelected ? View.VISIBLE : View.GONE);
         layoutNotificationTabContent.setVisibility(chatSelected ? View.GONE : View.VISIBLE);
+        if (!chatSelected) loadNotifications();
 
         // ── 3. ANIMATION CHUYỂN MÀU (TAB HEADER) ──
         int activeColor   = android.graphics.Color.parseColor("#2F54D4"); // Xanh
@@ -575,7 +587,100 @@ public class MessagesFragment extends Fragment {
                 tvTabNotification.setTextColor((int) animator.getAnimatedValue()));
         colorAnimNotif.start();
 
-        // (Lưu ý: Không gán colorFilter cho ivTabIconChat và ivTabIconNotification ở đây để chúng luôn giữ màu xanh mặc định)
+        // (Lưu ý: Không đổi màu icon của 2 tab ở đây để chúng luôn giữ màu xanh mặc định)
+    }
+
+    private void loadNotifications() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null || rvNotifications == null) return;
+        // Không dùng orderBy chung với whereEqualTo để tránh phải tạo composite index
+        // trên Firestore (nếu thiếu index, query sẽ lỗi âm thầm và customer không thấy
+        // thông báo duyệt/từ chối đăng ký tài xế). Sắp xếp ở phía client.
+        FirebaseFirestore.getInstance()
+                .collection("notifications")
+                .whereEqualTo("userId", user.getUid())
+                .get()
+                .addOnSuccessListener(snap -> {
+                    if (!isAdded()) return;
+                    List<QueryDocumentSnapshot> docs = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : snap) {
+                        docs.add(doc);
+                    }
+                    docs.sort((a, b) -> {
+                        Timestamp ta = a.getTimestamp("createdAt");
+                        Timestamp tb = b.getTimestamp("createdAt");
+                        if (ta == null && tb == null) return 0;
+                        if (ta == null) return 1;
+                        if (tb == null) return -1;
+                        return tb.compareTo(ta);
+                    });
+
+                    notifList.clear();
+                    for (QueryDocumentSnapshot doc : docs) {
+                        notifList.add(doc.getData());
+                        // đánh dấu đã đọc
+                        if (!Boolean.TRUE.equals(doc.getBoolean("read"))) {
+                            doc.getReference().update("read", true);
+                        }
+                    }
+                    notifAdapter.notifyDataSetChanged();
+                    boolean empty = notifList.isEmpty();
+                    if (tvNotifEmpty != null) tvNotifEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+                    rvNotifications.setVisibility(empty ? View.GONE : View.VISIBLE);
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+                    boolean empty = notifList.isEmpty();
+                    if (tvNotifEmpty != null) tvNotifEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+                    rvNotifications.setVisibility(empty ? View.GONE : View.VISIBLE);
+                });
+    }
+
+    // ── Adapter thông báo ──────────────────────────────────────────────────────
+    private class NotifAdapter extends RecyclerView.Adapter<NotifAdapter.VH> {
+        private final java.text.SimpleDateFormat SDF =
+                new java.text.SimpleDateFormat("HH:mm  dd/MM/yyyy", java.util.Locale.getDefault());
+
+        @NonNull
+        @Override
+        public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View v = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_notification, parent, false);
+            return new VH(v);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull VH h, int position) {
+            Map<String, Object> item = notifList.get(position);
+            h.tvTitle.setText(str(item, "title"));
+            h.tvBody.setText(str(item, "body"));
+            Object createdAt = item.get("createdAt");
+            if (createdAt instanceof Timestamp) {
+                h.tvTime.setText(SDF.format(((Timestamp) createdAt).toDate()));
+            } else {
+                h.tvTime.setText("");
+            }
+            // chấm đỏ nếu chưa đọc (khi vừa load xong chưa kịp update)
+            Object read = item.get("read");
+            h.tvDot.setVisibility(Boolean.FALSE.equals(read) ? View.VISIBLE : View.GONE);
+        }
+
+        @Override public int getItemCount() { return notifList.size(); }
+
+        private String str(Map<String, Object> m, String key) {
+            Object v = m.get(key); return v != null ? v.toString() : "";
+        }
+
+        class VH extends RecyclerView.ViewHolder {
+            TextView tvTitle, tvBody, tvTime, tvDot;
+            VH(@NonNull View v) {
+                super(v);
+                tvTitle = v.findViewById(R.id.tv_notif_title);
+                tvBody  = v.findViewById(R.id.tv_notif_body);
+                tvTime  = v.findViewById(R.id.tv_notif_time);
+                tvDot   = v.findViewById(R.id.tv_notif_dot);
+            }
+        }
     }
 
     public void onShortcutClicked(String partnerId) {
