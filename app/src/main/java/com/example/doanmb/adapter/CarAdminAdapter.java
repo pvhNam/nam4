@@ -13,8 +13,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.example.doanmb.R;
+import com.example.doanmb.util.ImageLoader;
 
 import java.util.List;
 import java.util.Map;
@@ -76,9 +76,7 @@ public class CarAdminAdapter extends RecyclerView.Adapter<CarAdminAdapter.ViewHo
         applyStatusStyle(ctx, holder.tvStatus, status);
 
         if (!imageUrl.isEmpty()) {
-            Glide.with(ctx).load(imageUrl).centerCrop()
-                    .placeholder(android.R.drawable.ic_menu_gallery)
-                    .into(holder.ivThumb);
+            ImageLoader.loadCard(holder.ivThumb, imageUrl, android.R.drawable.ic_menu_gallery);
         } else {
             holder.ivThumb.setImageResource(android.R.drawable.ic_menu_gallery);
         }

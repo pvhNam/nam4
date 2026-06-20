@@ -216,9 +216,13 @@
                             android:layout_marginHorizontal="16dp"/>
 
                         <RelativeLayout
+                            android:id="@+id/menu_favorite_cars"
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
-                            android:paddingHorizontal="16dp">
+                            android:paddingHorizontal="16dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?android:attr/selectableItemBackground">
 
                             <ImageView
                                 android:id="@+id/ic2"

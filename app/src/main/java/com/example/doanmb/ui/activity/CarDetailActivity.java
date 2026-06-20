@@ -14,7 +14,10 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -23,6 +26,7 @@ import com.bumptech.glide.Glide;
 import com.example.doanmb.R;
 import com.example.doanmb.adapter.CarImageAdapter;
 import com.example.doanmb.model.Car;
+import com.example.doanmb.util.FavoriteHelper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -39,7 +43,7 @@ public class CarDetailActivity extends AppCompatActivity {
     private RecyclerView rvCarImages;
     private LinearLayout layoutImageDots;
     private CarImageAdapter imageAdapter;
-    private TextView tvCarName, tvCarPrice, tvCarInfo;
+    private TextView tvCarName, tvCarPrice, tvCarInfo, tvDetailTitle;
     private TextView tvCarTypeBadge, tvCarFuelBadge, tvCarConditionBadge;
     private TextView tvSellerName, tvSellerPhone, tvOwnerNote;
 
@@ -67,10 +71,21 @@ public class CarDetailActivity extends AppCompatActivity {
     private String carStatus = "";
     private String statusBeforeHide = "";
 
+    // Header trượt: thanh trắng hiện dần khi cuộn, nút back nổi mờ dần
+    private NestedScrollView detailScroll;
+    private View imageHero, headerDetail, btnBackFloat, floatTopBar;
+    private ImageView btnFavoriteFloat, ivFavoriteDetail, btnMenuFloat;
+    private boolean isFav = false; // xe này đã được mình yêu thích chưa
+    private boolean statusBarDarkIcons = true; // khởi tạo true để lần gọi đầu ép sang icon sáng
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_car_detail);
+
+        // Edge-to-edge: ảnh tràn lên sau thanh trạng thái cho vừa khung
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
 
         db = FirebaseFirestore.getInstance();
         initViews();
@@ -98,6 +113,7 @@ public class CarDetailActivity extends AppCompatActivity {
             }
             showImages(coverImages);
             tvCarName.setText(car.getName());
+            if (tvDetailTitle != null) tvDetailTitle.setText(car.getName());
             tvCarPrice.setText(car.getPrice());
             tvCarInfo.setText(car.getInfo());
         }
@@ -123,6 +139,7 @@ public class CarDetailActivity extends AppCompatActivity {
 
         setupButtons();
         setupRentDepositUi();
+        loadFavoriteState();
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -168,19 +185,138 @@ public class CarDetailActivity extends AppCompatActivity {
     }
 
     private void setupDetailHeader() {
+        detailScroll     = findViewById(R.id.detail_scroll);
+        imageHero        = findViewById(R.id.image_hero);
+        headerDetail     = findViewById(R.id.header_detail);
+        btnBackFloat     = findViewById(R.id.btn_back_float);
+        floatTopBar      = findViewById(R.id.float_top_bar);
+        btnFavoriteFloat = findViewById(R.id.btn_favorite_float);
+        btnMenuFloat     = findViewById(R.id.btn_menu_float);
+        ivFavoriteDetail = findViewById(R.id.iv_favorite_detail);
+        tvDetailTitle    = findViewById(R.id.tv_detail_title);
+
         View btnBack = findViewById(R.id.btn_back_detail);
         if (btnBack != null) btnBack.setOnClickListener(v -> finish());
+        if (btnBackFloat != null) btnBackFloat.setOnClickListener(v -> finish());
 
-        View header = findViewById(R.id.header_detail);
-        if (header != null) {
-            final int baseTop = header.getPaddingTop();
-            // Đẩy header xuống dưới thanh trạng thái để ảnh không bị che (edge-to-edge)
-            ViewCompat.setOnApplyWindowInsetsListener(header, (v, insets) -> {
+        if (btnFavoriteFloat != null) btnFavoriteFloat.setOnClickListener(v -> toggleFavorite());
+        if (ivFavoriteDetail != null) ivFavoriteDetail.setOnClickListener(v -> toggleFavorite());
+        updateFavoriteIcons();
+
+        // Đẩy thanh tiêu đề trắng xuống dưới thanh trạng thái (edge-to-edge)
+        if (headerDetail != null) {
+            final int baseTop = headerDetail.getPaddingTop();
+            ViewCompat.setOnApplyWindowInsetsListener(headerDetail, (v, insets) -> {
                 int top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
                 v.setPadding(v.getPaddingLeft(), baseTop + top, v.getPaddingRight(), v.getPaddingBottom());
                 return insets;
             });
         }
+
+        // Thanh nổi né thanh trạng thái
+        if (floatTopBar != null) {
+            final int baseTopPad = floatTopBar.getPaddingTop();
+            ViewCompat.setOnApplyWindowInsetsListener(floatTopBar, (v, insets) -> {
+                int top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
+                v.setPadding(v.getPaddingLeft(), baseTopPad + top, v.getPaddingRight(), v.getPaddingBottom());
+                return insets;
+            });
+        }
+
+        // Chừa chỗ cho thanh điều hướng hệ thống ở đáy nội dung cuộn
+        if (detailScroll != null) {
+            final int basePad = detailScroll.getPaddingBottom();
+            ViewCompat.setOnApplyWindowInsetsListener(detailScroll, (v, insets) -> {
+                int bottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+                v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), basePad + bottom);
+                return insets;
+            });
+        }
+
+        // Trạng thái ban đầu: thanh trắng ẩn (không chặn chạm), icon thanh trạng thái màu sáng
+        if (headerDetail != null) headerDetail.setVisibility(View.INVISIBLE);
+        setStatusBarDarkIcons(false);
+
+        // Cuộn lên: thanh trắng hiện dần, nút back nổi mờ dần (kiểu collapsing toolbar)
+        if (detailScroll != null) {
+            detailScroll.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener)
+                    (v, x, y, ox, oy) -> updateDetailHeader(y));
+        }
+    }
+
+    /** Nội suy theo độ cuộn: thanh trắng alpha 0→1, nút back nổi alpha 1→0. */
+    private void updateDetailHeader(int scrollY) {
+        if (headerDetail == null || imageHero == null || floatTopBar == null) return;
+
+        int trigger = imageHero.getHeight() - headerDetail.getHeight();
+        if (trigger <= 0) trigger = dp(180);
+
+        float p = clamp01(scrollY / (float) trigger);
+
+        headerDetail.setAlpha(p);
+        headerDetail.setVisibility(p <= 0.01f ? View.INVISIBLE : View.VISIBLE);
+
+        floatTopBar.setAlpha(1f - p);
+        floatTopBar.setVisibility(p >= 0.99f ? View.INVISIBLE : View.VISIBLE);
+
+        // Qua nửa chặng (thanh trắng đã rõ) → icon thanh trạng thái màu tối
+        setStatusBarDarkIcons(p >= 0.5f);
+    }
+
+    /** Cập nhật biểu tượng tim cho cả nút nổi (nền tối) và thanh trắng. */
+    private void updateFavoriteIcons() {
+        int icon = isFav ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline;
+        if (btnFavoriteFloat != null) {
+            btnFavoriteFloat.setImageResource(icon);
+            btnFavoriteFloat.clearColorFilter(); // trên nền tối: trắng/đỏ đều rõ
+        }
+        if (ivFavoriteDetail != null) {
+            ivFavoriteDetail.setImageResource(icon);
+            if (isFav) ivFavoriteDetail.clearColorFilter();
+            else ivFavoriteDetail.setColorFilter(0xFF1A1A2E); // viền tim tối trên nền trắng
+        }
+    }
+
+    /** Nạp trạng thái đã-thích để hiện tim đỏ sẵn nếu user từng thích xe này. */
+    private void loadFavoriteState() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null || carId == null || carId.isEmpty()) return;
+        FavoriteHelper.contains(user.getUid(), carId, fav -> {
+            isFav = fav;
+            updateFavoriteIcons();
+        });
+    }
+
+    /** Bấm tim trong trang chi tiết: thêm/bỏ yêu thích. */
+    private void toggleFavorite() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Toast.makeText(this, "Đăng nhập để lưu xe yêu thích", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (carId == null || carId.isEmpty()) return;
+        isFav = !isFav;
+        if (isFav) FavoriteHelper.add(user.getUid(), carId);
+        else FavoriteHelper.remove(user.getUid(), carId);
+        updateFavoriteIcons();
+    }
+
+    private void setStatusBarDarkIcons(boolean dark) {
+        if (statusBarDarkIcons == dark) return;
+        statusBarDarkIcons = dark;
+        WindowInsetsControllerCompat c =
+                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        c.setAppearanceLightStatusBars(dark);
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    private float clamp01(float value) {
+        if (value < 0f) return 0f;
+        if (value > 1f) return 1f;
+        return value;
     }
 
     private void setupImagePager() {
@@ -454,12 +590,17 @@ public class CarDetailActivity extends AppCompatActivity {
             if (tvOwnerNote != null) tvOwnerNote.setVisibility(View.VISIBLE);
             if (btnMenuDetail != null) {
                 btnMenuDetail.setVisibility(View.VISIBLE);
-                btnMenuDetail.setOnClickListener(v -> showOwnerMenu());
+                btnMenuDetail.setOnClickListener(v -> showOwnerMenu(btnMenuDetail));
+            }
+            if (btnMenuFloat != null) {
+                btnMenuFloat.setVisibility(View.VISIBLE);
+                btnMenuFloat.setOnClickListener(v -> showOwnerMenu(btnMenuFloat));
             }
             return;
         }
 
         if (btnMenuDetail != null) btnMenuDetail.setVisibility(View.GONE);
+        if (btnMenuFloat != null) btnMenuFloat.setVisibility(View.GONE);
         if (tvOwnerNote != null) tvOwnerNote.setVisibility(View.GONE);
         if (tvReportCar != null) {
             tvReportCar.setVisibility(View.VISIBLE);
@@ -506,10 +647,10 @@ public class CarDetailActivity extends AppCompatActivity {
     }
 
     /** Menu 3 gạch (chỉ chủ bài đăng): chỉnh sửa, ẩn/hiện, xóa bài viết. */
-    private void showOwnerMenu() {
+    private void showOwnerMenu(View anchor) {
         boolean isHidden = "hidden".equals(carStatus);
         androidx.appcompat.widget.PopupMenu menu =
-                new androidx.appcompat.widget.PopupMenu(this, btnMenuDetail);
+                new androidx.appcompat.widget.PopupMenu(this, anchor);
         menu.getMenu().add(0, 1, 0, "✏️  Chỉnh sửa bài viết");
         menu.getMenu().add(0, 2, 1, isHidden ? "👁  Hiện bài viết" : "🙈  Ẩn bài viết");
         menu.getMenu().add(0, 3, 2, "🗑  Xóa bài viết");
@@ -565,6 +706,7 @@ public class CarDetailActivity extends AppCompatActivity {
                     db.collection("cars").document(carId).update(update)
                             .addOnSuccessListener(aVoid -> {
                                 tvCarName.setText(name);
+                                if (tvDetailTitle != null) tvDetailTitle.setText(name);
                                 tvCarPrice.setText(price);
                                 tvCarInfo.setText(info);
                                 Toast.makeText(this, "✅ Đã cập nhật bài viết!", Toast.LENGTH_SHORT).show();

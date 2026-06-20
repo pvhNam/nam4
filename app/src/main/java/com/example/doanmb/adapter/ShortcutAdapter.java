@@ -10,9 +10,8 @@ import android.graphics.Color;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.example.doanmb.R;
+import com.example.doanmb.util.ImageLoader;
 
 import java.util.List;
 import java.util.Map;
@@ -62,7 +61,7 @@ public class ShortcutAdapter extends RecyclerView.Adapter<ShortcutAdapter.VH> {
         if (avatar != null && !avatar.isEmpty()) {
             h.tvAvatar.setVisibility(View.GONE);
             h.ivAvatar.setVisibility(View.VISIBLE);
-            Glide.with(h.ivAvatar.getContext()).load(avatar).transform(new CircleCrop()).into(h.ivAvatar);
+            ImageLoader.loadAvatar(h.ivAvatar, avatar);
         } else {
             h.tvAvatar.setVisibility(View.VISIBLE);
             h.ivAvatar.setVisibility(View.GONE);

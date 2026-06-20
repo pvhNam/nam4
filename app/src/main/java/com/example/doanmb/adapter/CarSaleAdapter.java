@@ -8,9 +8,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.bumptech.glide.Glide;
 
 import com.example.doanmb.R;
+import com.example.doanmb.util.ImageLoader;
 import com.example.doanmb.model.Car;
 
 import java.util.List;
@@ -23,6 +23,21 @@ public class CarSaleAdapter extends RecyclerView.Adapter<CarSaleAdapter.CarSaleV
     // Tạo Interface để xử lý Click
     public interface OnItemClickListener {
         void onItemClick(Car car);
+    }
+
+    // Yêu thích (tim ở góc card)
+    private java.util.Set<String> favoriteIds = java.util.Collections.emptySet();
+    private OnFavoriteToggle favoriteListener;
+
+    public interface OnFavoriteToggle {
+        void onToggle(Car car, boolean makeFavorite);
+    }
+
+    public void setFavoriteListener(OnFavoriteToggle l) { this.favoriteListener = l; }
+
+    public void setFavoriteIds(java.util.Set<String> ids) {
+        this.favoriteIds = ids != null ? ids : java.util.Collections.emptySet();
+        notifyDataSetChanged();
     }
 
     // Cập nhật Constructor
@@ -47,10 +62,7 @@ public class CarSaleAdapter extends RecyclerView.Adapter<CarSaleAdapter.CarSaleV
 
         String imageUrl = car.getImageUrl();
         if (imageUrl != null && !imageUrl.isEmpty()) {
-            Glide.with(holder.itemView.getContext())
-                    .load(imageUrl)
-                    .placeholder(android.R.drawable.ic_menu_gallery)
-                    .into(holder.ivImage);
+            ImageLoader.loadCard(holder.ivImage, imageUrl, android.R.drawable.ic_menu_gallery);
         } else {
             holder.ivImage.setImageResource(android.R.drawable.ic_menu_gallery);
         }
@@ -68,6 +80,13 @@ public class CarSaleAdapter extends RecyclerView.Adapter<CarSaleAdapter.CarSaleV
                 listener.onItemClick(car);
             }
         });
+
+        // Tim yêu thích
+        boolean fav = car.getId() != null && favoriteIds.contains(car.getId());
+        holder.ivFavorite.setImageResource(fav ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
+        holder.ivFavorite.setOnClickListener(v -> {
+            if (favoriteListener != null) favoriteListener.onToggle(car, !fav);
+        });
     }
 
     @Override
@@ -76,13 +95,14 @@ public class CarSaleAdapter extends RecyclerView.Adapter<CarSaleAdapter.CarSaleV
     }
 
     public static class CarSaleViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivImage;
+        ImageView ivImage, ivFavorite;
         TextView tvName, tvPrice, tvInfo;
         Button btnViewDetails; // Khai báo thêm nút bấm
 
         public CarSaleViewHolder(@NonNull View itemView) {
             super(itemView);
             ivImage = itemView.findViewById(R.id.ivCarSale);
+            ivFavorite = itemView.findViewById(R.id.iv_favorite_sale);
             tvName = itemView.findViewById(R.id.tvCarSaleName);
             tvPrice = itemView.findViewById(R.id.tvCarSalePrice);
             tvInfo = itemView.findViewById(R.id.tvCarSaleInfo);
