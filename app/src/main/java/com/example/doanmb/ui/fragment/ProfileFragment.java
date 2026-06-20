@@ -24,7 +24,9 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.example.doanmb.util.ImageLoader;
 import com.example.doanmb.R;
+import com.example.doanmb.ui.activity.FavoriteCarsActivity;
 import com.example.doanmb.ui.activity.LoginActivity;
 import com.example.doanmb.ui.activity.RegisterActivity;
 import com.example.doanmb.util.CloudinaryHelper;
@@ -57,6 +59,7 @@ public class ProfileFragment extends Fragment {
     private ImageView ivAvatarSettings;
     private CardView ivChangeAvatarTrigger;
     private RelativeLayout menuPersonalInfoClick;
+    private RelativeLayout menuFavoriteCars;
     private RelativeLayout menuRegisterDriver;
     private TextView tvDriverStatusHint;
     private TextView tvRegisterDriverLabel;
@@ -109,6 +112,7 @@ public class ProfileFragment extends Fragment {
         ivAvatarSettings = view.findViewById(R.id.iv_avatar_settings);
         ivChangeAvatarTrigger = view.findViewById(R.id.iv_change_avatar_trigger);
         menuPersonalInfoClick = view.findViewById(R.id.menu_personal_info);
+        menuFavoriteCars = view.findViewById(R.id.menu_favorite_cars);
         menuRegisterDriver = view.findViewById(R.id.menu_register_driver);
         tvDriverStatusHint = view.findViewById(R.id.tv_driver_status_hint);
         tvRegisterDriverLabel = view.findViewById(R.id.tv_register_driver_label);
@@ -135,6 +139,10 @@ public class ProfileFragment extends Fragment {
         cardUserProfile.setOnClickListener(v -> switchSubScreen(2));
         btnBackToMain.setOnClickListener(v -> switchSubScreen(1));
         menuPersonalInfoClick.setOnClickListener(v -> switchSubScreen(3));
+        if (menuFavoriteCars != null) {
+            menuFavoriteCars.setOnClickListener(v ->
+                    startActivity(new Intent(getActivity(), FavoriteCarsActivity.class)));
+        }
         // Đã được duyệt làm tài xế → chuyển sang giao diện tài xế, chưa thì mở form đăng ký
         menuRegisterDriver.setOnClickListener(v -> {
             if ("approved".equals(driverStatus)) {
@@ -269,10 +277,10 @@ public class ProfileFragment extends Fragment {
 
                     if (avatarUrl != null && !avatarUrl.isEmpty()) {
                         if (ivAvatarMain != null) {
-                            Glide.with(ProfileFragment.this).load(avatarUrl).circleCrop().into(ivAvatarMain);
+                            ImageLoader.loadAvatar(ivAvatarMain, avatarUrl);
                         }
                         if (ivAvatarSettings != null) {
-                            Glide.with(ProfileFragment.this).load(avatarUrl).circleCrop().into(ivAvatarSettings);
+                            ImageLoader.loadAvatar(ivAvatarSettings, avatarUrl);
                         }
                     }
                 });
@@ -293,8 +301,8 @@ public class ProfileFragment extends Fragment {
                         .addOnSuccessListener(requireActivity(), unused -> {
                             if (!isAdded()) return;
 
-                            Glide.with(ProfileFragment.this).load(imageUrl).circleCrop().into(ivAvatarMain);
-                            Glide.with(ProfileFragment.this).load(imageUrl).circleCrop().into(ivAvatarSettings);
+                            ImageLoader.loadAvatar(ivAvatarMain, imageUrl);
+                            ImageLoader.loadAvatar(ivAvatarSettings, imageUrl);
                             Toast.makeText(getContext(), "✅ Cập nhật ảnh đại diện thành công!", Toast.LENGTH_SHORT).show();
                         });
             }

@@ -17,7 +17,7 @@ import java.util.Locale;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
+import com.example.doanmb.util.ImageLoader;
 import com.example.doanmb.R;
 
 import java.util.List;
@@ -81,9 +81,7 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
         applyRoleStyle(ctx, holder.tvRole, role);
 
         if (!avatarUrl.isEmpty()) {
-            Glide.with(ctx).load(avatarUrl).circleCrop()
-                    .placeholder(android.R.drawable.ic_menu_myplaces)
-                    .into(holder.ivAvatar);
+            ImageLoader.loadAvatar(holder.ivAvatar, avatarUrl, android.R.drawable.ic_menu_myplaces);
         } else {
             holder.ivAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
         }
