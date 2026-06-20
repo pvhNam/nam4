@@ -27,6 +27,7 @@ import com.example.doanmb.R;
 import com.example.doanmb.adapter.CarImageAdapter;
 import com.example.doanmb.model.Car;
 import com.example.doanmb.util.FavoriteHelper;
+import com.example.doanmb.util.ImageLoader;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -534,6 +535,8 @@ public class CarDetailActivity extends AppCompatActivity {
                     }
                     if (!imgs.isEmpty()) {
                         showImages(imgs);
+                        // Tải sẵn các ảnh còn lại để vuốt xem mượt, không chờ mạng
+                        for (String u : imgs) ImageLoader.preload(getApplicationContext(), u);
                     }
 
                     if (fuel != null && !fuel.isEmpty()) {

@@ -1,57 +1,72 @@
 package com.example.doanmb.util;
 
+import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
-import com.bumptech.glide.load.DecodeFormat;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 /**
- * Tải ảnh tối ưu dùng chung toàn app:
- * - Resize qua Cloudinary (w_, q_auto, f_auto) để giảm dung lượng tải → nhanh hơn.
- * - Cache đĩa (DiskCacheStrategy.ALL) để lần sau hiện tức thì.
- * - RGB_565 cho ảnh nhỏ (card/avatar) để nhẹ RAM, cuộn mượt, ít giật.
+ * Tải ảnh dùng chung toàn app.
+ * - Giữ NGUYÊN chất lượng ảnh gốc (không hạ RGB_565, không nén lại).
+ * - Cache đĩa (DiskCacheStrategy.ALL) + cache bộ nhớ mặc định → lần sau hiện tức thì,
+ *   không tải lại nhiều lần.
+ * - dontAnimate(): khi bind lại item (vd đổi trạng thái tim) ảnh không nhấp nháy.
  */
 public final class ImageLoader {
 
     private ImageLoader() {}
 
-    private static final int THUMB_W  = 600;   // ảnh card/danh sách
-    private static final int DETAIL_W = 1080;  // ảnh chi tiết/gallery
-    private static final int AVATAR_W = 240;   // avatar tròn
-
-    /** Ảnh card/danh sách (cắt đầy khung, nhẹ RAM). */
+    /** Ảnh card/danh sách (cắt đầy khung). */
     public static void loadCard(ImageView iv, String url, int placeholderRes) {
-        lite(iv, url, THUMB_W, placeholderRes).centerCrop().into(iv);
+        Glide.with(iv.getContext())
+                .load(url)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .placeholder(placeholderRes)
+                .error(placeholderRes)
+                .centerCrop()
+                .dontAnimate()
+                .into(iv);
     }
 
-    /** Ảnh chi tiết/gallery (giữ chất lượng cao hơn, theo scaleType của ImageView). */
+    /** Ảnh chi tiết/gallery (theo scaleType của ImageView). */
     public static void loadDetail(ImageView iv, String url, int placeholderRes) {
-        RequestBuilder<Drawable> rb = Glide.with(iv.getContext())
-                .load(CloudinaryHelper.optimizeImageUrl(url, DETAIL_W))
-                .diskCacheStrategy(DiskCacheStrategy.ALL);
-        if (placeholderRes != 0) rb = rb.placeholder(placeholderRes);
-        rb.into(iv);
+        Glide.with(iv.getContext())
+                .load(url)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .placeholder(placeholderRes)
+                .dontAnimate()
+                .into(iv);
     }
 
     /** Avatar tròn (có ảnh chờ). */
     public static void loadAvatar(ImageView iv, String url, int placeholderRes) {
-        lite(iv, url, AVATAR_W, placeholderRes).circleCrop().into(iv);
+        avatar(iv, url, placeholderRes);
     }
 
     /** Avatar tròn (không cần ảnh chờ). */
     public static void loadAvatar(ImageView iv, String url) {
-        lite(iv, url, AVATAR_W, 0).circleCrop().into(iv);
+        avatar(iv, url, 0);
     }
 
-    private static RequestBuilder<Drawable> lite(ImageView iv, String url, int width, int placeholderRes) {
+    /**
+     * Tải sẵn ảnh vào cache đĩa để khi hiển thị không phải chờ mạng (giữ NGUYÊN chất lượng gốc).
+     * Nên truyền application context để preload không bị hủy khi màn hình đóng.
+     */
+    public static void preload(Context ctx, String url) {
+        if (ctx == null || url == null || url.isEmpty()) return;
+        Glide.with(ctx).load(url).diskCacheStrategy(DiskCacheStrategy.ALL).preload();
+    }
+
+    private static void avatar(ImageView iv, String url, int placeholderRes) {
         RequestBuilder<Drawable> rb = Glide.with(iv.getContext())
-                .load(CloudinaryHelper.optimizeImageUrl(url, width))
+                .load(url)
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .format(DecodeFormat.PREFER_RGB_565);
+                .circleCrop()
+                .dontAnimate();
         if (placeholderRes != 0) rb = rb.placeholder(placeholderRes).error(placeholderRes);
-        return rb;
+        rb.into(iv);
     }
 }

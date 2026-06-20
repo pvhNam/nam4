@@ -35,7 +35,8 @@ public class CarRentalAdapter extends RecyclerView.Adapter<CarRentalAdapter.CarV
 
     public void setFavoriteIds(java.util.Set<String> ids) {
         this.favoriteIds = ids != null ? ids : java.util.Collections.emptySet();
-        notifyDataSetChanged();
+        // Chỉ báo cập nhật phần tim (payload) → KHÔNG tải lại ảnh
+        notifyItemRangeChanged(0, getItemCount(), "fav");
     }
 
     public CarRentalAdapter(List<Car> carList, OnItemClickListener listener) {
@@ -69,6 +70,20 @@ public class CarRentalAdapter extends RecyclerView.Adapter<CarRentalAdapter.CarV
         });
 
         // Tim yêu thích
+        bindFavorite(holder, car);
+    }
+
+    /** Bind lại chỉ phần tim (khi đổi trạng thái yêu thích) — không tải lại ảnh. */
+    @Override
+    public void onBindViewHolder(@NonNull CarViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if (!payloads.isEmpty()) {
+            bindFavorite(holder, carList.get(position));
+            return;
+        }
+        super.onBindViewHolder(holder, position, payloads);
+    }
+
+    private void bindFavorite(CarViewHolder holder, Car car) {
         boolean fav = car.getId() != null && favoriteIds.contains(car.getId());
         holder.ivFavorite.setImageResource(fav ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline);
         holder.ivFavorite.setOnClickListener(v -> {

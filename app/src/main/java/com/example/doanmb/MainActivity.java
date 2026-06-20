@@ -274,6 +274,9 @@ public class MainActivity extends AppCompatActivity {
         // Card có kích thước cố định → bỏ đo lại layout mỗi lần đổi dữ liệu, cuộn mượt hơn
         rvFeaturedSales.setHasFixedSize(true);
         rvRentalCars.setHasFixedSize(true);
+        // Giữ nhiều view ngoài màn hình hơn để cuộn ngang khỏi bind/tải lại
+        rvFeaturedSales.setItemViewCacheSize(8);
+        rvRentalCars.setItemViewCacheSize(8);
 
         carSaleAdapter = new CarSaleAdapter(saleCarList, car -> openCarDetail(car));
         carSaleAdapter.setFavoriteListener(this::toggleFavorite);
@@ -380,6 +383,7 @@ public class MainActivity extends AppCompatActivity {
 
                     carSaleAdapter.filterList(saleCarList);
                     carRentalAdapter.filterList(rentalCarList);
+                    preloadCarImages();
                     setupAutoComplete();
                     if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(false);
                 })
@@ -387,6 +391,12 @@ public class MainActivity extends AppCompatActivity {
                     loadDummyData();
                     if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(false);
                 });
+    }
+
+    /** Tải sẵn ảnh các xe vào cache để cuộn ngang/quay lại hiện tức thì (không đổi chất lượng). */
+    private void preloadCarImages() {
+        for (Car c : saleCarList)   ImageLoader.preload(getApplicationContext(), c.getImageUrl());
+        for (Car c : rentalCarList) ImageLoader.preload(getApplicationContext(), c.getImageUrl());
     }
 
     private void loadDummyData() {
