@@ -5,6 +5,10 @@
         android:icon="@android:drawable/ic_menu_compass"
         android:title="Tổng quan" />
     <item
+        android:id="@+id/nav_admin_users"
+        android:icon="@drawable/ic_admin_users"
+        android:title="Người dùng" />
+    <item
         android:id="@+id/nav_admin_cars"
         android:icon="@android:drawable/ic_menu_agenda"
         android:title="Xe hơi" />

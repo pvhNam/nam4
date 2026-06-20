@@ -17,6 +17,9 @@ public class User {
     private String driverCarType;  // Loại xe tài xế có thể lái, vd "4 chỗ"
     private boolean driverOnline;  // Tài xế đang online hay offline
 
+    // ----- Ví trong app -----
+    private double balance;        // Số dư ví (VNĐ). Mặc định 0 nếu Firestore thiếu field.
+
     public User() {}
 
     public String getUid() { return uid; }
@@ -46,4 +49,7 @@ public class User {
     public void setDriverCarType(String driverCarType) { this.driverCarType = driverCarType; }
     public boolean isDriverOnline() { return driverOnline; }
     public void setDriverOnline(boolean driverOnline) { this.driverOnline = driverOnline; }
+
+    public double getBalance() { return balance; }
+    public void setBalance(double balance) { this.balance = balance; }
 }

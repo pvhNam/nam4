@@ -49,7 +49,7 @@ public class ProfileFragment extends Fragment {
 
     // Views màn 1
     private CardView cardUserProfile;
-    private TextView tvProfileNameMain, tvPhoneVerifiedBadge;
+    private TextView tvProfileNameMain, tvPhoneVerifiedBadge, tvWalletBalance;
     private ImageView ivAvatarMain,ivVerifiedIcon,ivFavouriteCar,ivRegRentCar,ivLocation;
     private Button btnLogin, btnRegister, btnLogout, btnSwitchDriver;
 
@@ -103,6 +103,7 @@ public class ProfileFragment extends Fragment {
         cardUserProfile = view.findViewById(R.id.card_user_profile);
         tvProfileNameMain = view.findViewById(R.id.tv_profile_name_main);
         tvPhoneVerifiedBadge = view.findViewById(R.id.tv_phone_verified_badge);
+        tvWalletBalance = view.findViewById(R.id.tv_wallet_balance);
         ivAvatarMain = view.findViewById(R.id.iv_avatar_main);
 
         ivAvatarSettings = view.findViewById(R.id.iv_avatar_settings);
@@ -245,6 +246,12 @@ public class ProfileFragment extends Fragment {
                     }
 
                     tvProfileNameMain.setText(name != null ? name : "Chưa đặt tên");
+                    if (tvWalletBalance != null) {
+                        Double balance = doc.getDouble("balance");
+                        long bal = balance != null ? Math.round(balance) : 0L;
+                        tvWalletBalance.setText("💰 Số dư ví: "
+                                + java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN")).format(bal) + " đ");
+                    }
                     if (phoneVerified != null && phoneVerified) {
                         tvPhoneVerifiedBadge.setText("Đã xác thực");
                         tvPhoneVerifiedBadge.setTextColor(android.graphics.Color.parseColor("#4CAF50"));

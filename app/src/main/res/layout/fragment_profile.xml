@@ -138,6 +138,16 @@
                                 android:textSize="12sp"
                                 android:textStyle="bold" />
                             </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/tv_wallet_balance"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="💰 Số dư ví: 0 đ"
+                                android:textColor="#2E7D32"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
                         </LinearLayout>
 
                         <TextView
