@@ -33,6 +33,7 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity android:name="com.example.doanmb.ui.activity.CarDetailActivity" android:exported="false" />
+        <activity android:name="com.example.doanmb.ui.activity.FavoriteCarsActivity" android:exported="false" />
         <activity android:name="com.example.doanmb.ui.activity.LoginActivity" />
         <activity android:name="com.example.doanmb.ui.activity.RegisterActivity" />
         <activity android:name="com.example.doanmb.ui.activity.ForgotPassActivity" />

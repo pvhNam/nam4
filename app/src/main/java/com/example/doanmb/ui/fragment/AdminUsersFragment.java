@@ -41,7 +41,7 @@ public class AdminUsersFragment extends Fragment {
         tvUserCount = view.findViewById(R.id.tv_user_count);
         tvEmpty = view.findViewById(R.id.tv_empty_users);
 
-        adapter = new UserAdminAdapter(userList, userIds, this::changeUserRole);
+        adapter = new UserAdminAdapter(userList, userIds, this::changeUserRole, this::topUpUser);
         rvUsers.setLayoutManager(new LinearLayoutManager(getContext()));
         rvUsers.setAdapter(adapter);
 
@@ -77,6 +77,23 @@ public class AdminUsersFragment extends Fragment {
                     if (!isAdded()) return;
                     Toast.makeText(getContext(), "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    private void topUpUser(String userId, String userName, long amount) {
+        com.example.doanmb.util.WalletHelper.topUp(userId, amount, new com.example.doanmb.util.WalletHelper.Callback() {
+            @Override
+            public void onSuccess() {
+                if (!isAdded()) return;
+                Toast.makeText(getContext(),
+                        "✅ Đã nạp " + amount + " đ cho " + userName, Toast.LENGTH_SHORT).show();
+                loadUsers();
+            }
+            @Override
+            public void onError(String message) {
+                if (!isAdded()) return;
+                Toast.makeText(getContext(), "Lỗi nạp tiền: " + message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override

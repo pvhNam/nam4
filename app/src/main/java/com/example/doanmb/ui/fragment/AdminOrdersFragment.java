@@ -55,8 +55,9 @@ public class AdminOrdersFragment extends Fragment {
         btnTabAll      = view.findViewById(R.id.btn_order_tab_all);
 
         adapter = new OrderAdminAdapter(orderList, orderIds, new OrderAdminAdapter.OnOrderActionListener() {
-            @Override public void onConfirm(String orderId) { confirmOrder(orderId); }
-            @Override public void onCancel(String orderId)  { askCancelOrder(orderId); }
+            @Override public void onConfirm(String orderId)  { confirmOrder(orderId); }
+            @Override public void onComplete(String orderId) { askCompleteOrder(orderId); }
+            @Override public void onCancel(String orderId)   { askCancelOrder(orderId); }
         });
         rvOrders.setLayoutManager(new LinearLayoutManager(getContext()));
         rvOrders.setAdapter(adapter);
@@ -132,6 +133,52 @@ public class AdminOrdersFragment extends Fragment {
                 .addOnFailureListener(e -> Toast.makeText(getContext(), "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
+    private void askCompleteOrder(String orderId) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Hoàn thành đơn")
+                .setMessage("Xác nhận đơn đã hoàn thành?\nApp sẽ trừ 15% hoa hồng từ tiền cọc và trả 85% còn lại về ví chủ xe/tài xế.")
+                .setPositiveButton("Hoàn thành", (d, w) -> completeOrder(orderId))
+                .setNegativeButton("Đóng", null)
+                .show();
+    }
+
+    private void completeOrder(String orderId) {
+        db.collection("orders").document(orderId).get().addOnSuccessListener(doc -> {
+            if (!isAdded() || !doc.exists()) return;
+            String depositStatus = doc.getString("depositStatus");
+            String sellerId       = doc.getString("sellerId");
+            Long   deposit        = doc.getLong("depositAmount");
+
+            // Đơn không có cọc giữ qua ví -> chỉ đánh dấu hoàn thành
+            if (!"held".equals(depositStatus) || sellerId == null || sellerId.isEmpty()
+                    || deposit == null || deposit <= 0) {
+                markCompleted(orderId, null);
+                return;
+            }
+
+            com.example.doanmb.util.WalletHelper.settle(sellerId, deposit, orderId,
+                    new com.example.doanmb.util.WalletHelper.Callback() {
+                        @Override public void onSuccess() { markCompleted(orderId, "settled"); }
+                        @Override public void onError(String message) {
+                            if (!isAdded()) return;
+                            Toast.makeText(getContext(), "Lỗi chia tiền: " + message, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        });
+    }
+
+    private void markCompleted(String orderId, String newDepositStatus) {
+        Map<String, Object> update = new HashMap<>();
+        update.put("status", "completed");
+        if (newDepositStatus != null) update.put("depositStatus", newDepositStatus);
+        db.collection("orders").document(orderId).update(update)
+                .addOnSuccessListener(v -> {
+                    if (!isAdded()) return;
+                    Toast.makeText(getContext(), "✅ Đơn đã hoàn thành & chia tiền", Toast.LENGTH_SHORT).show();
+                    loadOrders();
+                });
+    }
+
     private void askCancelOrder(String orderId) {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Hủy đơn hàng")
@@ -145,10 +192,13 @@ public class AdminOrdersFragment extends Fragment {
         // Lấy carId trong đơn để reset trạng thái xe về active
         db.collection("orders").document(orderId).get()
                 .addOnSuccessListener(doc -> {
-                    String carId = doc.getString("carId");
+                    String carId          = doc.getString("carId");
+                    String buyerId        = doc.getString("buyerId");
+                    String depositStatus  = doc.getString("depositStatus");
+                    Long   deposit        = doc.getLong("depositAmount");
+
                     Map<String, Object> orderUpdate = new HashMap<>();
                     orderUpdate.put("status", "cancelled");
-                    db.collection("orders").document(orderId).update(orderUpdate);
 
                     if (carId != null && !carId.isEmpty()) {
                         Map<String, Object> carUpdate = new HashMap<>();
@@ -156,8 +206,17 @@ public class AdminOrdersFragment extends Fragment {
                         db.collection("cars").document(carId).update(carUpdate);
                     }
 
+                    // Còn giữ cọc -> hoàn lại 100% vào ví khách
+                    if ("held".equals(depositStatus) && buyerId != null && deposit != null && deposit > 0) {
+                        orderUpdate.put("depositStatus", "refunded");
+                        com.example.doanmb.util.WalletHelper.refund(buyerId, deposit, orderId, null);
+                    }
+
+                    db.collection("orders").document(orderId).update(orderUpdate);
+
                     if (!isAdded()) return;
-                    Toast.makeText(getContext(), "Đã hủy đơn hàng", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Đã hủy đơn hàng" +
+                            ("held".equals(depositStatus) ? " & hoàn cọc cho khách" : ""), Toast.LENGTH_SHORT).show();
                     loadOrders();
                 });
     }

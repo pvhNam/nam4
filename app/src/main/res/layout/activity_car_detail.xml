@@ -1,335 +1,443 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/color_background">
 
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/detail_scroll"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:overScrollMode="never">
 
         <LinearLayout
-            android:id="@+id/header_detail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@android:color/white"
-            android:elevation="4dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="6dp"
-            android:paddingTop="10dp"
-            android:paddingEnd="16dp"
-            android:paddingBottom="10dp">
+            android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/btn_back_detail"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Trở lại"
-                android:padding="9dp"
-                android:src="@drawable/ic_back"
-                android:tint="#1A1A2E" />
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:text="Trang chủ"
-                android:textColor="#1A1A2E"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <ImageView
-                android:id="@+id/btn_menu_detail"
-                android:layout_width="42dp"
-                android:layout_height="42dp"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Tùy chọn bài viết"
-                android:padding="9dp"
-                android:src="@drawable/ic_menu_bars"
-                android:tint="#1A1A2E"
-                android:visibility="gone" />
-        </LinearLayout>
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="240dp"
-            android:background="#EEF1F5">
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_car_images"
+            <!-- Ảnh xe: tràn lên sau thanh trạng thái cho vừa khung -->
+            <FrameLayout
+                android:id="@+id/image_hero"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@color/color_image_placeholder"
-                android:clipToPadding="false"
-                android:overScrollMode="never" />
+                android:layout_height="280dp"
+                android:background="@color/color_image_placeholder">
 
-            <ImageView
-                android:id="@+id/ivCarDetail"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:src="@color/color_image_placeholder"
-                android:visibility="gone" />
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_car_images"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/color_image_placeholder"
+                    android:clipToPadding="false"
+                    android:overScrollMode="never" />
+
+                <ImageView
+                    android:id="@+id/ivCarDetail"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@color/color_image_placeholder"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:id="@+id/layout_image_dots"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|center_horizontal"
+                    android:layout_marginBottom="12dp"
+                    android:gravity="center"
+                    android:orientation="horizontal" />
+            </FrameLayout>
 
             <LinearLayout
-                android:id="@+id/layout_image_dots"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom|center_horizontal"
-                android:layout_marginBottom="10dp"
-                android:gravity="center"
-                android:orientation="horizontal" />
-        </FrameLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="12dp">
-
-            <TextView
-                android:id="@+id/tvCarTypeBadge"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Cần Bán" android:textColor="#FFFFFF" android:textSize="12sp"
-                android:textStyle="bold" android:background="#4CAF50"
-                android:paddingStart="10dp" android:paddingEnd="10dp"
-                android:paddingTop="4dp" android:paddingBottom="4dp"
-                android:layout_marginEnd="8dp"/>
-
-            <TextView
-                android:id="@+id/tvCarFuelBadge"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Xăng" android:textColor="#FFFFFF" android:textSize="12sp"
-                android:textStyle="bold" android:background="#FF9800"
-                android:paddingStart="10dp" android:paddingEnd="10dp"
-                android:paddingTop="4dp" android:paddingBottom="4dp"
-                android:layout_marginEnd="8dp"/>
-
-            <TextView
-                android:id="@+id/tvCarConditionBadge"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Xe cũ" android:textColor="#FFFFFF" android:textSize="12sp"
-                android:textStyle="bold" android:background="@color/color_on_surface_tertiary"
-                android:paddingStart="10dp" android:paddingEnd="10dp"
-                android:paddingTop="4dp" android:paddingBottom="4dp"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingBottom="24dp">
-
-            <TextView android:id="@+id/tvCarNameDetail"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Tên Xe" android:textColor="@color/color_on_background"
-                android:textSize="22sp" android:textStyle="bold"/>
-
-            <TextView android:id="@+id/tvCarPriceDetail"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="4dp" android:text="Giá Xe"
-                android:textColor="#E53935" android:textSize="20sp" android:textStyle="bold"/>
-
-            <View android:layout_width="match_parent" android:layout_height="1dp"
-                android:background="@color/color_divider" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
-
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Thông tin xe" android:textColor="@color/color_on_surface" android:textSize="15sp"
-                android:textStyle="bold" android:layout_marginBottom="8dp"/>
-
-            <TextView android:id="@+id/tvCarInfoDetail"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Thông tin xe" android:textColor="@color/color_on_surface_secondary"
-                android:textSize="14sp" android:lineSpacingExtra="4dp"/>
-
-            <View android:layout_width="match_parent" android:layout_height="1dp"
-                android:background="@color/color_divider" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
-
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Thông tin người đăng" android:textColor="@color/color_on_surface" android:textSize="15sp"
-                android:textStyle="bold" android:layout_marginBottom="8dp"/>
-
-            <TextView android:id="@+id/tvSellerName"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="👤  Đang tải..." android:textColor="@color/color_on_surface_secondary" android:textSize="14sp"/>
-
-            <TextView android:id="@+id/tvSellerPhone"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="📞  Đang tải..." android:textColor="@color/color_on_surface_secondary" android:textSize="14sp"
-                android:layout_marginTop="4dp"/>
-
-            <!-- Nút báo cáo -->
-            <TextView
-                android:id="@+id/tv_report_car"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="⚑ Báo cáo tin này"
-                android:textColor="@color/color_on_surface_tertiary"
-                android:textSize="13sp"
-                android:visibility="gone" />
-
-            <View android:layout_width="match_parent" android:layout_height="1dp"
-                android:background="@color/color_divider" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
-
-            <!-- THÔNG BÁO CHỦ XE -->
-            <TextView
-                android:id="@+id/tvOwnerNote"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/stat_card_green"
-                android:padding="14dp"
-                android:text="🚗  Đây là xe của bạn. Bạn không thể tự gửi yêu cầu."
-                android:textColor="#2E7D32"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:visibility="gone"/>
+                android:orientation="horizontal"
+                android:padding="12dp">
 
-            <!-- FORM MUA XE -->
-            <LinearLayout android:id="@+id/layoutBuyForm"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="vertical" android:visibility="gone">
+                <TextView
+                    android:id="@+id/tvCarTypeBadge"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Cần Bán" android:textColor="#FFFFFF" android:textSize="12sp"
+                    android:textStyle="bold" android:background="#4CAF50"
+                    android:paddingStart="10dp" android:paddingEnd="10dp"
+                    android:paddingTop="4dp" android:paddingBottom="4dp"
+                    android:layout_marginEnd="8dp"/>
+
+                <TextView
+                    android:id="@+id/tvCarFuelBadge"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Xăng" android:textColor="#FFFFFF" android:textSize="12sp"
+                    android:textStyle="bold" android:background="#FF9800"
+                    android:paddingStart="10dp" android:paddingEnd="10dp"
+                    android:paddingTop="4dp" android:paddingBottom="4dp"
+                    android:layout_marginEnd="8dp"/>
+
+                <TextView
+                    android:id="@+id/tvCarConditionBadge"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Xe cũ" android:textColor="#FFFFFF" android:textSize="12sp"
+                    android:textStyle="bold" android:background="@color/color_on_surface_tertiary"
+                    android:paddingStart="10dp" android:paddingEnd="10dp"
+                    android:paddingTop="4dp" android:paddingBottom="4dp"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="24dp">
+
+                <TextView android:id="@+id/tvCarNameDetail"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Tên Xe" android:textColor="@color/color_on_background"
+                    android:textSize="22sp" android:textStyle="bold"/>
+
+                <TextView android:id="@+id/tvCarPriceDetail"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp" android:text="Giá Xe"
+                    android:textColor="#E53935" android:textSize="20sp" android:textStyle="bold"/>
+
+                <View android:layout_width="match_parent" android:layout_height="1dp"
+                    android:background="@color/color_divider" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Ghi chú / Câu hỏi" android:textColor="@color/color_on_surface" android:textSize="15sp"
+                    android:text="Thông tin xe" android:textColor="@color/color_on_surface" android:textSize="15sp"
                     android:textStyle="bold" android:layout_marginBottom="8dp"/>
 
-                <EditText android:id="@+id/etBuyerNote"
-                    android:layout_width="match_parent" android:layout_height="90dp"
-                    android:hint="Nhập câu hỏi hoặc ghi chú cho người bán..."
-                    android:background="@drawable/bg_search" android:padding="10dp"
-                    android:gravity="top" android:inputType="textMultiLine" android:textSize="14sp"/>
+                <TextView android:id="@+id/tvCarInfoDetail"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Thông tin xe" android:textColor="@color/color_on_surface_secondary"
+                    android:textSize="14sp" android:lineSpacingExtra="4dp"/>
 
-                <Button android:id="@+id/btnSendRequest"
-                    android:layout_width="match_parent" android:layout_height="52dp"
-                    android:layout_marginTop="12dp" android:text="GỬI YÊU CẦU MUA XE"
-                    android:textSize="15sp" android:textStyle="bold"
-                    android:textColor="#FFFFFF" android:backgroundTint="#1976D2"/>
+                <View android:layout_width="match_parent" android:layout_height="1dp"
+                    android:background="@color/color_divider" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 
-                <LinearLayout
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Thông tin người đăng" android:textColor="@color/color_on_surface" android:textSize="15sp"
+                    android:textStyle="bold" android:layout_marginBottom="8dp"/>
+
+                <TextView android:id="@+id/tvSellerName"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="👤  Đang tải..." android:textColor="@color/color_on_surface_secondary" android:textSize="14sp"/>
+
+                <TextView android:id="@+id/tvSellerPhone"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="📞  Đang tải..." android:textColor="@color/color_on_surface_secondary" android:textSize="14sp"
+                    android:layout_marginTop="4dp"/>
+
+                <!-- Nút báo cáo -->
+                <TextView
+                    android:id="@+id/tv_report_car"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="⚑ Báo cáo tin này"
+                    android:textColor="@color/color_on_surface_tertiary"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
+
+                <View android:layout_width="match_parent" android:layout_height="1dp"
+                    android:background="@color/color_divider" android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+
+                <!-- THÔNG BÁO CHỦ XE -->
+                <TextView
+                    android:id="@+id/tvOwnerNote"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:orientation="horizontal">
+                    android:background="@color/stat_card_green"
+                    android:padding="14dp"
+                    android:text="🚗  Đây là xe của bạn. Bạn không thể tự gửi yêu cầu."
+                    android:textColor="#2E7D32"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:visibility="gone"/>
 
-                    <Button android:id="@+id/btnCallSeller"
-                        android:layout_width="0dp"
-                        android:layout_height="52dp"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="4dp"
-                        android:text="📞 Gọi điện"
-                        android:textSize="14sp" android:textColor="#1976D2" android:backgroundTint="#E3F2FD"/>
+                <!-- FORM MUA XE -->
+                <LinearLayout android:id="@+id/layoutBuyForm"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:visibility="gone">
 
-                    <Button android:id="@+id/btnChatSeller"
-                        android:layout_width="0dp"
-                        android:layout_height="52dp"
-                        android:layout_weight="1"
-                        android:layout_marginStart="4dp"
-                        android:text="💬 Nhắn tin"
-                        android:textSize="14sp" android:textColor="#FFFFFF" android:backgroundTint="#FF9800"/>
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- FORM THUÊ XE -->
-            <LinearLayout android:id="@+id/layoutRentForm"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="vertical" android:visibility="gone">
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Thông tin người thuê" android:textColor="@color/color_on_surface" android:textSize="15sp"
-                    android:textStyle="bold" android:layout_marginBottom="12dp"/>
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Họ và tên *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
-                <EditText android:id="@+id/etRenterName"
-                    android:layout_width="match_parent" android:layout_height="50dp"
-                    android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
-                    android:padding="10dp" android:hint="Nhập họ và tên đầy đủ" android:inputType="textPersonName"/>
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Số điện thoại *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
-                <EditText android:id="@+id/etRenterPhone"
-                    android:layout_width="match_parent" android:layout_height="50dp"
-                    android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
-                    android:padding="10dp" android:hint="Nhập số điện thoại" android:inputType="phone"/>
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Số CCCD/CMND *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
-                <EditText android:id="@+id/etRenterCCCD"
-                    android:layout_width="match_parent" android:layout_height="50dp"
-                    android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
-                    android:padding="10dp" android:hint="Nhập số CCCD 12 số"
-                    android:inputType="number" android:maxLength="12"/>
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Ngày bắt đầu thuê *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
-                <EditText android:id="@+id/etRentStartDate"
-                    android:layout_width="match_parent" android:layout_height="50dp"
-                    android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
-                    android:padding="10dp" android:hint="Ví dụ: 20/05/2026"/>
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Số ngày thuê *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
-                <EditText android:id="@+id/etRentDays"
-                    android:layout_width="match_parent" android:layout_height="50dp"
-                    android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
-                    android:padding="10dp" android:hint="Nhập số ngày muốn thuê" android:inputType="number"/>
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="Ghi chú thêm" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
-                <EditText android:id="@+id/etRenterNote"
-                    android:layout_width="match_parent" android:layout_height="80dp"
-                    android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
-                    android:padding="10dp" android:hint="Yêu cầu thêm (nếu có)..."
-                    android:gravity="top" android:inputType="textMultiLine"/>
-
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:background="@color/stat_card_orange" android:padding="10dp" android:layout_marginBottom="16dp"
-                    android:orientation="horizontal">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="⚠️  " android:textSize="14sp"/>
+                        android:text="Ghi chú / Câu hỏi" android:textColor="@color/color_on_surface" android:textSize="15sp"
+                        android:textStyle="bold" android:layout_marginBottom="8dp"/>
+
+                    <EditText android:id="@+id/etBuyerNote"
+                        android:layout_width="match_parent" android:layout_height="90dp"
+                        android:hint="Nhập câu hỏi hoặc ghi chú cho người bán..."
+                        android:background="@drawable/bg_search" android:padding="10dp"
+                        android:gravity="top" android:inputType="textMultiLine" android:textSize="14sp"/>
+
+                    <Button android:id="@+id/btnSendRequest"
+                        android:layout_width="match_parent" android:layout_height="52dp"
+                        android:layout_marginTop="12dp" android:text="GỬI YÊU CẦU MUA XE"
+                        android:textSize="15sp" android:textStyle="bold"
+                        android:textColor="#FFFFFF" android:backgroundTint="#1976D2"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <Button android:id="@+id/btnCallSeller"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="4dp"
+                            android:text="📞 Gọi điện"
+                            android:textSize="14sp" android:textColor="#1976D2" android:backgroundTint="#E3F2FD"/>
+
+                        <Button android:id="@+id/btnChatSeller"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="4dp"
+                            android:text="💬 Nhắn tin"
+                            android:textSize="14sp" android:textColor="#FFFFFF" android:backgroundTint="#FF9800"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- FORM THUÊ XE -->
+                <LinearLayout android:id="@+id/layoutRentForm"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:visibility="gone">
+
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="Bạn cần mang theo CCCD bản gốc khi nhận xe. Thông tin được bảo mật."
-                        android:textColor="#E65100" android:textSize="12sp"/>
+                        android:text="Thông tin người thuê" android:textColor="@color/color_on_surface" android:textSize="15sp"
+                        android:textStyle="bold" android:layout_marginBottom="12dp"/>
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Họ và tên *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
+                    <EditText android:id="@+id/etRenterName"
+                        android:layout_width="match_parent" android:layout_height="50dp"
+                        android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
+                        android:padding="10dp" android:hint="Nhập họ và tên đầy đủ" android:inputType="textPersonName"/>
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Số điện thoại *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
+                    <EditText android:id="@+id/etRenterPhone"
+                        android:layout_width="match_parent" android:layout_height="50dp"
+                        android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
+                        android:padding="10dp" android:hint="Nhập số điện thoại" android:inputType="phone"/>
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Số CCCD/CMND *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
+                    <EditText android:id="@+id/etRenterCCCD"
+                        android:layout_width="match_parent" android:layout_height="50dp"
+                        android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
+                        android:padding="10dp" android:hint="Nhập số CCCD 12 số"
+                        android:inputType="number" android:maxLength="12"/>
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Ngày bắt đầu thuê *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
+                    <EditText android:id="@+id/etRentStartDate"
+                        android:layout_width="match_parent" android:layout_height="50dp"
+                        android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
+                        android:padding="10dp" android:hint="Ví dụ: 20/05/2026"/>
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Số ngày thuê *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
+                    <EditText android:id="@+id/etRentDays"
+                        android:layout_width="match_parent" android:layout_height="50dp"
+                        android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
+                        android:padding="10dp" android:hint="Nhập số ngày muốn thuê" android:inputType="number"/>
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Ghi chú thêm" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
+                    <EditText android:id="@+id/etRenterNote"
+                        android:layout_width="match_parent" android:layout_height="80dp"
+                        android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
+                        android:padding="10dp" android:hint="Yêu cầu thêm (nếu có)..."
+                        android:gravity="top" android:inputType="textMultiLine"/>
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Thanh toán phần còn lại bằng" android:textColor="@color/color_on_surface_secondary"
+                        android:textSize="13sp" android:layout_marginBottom="4dp"/>
+                    <RadioGroup android:id="@+id/rg_payment_method"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:layout_marginBottom="12dp">
+                        <RadioButton android:id="@+id/rb_pay_cash"
+                            android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="1" android:checked="true"
+                            android:text="💵 Tiền mặt" android:textSize="14sp"/>
+                        <RadioButton android:id="@+id/rb_pay_transfer"
+                            android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="🏦 Chuyển khoản" android:textSize="14sp"/>
+                    </RadioGroup>
+
+                    <TextView android:id="@+id/tv_deposit_info"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:background="@drawable/bg_info_card" android:padding="12dp"
+                        android:layout_marginBottom="16dp" android:textSize="13sp"
+                        android:textColor="@color/color_on_surface" android:lineSpacingExtra="4dp"
+                        android:text="Nhập số ngày thuê để xem tiền cọc."/>
+
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:background="@color/stat_card_orange" android:padding="10dp" android:layout_marginBottom="16dp"
+                        android:orientation="horizontal">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="⚠️  " android:textSize="14sp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Bạn cần mang theo CCCD bản gốc khi nhận xe. Thông tin được bảo mật."
+                            android:textColor="#E65100" android:textSize="12sp"/>
+                    </LinearLayout>
+
+                    <Button android:id="@+id/btnSendRentRequest"
+                        android:layout_width="match_parent" android:layout_height="52dp"
+                        android:text="GỬI YÊU CẦU THUÊ XE"
+                        android:textSize="15sp" android:textStyle="bold"
+                        android:textColor="#FFFFFF" android:backgroundTint="#1976D2"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <Button android:id="@+id/btnCallRentSeller"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="4dp"
+                            android:text="📞 Gọi điện"
+                            android:textSize="14sp" android:textColor="#1976D2" android:backgroundTint="#E3F2FD"/>
+
+                        <Button android:id="@+id/btnChatRentSeller"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="4dp"
+                            android:text="💬 Nhắn tin"
+                            android:textSize="14sp" android:textColor="#FFFFFF" android:backgroundTint="#FF9800"/>
+                    </LinearLayout>
                 </LinearLayout>
 
-                <Button android:id="@+id/btnSendRentRequest"
-                    android:layout_width="match_parent" android:layout_height="52dp"
-                    android:text="GỬI YÊU CẦU THUÊ XE"
-                    android:textSize="15sp" android:textStyle="bold"
-                    android:textColor="#FFFFFF" android:backgroundTint="#1976D2"/>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:orientation="horizontal">
-
-                    <Button android:id="@+id/btnCallRentSeller"
-                        android:layout_width="0dp"
-                        android:layout_height="52dp"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="4dp"
-                        android:text="📞 Gọi điện"
-                        android:textSize="14sp" android:textColor="#1976D2" android:backgroundTint="#E3F2FD"/>
-
-                    <Button android:id="@+id/btnChatRentSeller"
-                        android:layout_width="0dp"
-                        android:layout_height="52dp"
-                        android:layout_weight="1"
-                        android:layout_marginStart="4dp"
-                        android:text="💬 Nhắn tin"
-                        android:textSize="14sp" android:textColor="#FFFFFF" android:backgroundTint="#FF9800"/>
-                </LinearLayout>
             </LinearLayout>
-
         </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Thanh tiêu đề trắng: ẩn lúc đầu, hiện dần khi cuộn lên -->
+    <LinearLayout
+        android:id="@+id/header_detail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:alpha="0"
+        android:background="@android:color/white"
+        android:elevation="6dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="6dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="10dp">
+
+        <ImageView
+            android:id="@+id/btn_back_detail"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Trở lại"
+            android:padding="9dp"
+            android:src="@drawable/ic_back"
+            android:tint="#1A1A2E" />
+
+        <TextView
+            android:id="@+id/tv_detail_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Chi tiết xe"
+            android:textColor="#1A1A2E"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/iv_favorite_detail"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Yêu thích"
+            android:padding="9dp"
+            android:src="@drawable/ic_heart_outline" />
+
+        <ImageView
+            android:id="@+id/btn_menu_detail"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Tùy chọn bài viết"
+            android:padding="9dp"
+            android:src="@drawable/ic_menu_bars"
+            android:tint="#1A1A2E"
+            android:visibility="gone" />
     </LinearLayout>
-</ScrollView>
+
+    <!-- Thanh nổi đè lên ảnh: back bên trái; tim + 3 gạch bên phải (nền tròn trong suốt) -->
+    <LinearLayout
+        android:id="@+id/float_top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="12dp">
+
+        <FrameLayout
+            android:id="@+id/btn_back_float"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_circle_scrim"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="Trở lại">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_back"
+                android:tint="#FFFFFF" />
+        </FrameLayout>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <ImageView
+            android:id="@+id/btn_favorite_float"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_circle_scrim"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="Yêu thích"
+            android:padding="9dp"
+            android:src="@drawable/ic_heart_outline" />
+
+        <ImageView
+            android:id="@+id/btn_menu_float"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_circle_scrim"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="Tùy chọn bài viết"
+            android:padding="9dp"
+            android:src="@drawable/ic_menu_bars"
+            android:tint="#FFFFFF"
+            android:visibility="gone" />
+    </LinearLayout>
+</FrameLayout>

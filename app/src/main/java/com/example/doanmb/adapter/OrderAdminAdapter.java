@@ -20,6 +20,7 @@ public class OrderAdminAdapter extends RecyclerView.Adapter<OrderAdminAdapter.Vi
 
     public interface OnOrderActionListener {
         void onConfirm(String orderId);
+        void onComplete(String orderId);
         void onCancel(String orderId);
     }
 
@@ -68,10 +69,17 @@ public class OrderAdminAdapter extends RecyclerView.Adapter<OrderAdminAdapter.Vi
         holder.tvType.setText(type);
         applyStatusStyle(holder.tvStatus, status);
 
-        boolean isPending = "pending".equals(status);
-        if (listener != null && isPending) {
+        boolean isPending   = "pending".equals(status);
+        boolean isConfirmed = "confirmed".equals(status);
+        if (listener != null && (isPending || isConfirmed)) {
             holder.layoutActions.setVisibility(View.VISIBLE);
-            holder.btnConfirm.setOnClickListener(v -> listener.onConfirm(orderId));
+            if (isPending) {
+                holder.btnConfirm.setText("Xác nhận");
+                holder.btnConfirm.setOnClickListener(v -> listener.onConfirm(orderId));
+            } else {
+                holder.btnConfirm.setText("Hoàn thành");
+                holder.btnConfirm.setOnClickListener(v -> listener.onComplete(orderId));
+            }
             holder.btnCancel.setOnClickListener(v -> listener.onCancel(orderId));
         } else {
             holder.layoutActions.setVisibility(View.GONE);
@@ -89,6 +97,11 @@ public class OrderAdminAdapter extends RecyclerView.Adapter<OrderAdminAdapter.Vi
                 tv.setText("Đã xác nhận");
                 tv.setBackgroundColor(0xFFE8F5E9);
                 tv.setTextColor(0xFF2E7D32);
+                break;
+            case "completed":
+                tv.setText("Hoàn thành");
+                tv.setBackgroundColor(0xFFE3F2FD);
+                tv.setTextColor(0xFF1565C0);
                 break;
             case "rejected":
             case "cancelled":

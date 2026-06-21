@@ -55,7 +55,19 @@ public class OrderHistoryAdapter extends RecyclerView.Adapter<OrderHistoryAdapte
         holder.tvOrderCarPrice.setText(carPrice != null ? carPrice : "");
 
         // Trạng thái
-        if ("confirmed".equals(status)) {
+        if ("completed".equals(status)) {
+            holder.tvOrderStatus.setText("🏁 Hoàn thành");
+            holder.tvOrderStatus.setTextColor(0xFF1565C0);
+            holder.layoutStatusMessage.setVisibility(View.VISIBLE);
+            holder.tvStatusMessage.setText("🏁 Đơn đã hoàn thành. Cảm ơn bạn đã sử dụng dịch vụ!");
+            holder.tvStatusMessage.setTextColor(0xFF1565C0);
+        } else if ("cancelled".equals(status)) {
+            holder.tvOrderStatus.setText("↩️ Đã hủy");
+            holder.tvOrderStatus.setTextColor(0xFFF44336);
+            holder.layoutStatusMessage.setVisibility(View.VISIBLE);
+            holder.tvStatusMessage.setText("↩️ Đơn đã hủy. Nếu có đặt cọc, tiền đã được hoàn về ví của bạn.");
+            holder.tvStatusMessage.setTextColor(0xFFF44336);
+        } else if ("confirmed".equals(status)) {
             holder.tvOrderStatus.setText("✅ Đã xác nhận");
             holder.tvOrderStatus.setTextColor(0xFF4CAF50);
             holder.layoutStatusMessage.setVisibility(View.VISIBLE);

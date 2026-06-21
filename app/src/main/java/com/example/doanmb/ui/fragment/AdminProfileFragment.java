@@ -26,6 +26,17 @@ public class AdminProfileFragment extends Fragment {
         TextView tvEmail = view.findViewById(R.id.tv_admin_profile_email);
         TextView tvInfoName = view.findViewById(R.id.tv_info_name);
         TextView tvInfoEmail = view.findViewById(R.id.tv_info_email);
+        TextView tvAppWallet = view.findViewById(R.id.tv_app_wallet_balance);
+
+        FirebaseFirestore.getInstance().collection("app_wallet").document("main")
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (!isAdded() || tvAppWallet == null) return;
+                    Double bal = doc.getDouble("balance");
+                    long b = bal != null ? Math.round(bal) : 0L;
+                    tvAppWallet.setText(
+                            java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN")).format(b) + " đ");
+                });
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {

@@ -184,6 +184,20 @@ public class CloudinaryHelper {
                 .replaceAll("\\.(mp4|mov|avi|mkv|webm)$", ".jpg");
     }
 
+    /**
+     * Chèn transform Cloudinary để tải ảnh đã resize + nén (q_auto,f_auto) → nhẹ hơn nhiều, load nhanh hơn.
+     * URL không phải ảnh Cloudinary hoặc đã có transform thì giữ nguyên.
+     */
+    public static String optimizeImageUrl(String url, int width) {
+        if (url == null || url.isEmpty()) return url;
+        if (!url.contains("/image/upload/")) return url;
+        if (url.contains("/upload/w_") || url.contains("/upload/c_") || url.contains("/upload/q_auto")) {
+            return url;
+        }
+        return url.replace("/image/upload/",
+                "/image/upload/w_" + width + ",c_limit,q_auto,f_auto/");
+    }
+
     // ── Private helpers ──────────────────────────────────────────────────────
 
     private static File copyUriToTempFile(Context context, Uri uri,

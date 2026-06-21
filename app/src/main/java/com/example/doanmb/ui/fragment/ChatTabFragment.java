@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.doanmb.util.ImageLoader;
 import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.example.doanmb.R;
 import com.example.doanmb.adapter.ShortcutAdapter;
@@ -227,10 +228,7 @@ public class ChatTabFragment extends Fragment {
                                 if (avatarUrl != null && !avatarUrl.isEmpty()) {
                                     h.tvAvatar.setVisibility(View.GONE);
                                     h.ivAvatar.setVisibility(View.VISIBLE);
-                                    Glide.with(h.ivAvatar.getContext())
-                                            .load(avatarUrl)
-                                            .transform(new CircleCrop())
-                                            .into(h.ivAvatar);
+                                    ImageLoader.loadAvatar(h.ivAvatar, avatarUrl);
                                 } else {
                                     h.tvAvatar.setVisibility(View.VISIBLE);
                                     h.ivAvatar.setVisibility(View.GONE);

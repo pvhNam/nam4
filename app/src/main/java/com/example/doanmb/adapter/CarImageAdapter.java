@@ -8,8 +8,8 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.example.doanmb.R;
+import com.example.doanmb.util.ImageLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,10 +41,7 @@ public class CarImageAdapter extends RecyclerView.Adapter<CarImageAdapter.ImageV
     public void onBindViewHolder(@NonNull ImageViewHolder holder, int position) {
         String url = imageUrls.get(position);
         if (url != null && !url.isEmpty()) {
-            Glide.with(holder.itemView.getContext())
-                    .load(url)
-                    .placeholder(android.R.drawable.ic_menu_gallery)
-                    .into(holder.image);
+            ImageLoader.loadDetail(holder.image, url, android.R.drawable.ic_menu_gallery);
         } else {
             holder.image.setImageResource(android.R.drawable.ic_menu_gallery);
         }

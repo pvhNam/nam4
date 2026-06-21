@@ -9,10 +9,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.bumptech.glide.Glide;
 
 import com.example.doanmb.R;
 import com.example.doanmb.model.Car;
+import com.example.doanmb.util.ImageLoader;
 
 import java.text.Normalizer;
 import java.util.List;
@@ -52,10 +52,7 @@ public class ProfileCarAdapter extends RecyclerView.Adapter<ProfileCarAdapter.Vi
 
         String imageUrl = car.getImageUrl(); // cần thêm field này vào Car.java
         if (imageUrl != null && !imageUrl.isEmpty()) {
-            Glide.with(holder.itemView.getContext())
-                    .load(imageUrl)
-                    .placeholder(android.R.drawable.ic_menu_gallery)
-                    .into(holder.ivImage);
+            ImageLoader.loadCard(holder.ivImage, imageUrl, android.R.drawable.ic_menu_gallery);
         } else {
             holder.ivImage.setImageResource(android.R.drawable.ic_menu_gallery);
         }

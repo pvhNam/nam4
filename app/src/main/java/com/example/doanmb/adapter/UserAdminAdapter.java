@@ -2,16 +2,22 @@ package com.example.doanmb.adapter;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import java.text.NumberFormat;
+import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
+import com.example.doanmb.util.ImageLoader;
 import com.example.doanmb.R;
 
 import java.util.List;
@@ -23,14 +29,23 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
         void onRoleChange(String userId, String newRole);
     }
 
+    public interface OnTopUpListener {
+        void onTopUp(String userId, String userName, long amount);
+    }
+
+    private static final NumberFormat MONEY = NumberFormat.getInstance(new Locale("vi", "VN"));
+
     private List<Map<String, Object>> users;
     private List<String> userIds;
     private OnRoleChangeListener listener;
+    private OnTopUpListener topUpListener;
 
-    public UserAdminAdapter(List<Map<String, Object>> users, List<String> userIds, OnRoleChangeListener listener) {
+    public UserAdminAdapter(List<Map<String, Object>> users, List<String> userIds,
+                            OnRoleChangeListener listener, OnTopUpListener topUpListener) {
         this.users = users;
         this.userIds = userIds;
         this.listener = listener;
+        this.topUpListener = topUpListener;
     }
 
     public void updateList(List<Map<String, Object>> newUsers, List<String> newIds) {
@@ -66,14 +81,57 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
         applyRoleStyle(ctx, holder.tvRole, role);
 
         if (!avatarUrl.isEmpty()) {
-            Glide.with(ctx).load(avatarUrl).circleCrop()
-                    .placeholder(android.R.drawable.ic_menu_myplaces)
-                    .into(holder.ivAvatar);
+            ImageLoader.loadAvatar(holder.ivAvatar, avatarUrl, android.R.drawable.ic_menu_myplaces);
         } else {
             holder.ivAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
         }
 
-        holder.itemView.setOnClickListener(v -> showRoleDialog(ctx, userId, role));
+        long balance = getLong(user, "balance");
+        holder.itemView.setOnClickListener(v -> showActionDialog(ctx, userId, name, role, balance));
+    }
+
+    /** Chọn hành động cho user: nạp tiền vào ví hoặc đổi quyền. */
+    private void showActionDialog(Context ctx, String userId, String userName, String role, long balance) {
+        String[] actions = {
+                "Nạp tiền vào ví  (số dư: " + MONEY.format(balance) + " đ)",
+                "Đổi quyền  (" + role + ")"
+        };
+        new AlertDialog.Builder(ctx)
+                .setTitle(userName)
+                .setItems(actions, (dialog, which) -> {
+                    if (which == 0) showTopUpDialog(ctx, userId, userName, balance);
+                    else            showRoleDialog(ctx, userId, role);
+                })
+                .setNegativeButton("Đóng", null)
+                .show();
+    }
+
+    private void showTopUpDialog(Context ctx, String userId, String userName, long balance) {
+        final EditText input = new EditText(ctx);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setHint("Số tiền cần nạp (VNĐ)");
+        int pad = (int) (20 * ctx.getResources().getDisplayMetrics().density);
+        input.setPadding(pad, pad, pad, pad);
+
+        new AlertDialog.Builder(ctx)
+                .setTitle("Nạp tiền cho " + userName)
+                .setMessage("Số dư hiện tại: " + MONEY.format(balance) + " đ")
+                .setView(input)
+                .setPositiveButton("Nạp", (dialog, which) -> {
+                    String raw = input.getText().toString().trim().replaceAll("[^0-9]", "");
+                    if (raw.isEmpty()) {
+                        Toast.makeText(ctx, "Vui lòng nhập số tiền", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    long amount = Long.parseLong(raw);
+                    if (amount <= 0) {
+                        Toast.makeText(ctx, "Số tiền phải lớn hơn 0", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    if (topUpListener != null) topUpListener.onTopUp(userId, userName, amount);
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
     }
 
     private void showRoleDialog(Context ctx, String userId, String currentRole) {
@@ -115,6 +173,12 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
     private String getStr(Map<String, Object> map, String key, String def) {
         Object v = map.get(key);
         return (v != null) ? v.toString() : def;
+    }
+
+    private long getLong(Map<String, Object> map, String key) {
+        Object v = map.get(key);
+        if (v instanceof Number) return ((Number) v).longValue();
+        return 0L;
     }
 
     private String normalizeRole(String role) {

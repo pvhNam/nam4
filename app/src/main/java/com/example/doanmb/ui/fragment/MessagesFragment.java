@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.doanmb.util.ImageLoader;
 import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.example.doanmb.R;
 import com.example.doanmb.adapter.ShortcutAdapter;
@@ -334,7 +335,7 @@ public class MessagesFragment extends Fragment {
                 if (tvGreeting != null)
                     tvGreeting.setText("Hi, " + (name != null ? name : "User"));
                 if (avatarUrl != null && !avatarUrl.isEmpty() && imgAvatar != null) {
-                    Glide.with(this).load(avatarUrl).into(imgAvatar);
+                    ImageLoader.loadAvatar(imgAvatar, avatarUrl);
                 }
             }
         });
@@ -456,10 +457,7 @@ public class MessagesFragment extends Fragment {
             if (!partnerAvatar.isEmpty() && !"null".equals(partnerAvatar)) {
                 h.tvAvatar.setVisibility(View.GONE);
                 h.ivAvatar.setVisibility(View.VISIBLE);
-                Glide.with(h.ivAvatar.getContext())
-                        .load(partnerAvatar)
-                        .transform(new CircleCrop())
-                        .into(h.ivAvatar);
+                ImageLoader.loadAvatar(h.ivAvatar, partnerAvatar);
             } else if (!partnerName.isEmpty() && !"Đang tải...".equals(partnerName)) {
                 h.tvAvatar.setVisibility(View.VISIBLE);
                 h.ivAvatar.setVisibility(View.GONE);

@@ -14,7 +14,10 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -23,6 +26,8 @@ import com.bumptech.glide.Glide;
 import com.example.doanmb.R;
 import com.example.doanmb.adapter.CarImageAdapter;
 import com.example.doanmb.model.Car;
+import com.example.doanmb.util.FavoriteHelper;
+import com.example.doanmb.util.ImageLoader;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -39,7 +44,7 @@ public class CarDetailActivity extends AppCompatActivity {
     private RecyclerView rvCarImages;
     private LinearLayout layoutImageDots;
     private CarImageAdapter imageAdapter;
-    private TextView tvCarName, tvCarPrice, tvCarInfo;
+    private TextView tvCarName, tvCarPrice, tvCarInfo, tvDetailTitle;
     private TextView tvCarTypeBadge, tvCarFuelBadge, tvCarConditionBadge;
     private TextView tvSellerName, tvSellerPhone, tvOwnerNote;
 
@@ -53,6 +58,10 @@ public class CarDetailActivity extends AppCompatActivity {
     private EditText etRenterName, etRenterPhone, etRenterCCCD;
     private EditText etRentStartDate, etRentDays, etRenterNote;
     private Button btnSendRentRequest, btnCallRentSeller, btnChatRentSeller;
+    private android.widget.RadioGroup rgPaymentMethod;
+    private TextView tvDepositInfo;
+    private String sellerName = "";
+    private long walletBalance = 0L; // số dư ví của người đang đặt
 
     private TextView tvReportCar;
     private ImageView btnMenuDetail;
@@ -63,10 +72,21 @@ public class CarDetailActivity extends AppCompatActivity {
     private String carStatus = "";
     private String statusBeforeHide = "";
 
+    // Header trượt: thanh trắng hiện dần khi cuộn, nút back nổi mờ dần
+    private NestedScrollView detailScroll;
+    private View imageHero, headerDetail, btnBackFloat, floatTopBar;
+    private ImageView btnFavoriteFloat, ivFavoriteDetail, btnMenuFloat;
+    private boolean isFav = false; // xe này đã được mình yêu thích chưa
+    private boolean statusBarDarkIcons = true; // khởi tạo true để lần gọi đầu ép sang icon sáng
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_car_detail);
+
+        // Edge-to-edge: ảnh tràn lên sau thanh trạng thái cho vừa khung
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
 
         db = FirebaseFirestore.getInstance();
         initViews();
@@ -94,6 +114,7 @@ public class CarDetailActivity extends AppCompatActivity {
             }
             showImages(coverImages);
             tvCarName.setText(car.getName());
+            if (tvDetailTitle != null) tvDetailTitle.setText(car.getName());
             tvCarPrice.setText(car.getPrice());
             tvCarInfo.setText(car.getInfo());
         }
@@ -118,6 +139,8 @@ public class CarDetailActivity extends AppCompatActivity {
         }
 
         setupButtons();
+        setupRentDepositUi();
+        loadFavoriteState();
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -158,22 +181,143 @@ public class CarDetailActivity extends AppCompatActivity {
         btnSendRentRequest = findViewById(R.id.btnSendRentRequest);
         btnCallRentSeller  = findViewById(R.id.btnCallRentSeller);
         btnChatRentSeller = findViewById(R.id.btnChatRentSeller);
+        rgPaymentMethod = findViewById(R.id.rg_payment_method);
+        tvDepositInfo   = findViewById(R.id.tv_deposit_info);
     }
 
     private void setupDetailHeader() {
+        detailScroll     = findViewById(R.id.detail_scroll);
+        imageHero        = findViewById(R.id.image_hero);
+        headerDetail     = findViewById(R.id.header_detail);
+        btnBackFloat     = findViewById(R.id.btn_back_float);
+        floatTopBar      = findViewById(R.id.float_top_bar);
+        btnFavoriteFloat = findViewById(R.id.btn_favorite_float);
+        btnMenuFloat     = findViewById(R.id.btn_menu_float);
+        ivFavoriteDetail = findViewById(R.id.iv_favorite_detail);
+        tvDetailTitle    = findViewById(R.id.tv_detail_title);
+
         View btnBack = findViewById(R.id.btn_back_detail);
         if (btnBack != null) btnBack.setOnClickListener(v -> finish());
+        if (btnBackFloat != null) btnBackFloat.setOnClickListener(v -> finish());
 
-        View header = findViewById(R.id.header_detail);
-        if (header != null) {
-            final int baseTop = header.getPaddingTop();
-            // Đẩy header xuống dưới thanh trạng thái để ảnh không bị che (edge-to-edge)
-            ViewCompat.setOnApplyWindowInsetsListener(header, (v, insets) -> {
+        if (btnFavoriteFloat != null) btnFavoriteFloat.setOnClickListener(v -> toggleFavorite());
+        if (ivFavoriteDetail != null) ivFavoriteDetail.setOnClickListener(v -> toggleFavorite());
+        updateFavoriteIcons();
+
+        // Đẩy thanh tiêu đề trắng xuống dưới thanh trạng thái (edge-to-edge)
+        if (headerDetail != null) {
+            final int baseTop = headerDetail.getPaddingTop();
+            ViewCompat.setOnApplyWindowInsetsListener(headerDetail, (v, insets) -> {
                 int top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
                 v.setPadding(v.getPaddingLeft(), baseTop + top, v.getPaddingRight(), v.getPaddingBottom());
                 return insets;
             });
         }
+
+        // Thanh nổi né thanh trạng thái
+        if (floatTopBar != null) {
+            final int baseTopPad = floatTopBar.getPaddingTop();
+            ViewCompat.setOnApplyWindowInsetsListener(floatTopBar, (v, insets) -> {
+                int top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
+                v.setPadding(v.getPaddingLeft(), baseTopPad + top, v.getPaddingRight(), v.getPaddingBottom());
+                return insets;
+            });
+        }
+
+        // Chừa chỗ cho thanh điều hướng hệ thống ở đáy nội dung cuộn
+        if (detailScroll != null) {
+            final int basePad = detailScroll.getPaddingBottom();
+            ViewCompat.setOnApplyWindowInsetsListener(detailScroll, (v, insets) -> {
+                int bottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+                v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), basePad + bottom);
+                return insets;
+            });
+        }
+
+        // Trạng thái ban đầu: thanh trắng ẩn (không chặn chạm), icon thanh trạng thái màu sáng
+        if (headerDetail != null) headerDetail.setVisibility(View.INVISIBLE);
+        setStatusBarDarkIcons(false);
+
+        // Cuộn lên: thanh trắng hiện dần, nút back nổi mờ dần (kiểu collapsing toolbar)
+        if (detailScroll != null) {
+            detailScroll.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener)
+                    (v, x, y, ox, oy) -> updateDetailHeader(y));
+        }
+    }
+
+    /** Nội suy theo độ cuộn: thanh trắng alpha 0→1, nút back nổi alpha 1→0. */
+    private void updateDetailHeader(int scrollY) {
+        if (headerDetail == null || imageHero == null || floatTopBar == null) return;
+
+        int trigger = imageHero.getHeight() - headerDetail.getHeight();
+        if (trigger <= 0) trigger = dp(180);
+
+        float p = clamp01(scrollY / (float) trigger);
+
+        headerDetail.setAlpha(p);
+        headerDetail.setVisibility(p <= 0.01f ? View.INVISIBLE : View.VISIBLE);
+
+        floatTopBar.setAlpha(1f - p);
+        floatTopBar.setVisibility(p >= 0.99f ? View.INVISIBLE : View.VISIBLE);
+
+        // Qua nửa chặng (thanh trắng đã rõ) → icon thanh trạng thái màu tối
+        setStatusBarDarkIcons(p >= 0.5f);
+    }
+
+    /** Cập nhật biểu tượng tim cho cả nút nổi (nền tối) và thanh trắng. */
+    private void updateFavoriteIcons() {
+        int icon = isFav ? R.drawable.ic_heart_filled : R.drawable.ic_heart_outline;
+        if (btnFavoriteFloat != null) {
+            btnFavoriteFloat.setImageResource(icon);
+            btnFavoriteFloat.clearColorFilter(); // trên nền tối: trắng/đỏ đều rõ
+        }
+        if (ivFavoriteDetail != null) {
+            ivFavoriteDetail.setImageResource(icon);
+            if (isFav) ivFavoriteDetail.clearColorFilter();
+            else ivFavoriteDetail.setColorFilter(0xFF1A1A2E); // viền tim tối trên nền trắng
+        }
+    }
+
+    /** Nạp trạng thái đã-thích để hiện tim đỏ sẵn nếu user từng thích xe này. */
+    private void loadFavoriteState() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null || carId == null || carId.isEmpty()) return;
+        FavoriteHelper.contains(user.getUid(), carId, fav -> {
+            isFav = fav;
+            updateFavoriteIcons();
+        });
+    }
+
+    /** Bấm tim trong trang chi tiết: thêm/bỏ yêu thích. */
+    private void toggleFavorite() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            Toast.makeText(this, "Đăng nhập để lưu xe yêu thích", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (carId == null || carId.isEmpty()) return;
+        isFav = !isFav;
+        if (isFav) FavoriteHelper.add(user.getUid(), carId);
+        else FavoriteHelper.remove(user.getUid(), carId);
+        updateFavoriteIcons();
+    }
+
+    private void setStatusBarDarkIcons(boolean dark) {
+        if (statusBarDarkIcons == dark) return;
+        statusBarDarkIcons = dark;
+        WindowInsetsControllerCompat c =
+                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        c.setAppearanceLightStatusBars(dark);
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    private float clamp01(float value) {
+        if (value < 0f) return 0f;
+        if (value > 1f) return 1f;
+        return value;
     }
 
     private void setupImagePager() {
@@ -251,6 +395,71 @@ public class CarDetailActivity extends AppCompatActivity {
         btnChatRentSeller.setOnClickListener(v -> openChat());
     }
 
+    /** Nạp số dư ví của người đang đặt + theo dõi ô số ngày để cập nhật tiền cọc. */
+    private void setupRentDepositUi() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            db.collection("users").document(user.getUid()).get()
+                    .addOnSuccessListener(doc -> {
+                        Double b = doc.getDouble("balance");
+                        walletBalance = b != null ? Math.round(b) : 0L;
+                        updateDepositInfo();
+                    });
+        }
+        if (etRentDays != null) {
+            etRentDays.addTextChangedListener(new android.text.TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
+                @Override public void onTextChanged(CharSequence s, int a, int b, int c) {}
+                @Override public void afterTextChanged(android.text.Editable s) { updateDepositInfo(); }
+            });
+        }
+    }
+
+    /** Hiển thị tổng tiền, tiền cọc cần trả qua ví và số dư hiện có. */
+    private void updateDepositInfo() {
+        if (tvDepositInfo == null) return;
+        long pricePerDay = parseMoney(car != null ? car.getPrice() : null);
+        int days = parseDays(etRentDays != null ? etRentDays.getText().toString() : "");
+
+        if (pricePerDay <= 0 || days <= 0) {
+            tvDepositInfo.setText("Nhập số ngày thuê để xem tiền cọc.\nSố dư ví: " + money(walletBalance) + " đ");
+            return;
+        }
+
+        long total = pricePerDay * days;
+        StringBuilder sb = new StringBuilder();
+        sb.append("Tổng tiền thuê (").append(days).append(" ngày): ").append(money(total)).append(" đ\n");
+        if (com.example.doanmb.util.WalletHelper.requiresDeposit(days)) {
+            long deposit = com.example.doanmb.util.WalletHelper.deposit(total);
+            sb.append("Đặt cọc giữ xe (50%, trừ vào ví): ").append(money(deposit)).append(" đ\n");
+            sb.append("Số dư ví hiện tại: ").append(money(walletBalance)).append(" đ");
+            if (walletBalance < deposit) sb.append("\n⚠️ Số dư không đủ — vui lòng nhờ admin nạp tiền.");
+        } else {
+            sb.append("Đơn ngắn ngày: không cần đặt cọc, thanh toán khi nhận xe.\n");
+            sb.append("Số dư ví: ").append(money(walletBalance)).append(" đ");
+        }
+        tvDepositInfo.setText(sb.toString());
+    }
+
+    /** Lấy số tiền từ chuỗi giá, vd "800.000đ / ngày" -> 800000. */
+    private static long parseMoney(String s) {
+        if (s == null) return 0;
+        String d = s.replaceAll("[^0-9]", "");
+        if (d.isEmpty()) return 0;
+        try { return Long.parseLong(d); } catch (NumberFormatException e) { return 0; }
+    }
+
+    private static int parseDays(String s) {
+        if (s == null) return 0;
+        String d = s.replaceAll("[^0-9]", "");
+        if (d.isEmpty()) return 0;
+        try { return Integer.parseInt(d); } catch (NumberFormatException e) { return 0; }
+    }
+
+    private static String money(long amount) {
+        return java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN")).format(amount);
+    }
+
     private void openChat() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
@@ -326,6 +535,8 @@ public class CarDetailActivity extends AppCompatActivity {
                     }
                     if (!imgs.isEmpty()) {
                         showImages(imgs);
+                        // Tải sẵn các ảnh còn lại để vuốt xem mượt, không chờ mạng
+                        for (String u : imgs) ImageLoader.preload(getApplicationContext(), u);
                     }
 
                     if (fuel != null && !fuel.isEmpty()) {
@@ -341,8 +552,10 @@ public class CarDetailActivity extends AppCompatActivity {
                         tvCarConditionBadge.setVisibility(View.VISIBLE);
                     }
 
-                    if (sName != null && !sName.isEmpty())
+                    if (sName != null && !sName.isEmpty()) {
+                        sellerName = sName;
                         tvSellerName.setText("👤  " + sName);
+                    }
                     if (sPhone != null && !sPhone.isEmpty()) {
                         sellerPhone = sPhone;
                         tvSellerPhone.setText("📞  " + sellerPhone);
@@ -358,6 +571,7 @@ public class CarDetailActivity extends AppCompatActivity {
                     if (!doc.exists()) return;
                     String name  = doc.getString("name");
                     String phone = doc.getString("phone");
+                    if (name != null && !name.isEmpty()) sellerName = name;
                     if (phone != null && !phone.isEmpty()) sellerPhone = phone;
                     tvSellerName.setText("👤  " + (name != null ? name : "Không rõ"));
                     tvSellerPhone.setText("📞  " + (sellerPhone.isEmpty() ? "Không rõ" : sellerPhone));
@@ -379,12 +593,17 @@ public class CarDetailActivity extends AppCompatActivity {
             if (tvOwnerNote != null) tvOwnerNote.setVisibility(View.VISIBLE);
             if (btnMenuDetail != null) {
                 btnMenuDetail.setVisibility(View.VISIBLE);
-                btnMenuDetail.setOnClickListener(v -> showOwnerMenu());
+                btnMenuDetail.setOnClickListener(v -> showOwnerMenu(btnMenuDetail));
+            }
+            if (btnMenuFloat != null) {
+                btnMenuFloat.setVisibility(View.VISIBLE);
+                btnMenuFloat.setOnClickListener(v -> showOwnerMenu(btnMenuFloat));
             }
             return;
         }
 
         if (btnMenuDetail != null) btnMenuDetail.setVisibility(View.GONE);
+        if (btnMenuFloat != null) btnMenuFloat.setVisibility(View.GONE);
         if (tvOwnerNote != null) tvOwnerNote.setVisibility(View.GONE);
         if (tvReportCar != null) {
             tvReportCar.setVisibility(View.VISIBLE);
@@ -431,10 +650,10 @@ public class CarDetailActivity extends AppCompatActivity {
     }
 
     /** Menu 3 gạch (chỉ chủ bài đăng): chỉnh sửa, ẩn/hiện, xóa bài viết. */
-    private void showOwnerMenu() {
+    private void showOwnerMenu(View anchor) {
         boolean isHidden = "hidden".equals(carStatus);
         androidx.appcompat.widget.PopupMenu menu =
-                new androidx.appcompat.widget.PopupMenu(this, btnMenuDetail);
+                new androidx.appcompat.widget.PopupMenu(this, anchor);
         menu.getMenu().add(0, 1, 0, "✏️  Chỉnh sửa bài viết");
         menu.getMenu().add(0, 2, 1, isHidden ? "👁  Hiện bài viết" : "🙈  Ẩn bài viết");
         menu.getMenu().add(0, 3, 2, "🗑  Xóa bài viết");
@@ -490,6 +709,7 @@ public class CarDetailActivity extends AppCompatActivity {
                     db.collection("cars").document(carId).update(update)
                             .addOnSuccessListener(aVoid -> {
                                 tvCarName.setText(name);
+                                if (tvDetailTitle != null) tvDetailTitle.setText(name);
                                 tvCarPrice.setText(price);
                                 tvCarInfo.setText(info);
                                 Toast.makeText(this, "✅ Đã cập nhật bài viết!", Toast.LENGTH_SHORT).show();
@@ -583,16 +803,87 @@ public class CarDetailActivity extends AppCompatActivity {
             return;
         }
 
-        Map<String, Object> order = new HashMap<>();
-        order.put("buyerId",    user.getUid());
-        order.put("sellerId",   sellerId != null ? sellerId : "");
-        order.put("carId",      carId != null ? carId : "");
-        order.put("carName",    car != null ? car.getName() : "");
-        order.put("status",     "pending");
-        order.put("createdAt",  com.google.firebase.Timestamp.now());
+        String renterName  = etRenterName.getText().toString().trim();
+        String renterPhone = etRenterPhone.getText().toString().trim();
+        String renterCccd  = etRenterCCCD.getText().toString().trim();
+        int    days        = parseDays(etRentDays.getText().toString());
 
+        if (renterName.isEmpty() || renterPhone.isEmpty() || renterCccd.isEmpty()) {
+            Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin người thuê", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (days <= 0) {
+            Toast.makeText(this, "Vui lòng nhập số ngày thuê hợp lệ", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        long pricePerDay   = parseMoney(car != null ? car.getPrice() : null);
+        long total         = pricePerDay * days;
+        boolean needDeposit= com.example.doanmb.util.WalletHelper.requiresDeposit(days);
+        long deposit       = needDeposit ? com.example.doanmb.util.WalletHelper.deposit(total) : 0L;
+        String payMethod   = rgPaymentMethod != null
+                && rgPaymentMethod.getCheckedRadioButtonId() == R.id.rb_pay_transfer ? "transfer" : "cash";
+
+        // Chặn sớm nếu cần cọc mà ví không đủ (holdDeposit cũng kiểm tra lại trong transaction)
+        if (needDeposit && walletBalance < deposit) {
+            Toast.makeText(this, "Số dư ví không đủ để đặt cọc " + money(deposit)
+                    + " đ. Vui lòng nhờ admin nạp tiền.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        Map<String, Object> order = new HashMap<>();
+        order.put("buyerId",      user.getUid());
+        order.put("renterName",   renterName);
+        order.put("renterPhone",  renterPhone);
+        order.put("renterCccd",   renterCccd);
+        order.put("sellerId",     sellerId != null ? sellerId : "");
+        order.put("sellerName",   sellerName);
+        order.put("carId",        carId != null ? carId : "");
+        order.put("carName",      car != null ? car.getName() : "");
+        order.put("carPrice",     car != null ? car.getPrice() : "");
+        order.put("type",         isDriverType(carType) ? "Có tài xế" : "Thuê xe");
+        order.put("days",         String.valueOf(days));
+        order.put("startDate",    etRentStartDate.getText().toString().trim());
+        order.put("note",         etRenterNote.getText().toString().trim());
+        order.put("totalAmount",  total);
+        order.put("depositAmount", deposit);
+        order.put("paymentMethod", payMethod);
+        order.put("depositStatus", needDeposit ? "held" : "none");
+        order.put("status",       "pending");
+        order.put("createdAt",    com.google.firebase.Timestamp.now());
+
+        btnSendRentRequest.setEnabled(false);
         db.collection("orders").add(order)
-                .addOnSuccessListener(ref -> Toast.makeText(this, "✅ Gửi yêu cầu thuê xe thành công!", Toast.LENGTH_LONG).show());
+                .addOnSuccessListener(ref -> {
+                    if (!needDeposit) {
+                        btnSendRentRequest.setEnabled(true);
+                        Toast.makeText(this, "✅ Gửi yêu cầu thuê xe thành công!", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    // Giữ cọc: trừ tiền ví khách
+                    com.example.doanmb.util.WalletHelper.holdDeposit(user.getUid(), deposit, ref.getId(),
+                            new com.example.doanmb.util.WalletHelper.Callback() {
+                                @Override public void onSuccess() {
+                                    walletBalance -= deposit;
+                                    updateDepositInfo();
+                                    btnSendRentRequest.setEnabled(true);
+                                    Toast.makeText(CarDetailActivity.this,
+                                            "✅ Đặt xe thành công! Đã giữ cọc " + money(deposit) + " đ.",
+                                            Toast.LENGTH_LONG).show();
+                                }
+                                @Override public void onError(String msg) {
+                                    // Cọc thất bại -> xoá đơn vừa tạo để không treo đơn rác
+                                    ref.delete();
+                                    btnSendRentRequest.setEnabled(true);
+                                    Toast.makeText(CarDetailActivity.this,
+                                            "Không giữ được cọc: " + msg, Toast.LENGTH_LONG).show();
+                                }
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    btnSendRentRequest.setEnabled(true);
+                    Toast.makeText(this, "Lỗi tạo đơn: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 
     private void showReportDialog() {

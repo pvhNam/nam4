@@ -20,6 +20,9 @@ public class User {
     private boolean driverOnline;  // Tài xế đang online hay offline
     private Timestamp appliedAt;   // Thời điểm gửi đăng ký tài xế
 
+    // ----- Ví trong app -----
+    private double balance;        // Số dư ví (VNĐ). Mặc định 0 nếu Firestore thiếu field.
+
     public User() {}
 
     public String getUid() { return uid; }
@@ -51,4 +54,7 @@ public class User {
     public void setDriverOnline(boolean driverOnline) { this.driverOnline = driverOnline; }
     public Timestamp getAppliedAt() { return appliedAt; }
     public void setAppliedAt(Timestamp appliedAt) { this.appliedAt = appliedAt; }
+
+    public double getBalance() { return balance; }
+    public void setBalance(double balance) { this.balance = balance; }
 }

@@ -138,6 +138,16 @@
                                 android:textSize="12sp"
                                 android:textStyle="bold" />
                             </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/tv_wallet_balance"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="💰 Số dư ví: 0 đ"
+                                android:textColor="#2E7D32"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
                         </LinearLayout>
 
                         <TextView
@@ -206,9 +216,13 @@
                             android:layout_marginHorizontal="16dp"/>
 
                         <RelativeLayout
+                            android:id="@+id/menu_favorite_cars"
                             android:layout_width="match_parent"
                             android:layout_height="48dp"
-                            android:paddingHorizontal="16dp">
+                            android:paddingHorizontal="16dp"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?android:attr/selectableItemBackground">
 
                             <ImageView
                                 android:id="@+id/ic2"
