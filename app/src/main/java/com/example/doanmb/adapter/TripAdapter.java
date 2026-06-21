@@ -1,9 +1,10 @@
 package com.example.doanmb.adapter;
 
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -11,19 +12,22 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.doanmb.R;
 import com.example.doanmb.model.Trip;
+import com.google.android.material.button.MaterialButton;
 
 import java.text.DecimalFormat;
 import java.util.List;
 
 /**
- * Hiển thị danh sách chuyến cho tài xế.
- * Nút hành động đổi theo trạng thái: Nhận chuyến / Hoàn thành chuyến / (ẩn).
+ * Danh sách chuyến cho tài xế (thẻ kiểu yêu cầu chuyến - thiết kế driver2).
+ * Nút đổi theo trạng thái: Nhận chuyến + Bỏ qua / Hoàn thành chuyến / (ẩn, chỉ nhãn trạng thái).
  */
 public class TripAdapter extends RecyclerView.Adapter<TripAdapter.VH> {
 
     public interface OnTripActionListener {
-        /** Tài xế bấm nút hành động trên một chuyến. */
-        void onAction(Trip trip);
+        /** Nút chính: Nhận chuyến (waiting) hoặc Hoàn thành (running). */
+        void onPrimary(Trip trip);
+        /** Nút phụ "Bỏ qua" (chỉ với chuyến đang chờ). */
+        default void onSkip(Trip trip) {}
     }
 
     private final List<Trip> trips;
@@ -46,52 +50,69 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.VH> {
     public void onBindViewHolder(@NonNull VH h, int position) {
         Trip t = trips.get(position);
 
-        h.tvCarType.setText(t.getCarType() != null ? t.getCarType() : "--");
-        h.tvMode.setText(t.rentModeLabel());
-        h.tvCustomer.setText("Khách: " + (t.getCustomerName() != null ? t.getCustomerName() : "--")
-                + (t.getCustomerPhone() != null ? " · " + t.getCustomerPhone() : ""));
-        h.tvPrice.setText(MONEY.format(t.getPrice()) + " đ");
+        h.tvCustomer.setText(t.getCustomerName() != null && !t.getCustomerName().isEmpty()
+                ? t.getCustomerName() : "Khách hàng");
+        h.tvPickup.setText(safe(t.getPickup()));
 
-        // Lộ trình / thời lượng
         if (Trip.MODE_DISTANCE.equals(t.getRentMode())) {
-            String route = "Đón: " + safe(t.getPickup()) + "\nĐến: " + safe(t.getDestination());
-            if (t.getDistanceKm() > 0) route += "  (" + t.getDistanceKm() + " km)";
-            h.tvRoute.setText(route);
+            h.tvDest.setText(safe(t.getDestination()));
+            if (t.getDistanceKm() > 0) {
+                int mins = Math.max(5, (int) Math.round(t.getDistanceKm() * 2.5));
+                h.tvMeta.setText(t.getDistanceKm() + " km · " + mins + " phút");
+            } else {
+                h.tvMeta.setText("Theo quãng đường");
+            }
         } else {
             String unit = Trip.MODE_MONTH.equals(t.getRentMode()) ? "tháng" : "ngày";
-            h.tvRoute.setText("Đón: " + safe(t.getPickup()) + "\nThời lượng: " + t.getDuration() + " " + unit);
+            h.tvDest.setText("Thuê " + t.getDuration() + " " + unit);
+            h.tvMeta.setText(t.rentModeLabel());
         }
 
-        // Trạng thái + nút hành động
+        h.tvPrice.setText(MONEY.format(t.getPrice()) + "đ");
+
         String status = t.getStatus() != null ? t.getStatus() : Trip.STATUS_WAITING;
         switch (status) {
             case Trip.STATUS_WAITING:
-                styleStatus(h.tvStatus, "Chờ nhận", 0xFFFFF3E0, 0xFFE65100);
-                h.btnAction.setVisibility(View.VISIBLE);
-                h.btnAction.setText("Nhận chuyến");
+                h.tvBadge.setVisibility(View.VISIBLE);
+                h.tvStatus.setVisibility(View.GONE);
+                h.btnPrimary.setVisibility(View.VISIBLE);
+                h.btnPrimary.setText("Nhận chuyến");
+                tint(h.btnPrimary, 0xFF2E6BF0);
+                h.btnSecondary.setVisibility(View.VISIBLE);
                 break;
             case Trip.STATUS_RUNNING:
-                styleStatus(h.tvStatus, "Đang chạy", 0xFFE3F2FD, 0xFF1565C0);
-                h.btnAction.setVisibility(View.VISIBLE);
-                h.btnAction.setText("Hoàn thành chuyến");
+                h.tvBadge.setVisibility(View.GONE);
+                pill(h.tvStatus, "Đang chạy", 0xFFEAF1FE, 0xFF2E6BF0);
+                h.btnPrimary.setVisibility(View.VISIBLE);
+                h.btnPrimary.setText("Hoàn thành chuyến");
+                tint(h.btnPrimary, 0xFF16A34A);
+                h.btnSecondary.setVisibility(View.GONE);
                 break;
             case Trip.STATUS_COMPLETED:
-                styleStatus(h.tvStatus, "Hoàn thành", 0xFFE8F5E9, 0xFF2E7D32);
-                h.btnAction.setVisibility(View.GONE);
+                h.tvBadge.setVisibility(View.GONE);
+                pill(h.tvStatus, "Hoàn thành", 0xFFE6F6EC, 0xFF16A34A);
+                h.btnPrimary.setVisibility(View.GONE);
+                h.btnSecondary.setVisibility(View.GONE);
                 break;
             default:
-                styleStatus(h.tvStatus, "Đã huỷ", 0xFFFFCDD2, 0xFFC62828);
-                h.btnAction.setVisibility(View.GONE);
+                h.tvBadge.setVisibility(View.GONE);
+                pill(h.tvStatus, "Đã huỷ", 0xFFFDECEC, 0xFFEF4444);
+                h.btnPrimary.setVisibility(View.GONE);
+                h.btnSecondary.setVisibility(View.GONE);
         }
 
-        h.btnAction.setOnClickListener(v -> {
-            if (listener != null) listener.onAction(t);
-        });
+        h.btnPrimary.setOnClickListener(v -> { if (listener != null) listener.onPrimary(t); });
+        h.btnSecondary.setOnClickListener(v -> { if (listener != null) listener.onSkip(t); });
     }
 
-    private void styleStatus(TextView tv, String text, int bg, int fg) {
+    private void tint(MaterialButton b, int color) {
+        b.setBackgroundTintList(ColorStateList.valueOf(color));
+    }
+
+    private void pill(TextView tv, String text, int bg, int fg) {
+        tv.setVisibility(View.VISIBLE);
         tv.setText(text);
-        tv.setBackgroundColor(bg);
+        tv.setBackgroundTintList(ColorStateList.valueOf(bg));
         tv.setTextColor(fg);
     }
 
@@ -101,18 +122,21 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.VH> {
     public int getItemCount() { return trips.size(); }
 
     static class VH extends RecyclerView.ViewHolder {
-        TextView tvCarType, tvStatus, tvMode, tvRoute, tvCustomer, tvPrice;
-        Button btnAction;
+        TextView tvCustomer, tvRating, tvBadge, tvStatus, tvPickup, tvDest, tvMeta, tvPrice;
+        MaterialButton btnPrimary, btnSecondary;
 
         VH(@NonNull View v) {
             super(v);
-            tvCarType  = v.findViewById(R.id.tv_trip_cartype);
-            tvStatus   = v.findViewById(R.id.tv_trip_status);
-            tvMode     = v.findViewById(R.id.tv_trip_mode);
-            tvRoute    = v.findViewById(R.id.tv_trip_route);
             tvCustomer = v.findViewById(R.id.tv_trip_customer);
-            tvPrice    = v.findViewById(R.id.tv_trip_price);
-            btnAction  = v.findViewById(R.id.btn_trip_action);
+            tvRating = v.findViewById(R.id.tv_trip_rating);
+            tvBadge = v.findViewById(R.id.tv_trip_badge);
+            tvStatus = v.findViewById(R.id.tv_trip_status);
+            tvPickup = v.findViewById(R.id.tv_trip_pickup);
+            tvDest = v.findViewById(R.id.tv_trip_dest);
+            tvMeta = v.findViewById(R.id.tv_trip_meta);
+            tvPrice = v.findViewById(R.id.tv_trip_price);
+            btnPrimary = v.findViewById(R.id.btn_trip_primary);
+            btnSecondary = v.findViewById(R.id.btn_trip_secondary);
         }
     }
 }
