@@ -2,18 +2,22 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/nav_driver_home"
-        android:icon="@drawable/ic_driver_home"
+        android:icon="@drawable/ic_dnav_home"
         android:title="Trang chủ" />
     <item
         android:id="@+id/nav_driver_trips"
-        android:icon="@drawable/ic_driver_trips"
-        android:title="Chuyến của tôi" />
+        android:icon="@drawable/ic_dnav_trips"
+        android:title="Chuyến" />
     <item
-        android:id="@+id/nav_driver_post"
-        android:icon="@drawable/ic_driver_post"
-        android:title="Đăng bài" />
+        android:id="@+id/nav_driver_map"
+        android:icon="@drawable/ic_dnav_map"
+        android:title="Bản đồ" />
+    <item
+        android:id="@+id/nav_driver_earnings"
+        android:icon="@drawable/ic_dnav_wallet"
+        android:title="Thu nhập" />
     <item
         android:id="@+id/nav_driver_account"
-        android:icon="@drawable/ic_driver_account"
-        android:title="Tài khoản" />
+        android:icon="@drawable/ic_dnav_profile"
+        android:title="Cá nhân" />
 </menu>

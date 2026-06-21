@@ -1,255 +1,200 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F6F8"
+    android:background="@color/driver_bg"
     android:scrollbars="none">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:orientation="vertical">
 
-        <androidx.cardview.widget.CardView
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="86dp"
+            android:background="@drawable/bg_driver_header" />
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardBackgroundColor="#FFFFFF"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp">
+            android:layout_marginTop="-52dp"
+            android:orientation="vertical"
+            android:paddingHorizontal="14dp"
+            android:paddingBottom="18dp">
 
-            <LinearLayout
+            <!-- Thẻ hồ sơ -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/card_profile"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="20dp">
+                android:clickable="true"
+                android:focusable="true"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="3dp">
 
-                <de.hdodenhof.circleimageview.CircleImageView
-                    android:id="@+id/iv_dp_avatar"
-                    android:layout_width="88dp"
-                    android:layout_height="88dp"
-                    android:src="@drawable/ic_driver_avatar_placeholder"
-                    app:civ_border_color="@color/driver_primary"
-                    app:civ_border_width="2dp" />
-
-                <TextView
-                    android:id="@+id/tv_dp_name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:text="Tài xế"
-                    android:textColor="#1A1A1A"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:background="@color/driver_primary"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="3dp"
-                    android:text="TÀI XẾ"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <!-- Thống kê doanh thu theo ngày / tháng / năm (chọn kỳ cụ thể) -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardBackgroundColor="#FFFFFF"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Thống kê doanh thu"
-                    android:textColor="#1A1A1A"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
-
-                <!-- Chọn chế độ: Ngày / Tháng / Năm -->
-                <com.google.android.material.button.MaterialButtonToggleGroup
-                    android:id="@+id/toggle_rev_mode"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    app:checkedButton="@id/btn_mode_month"
-                    app:selectionRequired="true"
-                    app:singleSelection="true">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_mode_day"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Ngày"
-                        android:textSize="13sp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_mode_month"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Tháng"
-                        android:textSize="13sp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_mode_year"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Năm"
-                        android:textSize="13sp" />
-                </com.google.android.material.button.MaterialButtonToggleGroup>
-
-                <!-- Thanh điều hướng kỳ: ◀  [nhãn kỳ, bấm để mở lịch]  ▶ -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:padding="16dp">
 
-                    <ImageButton
-                        android:id="@+id/btn_period_prev"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Kỳ trước"
-                        android:src="@drawable/ic_back"
-                        app:tint="@color/driver_primary" />
+                    <de.hdodenhof.circleimageview.CircleImageView
+                        android:id="@+id/iv_dp_avatar"
+                        android:layout_width="58dp"
+                        android:layout_height="58dp"
+                        android:src="@drawable/ic_driver_avatar_placeholder"
+                        app:civ_border_color="@color/driver_surface_blue"
+                        app:civ_border_width="2dp" />
 
-                    <TextView
-                        android:id="@+id/tv_period_label"
+                    <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
                         android:layout_weight="1"
-                        android:background="?attr/selectableItemBackground"
-                        android:drawablePadding="6dp"
-                        android:gravity="center"
-                        android:paddingVertical="8dp"
-                        android:text="Tháng 6/2026"
-                        android:textColor="#1A1A1A"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:orientation="vertical">
 
-                    <ImageButton
-                        android:id="@+id/btn_period_next"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Kỳ sau"
-                        android:rotation="180"
-                        android:src="@drawable/ic_back"
-                        app:tint="@color/driver_primary" />
+                        <TextView
+                            android:id="@+id/tv_dp_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Tài xế"
+                            android:textColor="@color/driver_text"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="15dp"
+                                android:layout_height="15dp"
+                                android:src="@drawable/ic_verified_check"
+                                app:tint="@color/driver_green" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:text="Đã xác thực"
+                                android:textColor="@color/driver_green"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <ImageView style="@style/DriverChevron" />
                 </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
-                <!-- Kết quả doanh thu của kỳ đã chọn -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:background="@color/stat_card_orange"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="18dp">
+            <!-- Nhóm 1 -->
+            <androidx.cardview.widget.CardView style="@style/DriverMenuGroup">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Doanh thu"
-                        android:textColor="@color/driver_dark"
-                        android:textSize="12sp" />
+                <LinearLayout style="@style/DriverMenuGroupInner">
 
-                    <TextView
-                        android:id="@+id/tv_rev_selected"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="0 đ"
-                        android:textColor="@color/driver_dark"
-                        android:textSize="28sp"
-                        android:textStyle="bold" />
+                    <LinearLayout android:id="@+id/row_register" style="@style/DriverQuickRow">
+                        <ImageView style="@style/DriverMenuIcon" android:src="@drawable/ic_doc" />
+                        <TextView style="@style/DriverMenuTitle" android:text="Đăng kí cho thuê xe" />
+                        <ImageView style="@style/DriverChevron" />
+                    </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/tv_trips_selected"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="0 chuyến hoàn thành"
-                        android:textColor="@color/driver_primary"
-                        android:textSize="13sp" />
+                    <LinearLayout android:id="@+id/row_customer_mode" style="@style/DriverQuickRow">
+                        <ImageView style="@style/DriverMenuIcon" android:src="@drawable/ic_swap" />
+                        <TextView style="@style/DriverMenuTitle" android:text="Chế độ khách hàng" />
+                        <ImageView style="@style/DriverChevron" />
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/row_favorites" style="@style/DriverQuickRow">
+                        <ImageView style="@style/DriverMenuIcon" android:src="@drawable/ic_heart_outline" />
+                        <TextView style="@style/DriverMenuTitle" android:text="Xe yêu thích" />
+                        <ImageView style="@style/DriverChevron" />
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/row_location" style="@style/DriverQuickRow">
+                        <ImageView style="@style/DriverMenuIcon" android:src="@drawable/ic_pin" />
+                        <TextView style="@style/DriverMenuTitle" android:text="Vị trí của tôi" />
+                        <ImageView style="@style/DriverChevron" />
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/row_reviews" style="@style/DriverQuickRow">
+                        <ImageView style="@style/DriverMenuIcon" android:src="@drawable/ic_star" />
+                        <TextView style="@style/DriverMenuTitle" android:text="Bài đánh giá" />
+                        <ImageView style="@style/DriverChevron" />
+                    </LinearLayout>
                 </LinearLayout>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
+            </androidx.cardview.widget.CardView>
 
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardBackgroundColor="#FFFFFF"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp">
+            <!-- Nhóm 2 -->
+            <androidx.cardview.widget.CardView style="@style/DriverMenuGroup">
+
+                <LinearLayout style="@style/DriverMenuGroupInner">
+
+                    <LinearLayout android:id="@+id/row_gifts" style="@style/DriverQuickRow">
+                        <ImageView style="@style/DriverMenuIcon" android:src="@drawable/ic_gift" />
+                        <TextView style="@style/DriverMenuTitle" android:text="Quà tặng" />
+                        <ImageView style="@style/DriverChevron" />
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/row_refer" style="@style/DriverQuickRow">
+                        <ImageView style="@style/DriverMenuIcon" android:src="@drawable/ic_share" />
+                        <TextView style="@style/DriverMenuTitle" android:text="Giới thiệu bạn mới" />
+                        <ImageView style="@style/DriverChevron" />
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Nhóm 3 -->
+            <androidx.cardview.widget.CardView style="@style/DriverMenuGroup">
+
+                <LinearLayout style="@style/DriverMenuGroupInner">
+
+                    <LinearLayout android:id="@+id/row_privacy" style="@style/DriverQuickRow">
+                        <ImageView style="@style/DriverMenuIcon" android:src="@drawable/ic_shield" />
+                        <TextView style="@style/DriverMenuTitle" android:text="Chính sách bảo mật" />
+                        <ImageView style="@style/DriverChevron" />
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/row_support" style="@style/DriverQuickRow">
+                        <ImageView style="@style/DriverMenuIcon" android:src="@drawable/ic_support" />
+                        <TextView style="@style/DriverMenuTitle" android:text="Trung tâm hỗ trợ" />
+                        <ImageView style="@style/DriverChevron" />
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
             <LinearLayout
+                android:id="@+id/btn_dp_logout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_marginTop="16dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:padding="14dp">
 
-                <TextView style="@style/DriverFieldLabel" android:text="Loại xe lái" />
-                <TextView android:id="@+id/tv_dp_cartype" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" android:textColor="#1A1A1A" android:textSize="15sp" android:layout_marginBottom="12dp"/>
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_logout"
+                    app:tint="@color/driver_red" />
 
-                <TextView style="@style/DriverFieldLabel" android:text="Số CCCD" />
-                <TextView android:id="@+id/tv_dp_cccd" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" android:textColor="#1A1A1A" android:textSize="15sp" android:layout_marginBottom="12dp"/>
-
-                <TextView style="@style/DriverFieldLabel" android:text="Số bằng lái" />
-                <TextView android:id="@+id/tv_dp_license" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" android:textColor="#1A1A1A" android:textSize="15sp" android:layout_marginBottom="4dp"/>
-
-                <TextView style="@style/DriverFieldLabel" android:text="Số điện thoại" />
-                <TextView android:id="@+id/tv_dp_phone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" android:textColor="#1A1A1A" android:textSize="15sp"/>
-
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Đăng xuất"
+                    android:textColor="@color/driver_red"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
 
-        <Button
-            android:id="@+id/btn_dp_switch_user"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="20dp"
-            android:backgroundTint="#2A70DE"
-            android:text="Chuyển sang chế độ người dùng"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            app:cornerRadius="12dp" />
-
-        <Button
-            android:id="@+id/btn_dp_logout"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="12dp"
-            android:backgroundTint="#E53935"
-            android:text="Đăng xuất"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            app:cornerRadius="12dp" />
-
+        </LinearLayout>
     </LinearLayout>
-</ScrollView>
+</androidx.core.widget.NestedScrollView>
