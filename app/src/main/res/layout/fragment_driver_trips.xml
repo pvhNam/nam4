@@ -1,71 +1,178 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F6F8"
-    android:scrollbars="none">
+    android:background="@color/driver_bg"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <include layout="@layout/include_driver_greeting_header" />
+
+    <!-- Tabs trạng thái -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_trips"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingBottom="16dp">
+        android:background="#FFFFFF"
+        app:tabGravity="fill"
+        app:tabIndicatorColor="@color/driver_primary"
+        app:tabIndicatorFullWidth="false"
+        app:tabIndicatorHeight="3dp"
+        app:tabMode="fixed"
+        app:tabRippleColor="@color/driver_surface_blue"
+        app:tabSelectedTextColor="@color/driver_primary"
+        app:tabTextColor="@color/driver_text_secondary" />
 
-        <TextView
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp"
+        android:scrollbars="none">
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="14dp"
-            android:paddingBottom="2dp"
-            android:text="Đang chạy"
-            android:textColor="#1565C0"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tv_empty_running"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp"
-            android:text="Không có chuyến đang chạy"
-            android:textColor="#9E9E9E"
-            android:textSize="13sp"
-            android:visibility="gone" />
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="18dp"
+                android:paddingTop="14dp">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_running"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false" />
+                <TextView
+                    android:id="@+id/tv_section_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:text="Yêu cầu mới"
+                    android:textColor="@color/driver_text"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="18dp"
-            android:paddingBottom="2dp"
-            android:text="Đã hoàn thành"
-            android:textColor="#2E7D32"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/tv_countdown"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:text="● 30 giây"
+                    android:textColor="@color/driver_green"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </RelativeLayout>
 
-        <TextView
-            android:id="@+id/tv_empty_completed"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="8dp"
-            android:text="Chưa có chuyến hoàn thành"
-            android:textColor="#9E9E9E"
-            android:textSize="13sp"
-            android:visibility="gone" />
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_trips"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_completed"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false" />
+            <TextView
+                android:id="@+id/tv_empty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="14dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_round_16"
+                android:gravity="center"
+                android:paddingVertical="30dp"
+                android:text="Chưa có chuyến nào"
+                android:textColor="@color/driver_text_secondary"
+                android:textSize="14sp"
+                android:visibility="gone" />
 
-    </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+            <!-- Lối tắt -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="14dp"
+                android:layout_marginTop="14dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:divider="?android:attr/listDivider"
+                    android:orientation="vertical"
+                    android:showDividers="middle">
+
+                    <LinearLayout
+                        android:id="@+id/row_running"
+                        style="@style/DriverQuickRow">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/ic_dnav_trips"
+                            app:tint="@color/driver_primary" />
+
+                        <LinearLayout style="@style/DriverQuickRowText">
+
+                            <TextView
+                                style="@style/DriverQuickRowTitle"
+                                android:text="Đang chạy" />
+
+                            <TextView
+                                style="@style/DriverQuickRowSub"
+                                android:text="Xem thông tin chuyến đang chạy" />
+                        </LinearLayout>
+
+                        <ImageView style="@style/DriverChevron" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/row_history"
+                        style="@style/DriverQuickRow">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/ic_history"
+                            app:tint="@color/driver_primary" />
+
+                        <LinearLayout style="@style/DriverQuickRowText">
+
+                            <TextView
+                                style="@style/DriverQuickRowTitle"
+                                android:text="Lịch sử chuyến" />
+
+                            <TextView
+                                style="@style/DriverQuickRowSub"
+                                android:text="Xem chuyến đã hoàn thành / đã huỷ" />
+                        </LinearLayout>
+
+                        <ImageView style="@style/DriverChevron" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/row_scheduled"
+                        style="@style/DriverQuickRow">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/ic_clock"
+                            app:tint="@color/driver_primary" />
+
+                        <LinearLayout style="@style/DriverQuickRowText">
+
+                            <TextView
+                                style="@style/DriverQuickRowTitle"
+                                android:text="Chuyến đặt trước" />
+
+                            <TextView
+                                style="@style/DriverQuickRowSub"
+                                android:text="Chuyến đã nhận trong tương lai" />
+                        </LinearLayout>
+
+                        <ImageView style="@style/DriverChevron" />
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</LinearLayout>

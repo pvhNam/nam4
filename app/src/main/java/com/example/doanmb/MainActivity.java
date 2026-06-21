@@ -190,7 +190,11 @@ public class MainActivity extends AppCompatActivity {
         };
 
         if (btnBuyCar != null) btnBuyCar.setOnClickListener(openCategory);
-        if (btnDriver != null) btnDriver.setOnClickListener(openCategory);
+        if (btnDriver != null) btnDriver.setOnClickListener(v -> {
+            pulseView(v);
+            startActivity(new Intent(MainActivity.this,
+                    com.example.doanmb.ui.activity.BookDriverActivity.class));
+        });
         if (btnPoliceCar != null) btnPoliceCar.setOnClickListener(openCategory);
         if (btnPayment != null) btnPayment.setOnClickListener(openCategory);
     }
@@ -227,6 +231,11 @@ public class MainActivity extends AppCompatActivity {
         if (user == null) return;
 
         de.hdodenhof.circleimageview.CircleImageView imgAvatar = findViewById(R.id.img_avatar);
+
+        // Bấm avatar → mở trang cá nhân
+        imgAvatar.setOnClickListener(v -> {
+            if (bottomNavigationView != null) bottomNavigationView.setSelectedItemId(R.id.nav_account);
+        });
 
         FirebaseFirestore.getInstance()
                 .collection("users")

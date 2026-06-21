@@ -2,29 +2,30 @@ package com.example.doanmb.ui.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
-import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
 import com.example.doanmb.R;
+import com.example.doanmb.ui.fragment.DriverEarningsFragment;
 import com.example.doanmb.ui.fragment.DriverHomeFragment;
+import com.example.doanmb.ui.fragment.DriverMapFragment;
 import com.example.doanmb.ui.fragment.DriverPostFragment;
 import com.example.doanmb.ui.fragment.DriverProfileFragment;
 import com.example.doanmb.ui.fragment.DriverTripsFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
 
+/**
+ * Khung giao diện tài xế: chỉ chứa khu vực fragment + thanh điều hướng 5 tab.
+ * Mỗi tab (Trang chủ / Chuyến / Bản đồ / Thu nhập / Cá nhân) tự vẽ header xanh
+ * của riêng mình theo thiết kế driver1-5.
+ */
 public class DriverDashboardActivity extends AppCompatActivity {
 
-    private TextView tvDriverName, tvOnlineLabel;
-    private SwitchMaterial switchOnline;
-    private FirebaseFirestore db;
-    private String uid;
+    private BottomNavigationView bottomNav;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,52 +33,38 @@ public class DriverDashboardActivity extends AppCompatActivity {
         setContentView(R.layout.activity_driver_dashboard);
         if (getSupportActionBar() != null) getSupportActionBar().hide();
 
-        db = FirebaseFirestore.getInstance();
+        // Thanh trạng thái cùng tông xanh với header của các trang
+        getWindow().setStatusBarColor(0xFF2E6BF0);
+        getWindow().setNavigationBarColor(0xFFFFFFFF);
+
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) { logout(); return; }
-        uid = user.getUid();
+        if (user == null) {
+            startActivity(new Intent(this, LoginActivity.class)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+            finish();
+            return;
+        }
 
-        tvDriverName = findViewById(R.id.tv_driver_name);
-        tvOnlineLabel = findViewById(R.id.tv_online_label);
-        switchOnline = findViewById(R.id.switch_online);
-        BottomNavigationView bottomNav = findViewById(R.id.driver_bottom_nav);
-        Button btnLogout = findViewById(R.id.btn_driver_logout);
-
-        loadDriverInfo();
-
-        btnLogout.setOnClickListener(v -> logout());
-
-        switchOnline.setOnClickListener(v -> {
-            boolean online = switchOnline.isChecked();
-            tvOnlineLabel.setText(online ? "Online" : "Offline");
-            db.collection("users").document(uid).update("driverOnline", online);
-        });
-
+        bottomNav = findViewById(R.id.driver_bottom_nav);
         bottomNav.setOnItemSelectedListener(item -> {
             switchFragment(item.getItemId());
             return true;
         });
 
-        switchFragment(R.id.nav_driver_home);
         bottomNav.setSelectedItemId(R.id.nav_driver_home);
     }
 
-    private void loadDriverInfo() {
-        db.collection("users").document(uid).get().addOnSuccessListener(doc -> {
-            if (doc.getString("name") != null) tvDriverName.setText(doc.getString("name"));
-            Boolean online = doc.getBoolean("driverOnline");
-            boolean isOnline = online != null && online;
-            switchOnline.setChecked(isOnline);
-            tvOnlineLabel.setText(isOnline ? "Online" : "Offline");
-        });
-    }
-
     private void switchFragment(int itemId) {
+        // Mỗi lần đổi tab thì xoá form đăng bài (nếu đang mở) khỏi back stack
+        getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
         Fragment fragment;
         if (itemId == R.id.nav_driver_trips) {
             fragment = new DriverTripsFragment();
-        } else if (itemId == R.id.nav_driver_post) {
-            fragment = new DriverPostFragment();
+        } else if (itemId == R.id.nav_driver_map) {
+            fragment = new DriverMapFragment();
+        } else if (itemId == R.id.nav_driver_earnings) {
+            fragment = new DriverEarningsFragment();
         } else if (itemId == R.id.nav_driver_account) {
             fragment = new DriverProfileFragment();
         } else {
@@ -88,11 +75,16 @@ public class DriverDashboardActivity extends AppCompatActivity {
                 .commit();
     }
 
-    private void logout() {
-        FirebaseAuth.getInstance().signOut();
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
+    /** Chuyển sang tab Cá nhân (bấm avatar ở trang chủ). */
+    public void openProfileTab() {
+        if (bottomNav != null) bottomNav.setSelectedItemId(R.id.nav_driver_account);
+    }
+
+    /** Mở form "Đăng kí cho thuê xe" từ trang Cá nhân (driver5). */
+    public void openPostForm() {
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.driver_fragment_container, new DriverPostFragment())
+                .addToBackStack("post")
+                .commit();
     }
 }
