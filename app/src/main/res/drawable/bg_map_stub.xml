@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="360dp"
+    android:height="200dp"
+    android:viewportWidth="360"
+    android:viewportHeight="200">
+
+    <!-- Nền đất -->
+    <path android:fillColor="#E9EDEA" android:pathData="M0,0 H360 V200 H0 Z" />
+
+    <!-- Các khối nhà / công viên -->
+    <path android:fillColor="#D8E7CF" android:pathData="M18,84 H92 V140 H18 Z" />
+    <path android:fillColor="#ECE6DB" android:pathData="M250,30 H336 V92 H250 Z" />
+    <path android:fillColor="#E2E8EE" android:pathData="M150,120 H224 V178 H150 Z" />
+    <path android:fillColor="#E6E3DC" android:pathData="M120,28 H206 V78 H120 Z" />
+    <path android:fillColor="#DCE8E4" android:pathData="M250,116 H338 V180 H250 Z" />
+
+    <!-- Đại lộ chéo -->
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="8" android:strokeLineCap="round"
+        android:pathData="M-10,200 L214,-10" />
+
+    <!-- Đường lớn -->
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="8" android:strokeLineCap="round"
+        android:pathData="M-10,64 L370,76" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="8" android:strokeLineCap="round"
+        android:pathData="M-10,150 L370,138" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="8" android:strokeLineCap="round"
+        android:pathData="M104,-10 L120,210" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="8" android:strokeLineCap="round"
+        android:pathData="M238,-10 L228,210" />
+
+    <!-- Đường nhỏ -->
+    <path android:strokeColor="#F3F4F1" android:strokeWidth="3.5" android:strokeLineCap="round"
+        android:pathData="M-10,30 L370,36" />
+    <path android:strokeColor="#F3F4F1" android:strokeWidth="3.5" android:strokeLineCap="round"
+        android:pathData="M-10,108 L370,112" />
+    <path android:strokeColor="#F3F4F1" android:strokeWidth="3.5" android:strokeLineCap="round"
+        android:pathData="M-10,182 L370,176" />
+    <path android:strokeColor="#F3F4F1" android:strokeWidth="3" android:strokeLineCap="round"
+        android:pathData="M172,-10 L182,210" />
+    <path android:strokeColor="#F3F4F1" android:strokeWidth="3" android:strokeLineCap="round"
+        android:pathData="M302,-10 L310,210" />
+
+    <!-- Lộ trình -->
+    <path android:strokeColor="#16A34A" android:strokeWidth="6"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M58,166 L96,118 L150,110 L196,64 L240,44" />
+
+    <!-- Điểm đón (xanh) -->
+    <path android:fillColor="#FFFFFF" android:pathData="M58,166 m-8,0 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 Z" />
+    <path android:fillColor="#16A34A" android:pathData="M58,166 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 Z" />
+
+    <!-- Điểm đến (ghim đỏ) -->
+    <path android:fillColor="#FF5A4D"
+        android:pathData="M240,30 C233,30 228,35 228,42 C228,51 240,62 240,62 C240,62 252,51 252,42 C252,35 247,30 240,30 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M240,42 m-3.5,0 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0 Z" />
+</vector>

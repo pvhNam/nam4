@@ -190,11 +190,7 @@ public class MainActivity extends AppCompatActivity {
         };
 
         if (btnBuyCar != null) btnBuyCar.setOnClickListener(openCategory);
-        if (btnDriver != null) btnDriver.setOnClickListener(v -> {
-            pulseView(v);
-            startActivity(new Intent(MainActivity.this,
-                    com.example.doanmb.ui.activity.BookDriverActivity.class));
-        });
+        if (btnDriver != null) btnDriver.setOnClickListener(openCategory);
         if (btnPoliceCar != null) btnPoliceCar.setOnClickListener(openCategory);
         if (btnPayment != null) btnPayment.setOnClickListener(openCategory);
     }

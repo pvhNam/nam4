@@ -63,6 +63,30 @@ public class CarDetailActivity extends AppCompatActivity {
     private String sellerName = "";
     private long walletBalance = 0L; // số dư ví của người đang đặt
 
+    // Đặt theo ngày / theo chuyến (xe có tài xế)
+    private com.google.android.material.button.MaterialButtonToggleGroup toggleBookMode;
+    private View layoutDayFields, layoutTripFields;
+    private Button btnPickOnMap;
+    private TextView tvTripSummary;
+    private long pricePerDay = 0L;   // đơn giá theo ngày (từ bài đăng)
+    private long pricePerKm  = 0L;   // đơn giá theo km (từ bài đăng); 0 = không nhận theo chuyến
+    private boolean tripMode = false; // đang đặt theo chuyến?
+    private String tripPickup = "", tripDest = "";
+    private double tripDistanceKm = 0d;
+
+    // Nhận kết quả chọn điểm từ MapPickerActivity
+    private final androidx.activity.result.ActivityResultLauncher<Intent> mapLauncher =
+            registerForActivityResult(
+                    new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),
+                    result -> {
+                        if (result.getResultCode() != RESULT_OK || result.getData() == null) return;
+                        Intent d = result.getData();
+                        tripPickup = d.getStringExtra(MapPickerActivity.RESULT_PICKUP);
+                        tripDest = d.getStringExtra(MapPickerActivity.RESULT_DEST);
+                        tripDistanceKm = d.getDoubleExtra(MapPickerActivity.RESULT_DISTANCE_KM, 0d);
+                        updateTripSummary();
+                    });
+
     private TextView tvReportCar;
     private ImageView btnMenuDetail;
     private FirebaseFirestore db;
@@ -140,6 +164,7 @@ public class CarDetailActivity extends AppCompatActivity {
 
         setupButtons();
         setupRentDepositUi();
+        setupBookModeListeners();
         loadFavoriteState();
 
         if (getSupportActionBar() != null) {
@@ -183,6 +208,12 @@ public class CarDetailActivity extends AppCompatActivity {
         btnChatRentSeller = findViewById(R.id.btnChatRentSeller);
         rgPaymentMethod = findViewById(R.id.rg_payment_method);
         tvDepositInfo   = findViewById(R.id.tv_deposit_info);
+
+        toggleBookMode  = findViewById(R.id.toggle_book_mode);
+        layoutDayFields = findViewById(R.id.layout_day_fields);
+        layoutTripFields= findViewById(R.id.layout_trip_fields);
+        btnPickOnMap    = findViewById(R.id.btnPickOnMap);
+        tvTripSummary   = findViewById(R.id.tvTripSummary);
     }
 
     private void setupDetailHeader() {
@@ -415,6 +446,62 @@ public class CarDetailActivity extends AppCompatActivity {
         }
     }
 
+    // ── Đặt theo ngày / theo chuyến ─────────────────────────────────────────────
+
+    private void setupBookModeListeners() {
+        if (toggleBookMode != null) {
+            toggleBookMode.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+                if (!isChecked) return;
+                tripMode = checkedId == R.id.btn_book_trip;
+                applyBookMode();
+            });
+        }
+        if (btnPickOnMap != null) {
+            btnPickOnMap.setOnClickListener(v ->
+                    mapLauncher.launch(new Intent(this, MapPickerActivity.class)));
+        }
+    }
+
+    /**
+     * Bật/tắt nút chọn hình thức đặt. Chỉ "xe có tài xế" và có đơn giá/km mới cho đặt theo chuyến.
+     */
+    private void configureBookMode(boolean driver) {
+        boolean allowTrip = driver && pricePerKm > 0;
+        if (toggleBookMode != null) {
+            toggleBookMode.setVisibility(allowTrip ? View.VISIBLE : View.GONE);
+            if (allowTrip && toggleBookMode.getCheckedButtonId() == View.NO_ID) {
+                toggleBookMode.check(R.id.btn_book_day);
+            }
+        }
+        tripMode = false;
+        applyBookMode();
+    }
+
+    /** Đổi giao diện form theo hình thức đang chọn. */
+    private void applyBookMode() {
+        if (layoutDayFields != null) layoutDayFields.setVisibility(tripMode ? View.GONE : View.VISIBLE);
+        if (layoutTripFields != null) layoutTripFields.setVisibility(tripMode ? View.VISIBLE : View.GONE);
+        if (btnSendRentRequest != null) {
+            btnSendRentRequest.setText(tripMode ? "ĐẶT CHUYẾN" : "GỬI YÊU CẦU THUÊ XE");
+        }
+        if (tripMode) updateTripSummary();
+        else updateDepositInfo();
+    }
+
+    /** Cập nhật tóm tắt chuyến + tổng tiền theo quãng đường. */
+    private void updateTripSummary() {
+        if (tvTripSummary == null) return;
+        if (tripDistanceKm <= 0 || tripPickup == null || tripDest == null) {
+            tvTripSummary.setText("Chưa chọn điểm đón/đến.");
+            return;
+        }
+        long total = Math.round(tripDistanceKm * pricePerKm);
+        tvTripSummary.setText("🟢 Đón: " + tripPickup
+                + "\n🔴 Đến: " + tripDest
+                + "\nQuãng đường: " + tripDistanceKm + " km × " + money(pricePerKm) + " đ/km"
+                + "\nTổng tiền chuyến: " + money(total) + " đ (thanh toán tiền mặt)");
+    }
+
     /** Hiển thị tổng tiền, tiền cọc cần trả qua ví và số dư hiện có. */
     private void updateDepositInfo() {
         if (tvDepositInfo == null) return;
@@ -523,6 +610,12 @@ public class CarDetailActivity extends AppCompatActivity {
                     String sName     = doc.getString("sellerName");
                     String imageUrl  = doc.getString("imageUrl");
 
+                    // Đơn giá theo ngày/km (bài đăng tài xế mới có); fallback parse từ chuỗi giá
+                    Long ppd = doc.getLong("pricePerDay");
+                    Long ppk = doc.getLong("pricePerKm");
+                    pricePerDay = ppd != null ? ppd : parseMoney(doc.getString("price"));
+                    pricePerKm  = ppk != null ? ppk : 0L;
+
                     if (type != null) carType = type;
                     String status = doc.getString("status");
                     carStatus = status != null ? status : "";
@@ -617,6 +710,7 @@ public class CarDetailActivity extends AppCompatActivity {
         if (driver || rental) {
             layoutBuyForm.setVisibility(View.GONE);
             layoutRentForm.setVisibility(View.VISIBLE);
+            configureBookMode(driver);
         } else {
             layoutBuyForm.setVisibility(View.VISIBLE);
             layoutRentForm.setVisibility(View.GONE);
@@ -803,6 +897,8 @@ public class CarDetailActivity extends AppCompatActivity {
             return;
         }
 
+        if (tripMode) { sendTripRequest(user); return; }
+
         String renterName  = etRenterName.getText().toString().trim();
         String renterPhone = etRenterPhone.getText().toString().trim();
         String renterCccd  = etRenterCCCD.getText().toString().trim();
@@ -879,6 +975,65 @@ public class CarDetailActivity extends AppCompatActivity {
                                             "Không giữ được cọc: " + msg, Toast.LENGTH_LONG).show();
                                 }
                             });
+                })
+                .addOnFailureListener(e -> {
+                    btnSendRentRequest.setEnabled(true);
+                    Toast.makeText(this, "Lỗi tạo đơn: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    /** Gửi đơn đặt "theo chuyến" (quãng đường) cho tài xế của bài đăng này. */
+    private void sendTripRequest(FirebaseUser user) {
+        String renterName  = etRenterName.getText().toString().trim();
+        String renterPhone = etRenterPhone.getText().toString().trim();
+
+        if (renterName.isEmpty() || renterPhone.isEmpty()) {
+            Toast.makeText(this, "Vui lòng nhập họ tên và số điện thoại", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (tripDistanceKm <= 0 || tripPickup == null || tripDest == null) {
+            Toast.makeText(this, "Hãy chọn điểm đón & đến trên bản đồ", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (pricePerKm <= 0) {
+            Toast.makeText(this, "Tài xế này không nhận đặt theo chuyến", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        long total = Math.round(tripDistanceKm * pricePerKm);
+        String tripNote = "Chuyến: " + tripPickup + " → " + tripDest
+                + " (" + tripDistanceKm + " km). Tổng: " + money(total) + " đ."
+                + (etRenterNote.getText().toString().trim().isEmpty()
+                    ? "" : " Ghi chú: " + etRenterNote.getText().toString().trim());
+
+        Map<String, Object> order = new HashMap<>();
+        order.put("buyerId",      user.getUid());
+        order.put("renterName",   renterName);
+        order.put("renterPhone",  renterPhone);
+        order.put("sellerId",     sellerId != null ? sellerId : "");
+        order.put("sellerName",   sellerName);
+        order.put("carId",        carId != null ? carId : "");
+        order.put("carName",      car != null ? car.getName() : "");
+        order.put("carPrice",     money(pricePerKm) + " đ/km");
+        order.put("type",         "Có tài xế");
+        order.put("rentMode",     "distance");
+        order.put("pickup",       tripPickup);
+        order.put("destination",  tripDest);
+        order.put("distanceKm",   tripDistanceKm);
+        order.put("note",         tripNote);
+        order.put("totalAmount",  total);
+        order.put("depositAmount", 0L);
+        order.put("paymentMethod", "cash");
+        order.put("depositStatus", "none");
+        order.put("status",       "pending");
+        order.put("createdAt",    com.google.firebase.Timestamp.now());
+
+        btnSendRentRequest.setEnabled(false);
+        db.collection("orders").add(order)
+                .addOnSuccessListener(ref -> {
+                    btnSendRentRequest.setEnabled(true);
+                    Toast.makeText(this, "✅ Đã gửi yêu cầu đặt chuyến! Chờ tài xế xác nhận.",
+                            Toast.LENGTH_LONG).show();
                 })
                 .addOnFailureListener(e -> {
                     btnSendRentRequest.setEnabled(true);

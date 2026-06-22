@@ -37,7 +37,6 @@ public class Trip {
     private int duration;         // Số ngày/tháng khi thuê theo ngày/tháng
 
     private double price;         // Giá cước = doanh thu của tài xế
-    private long   deposit;       // Tiền cọc đã giữ qua ví (0 nếu trả tiền mặt)
     private String note;
 
     private String status;        // waiting | running | completed | cancelled
@@ -82,9 +81,6 @@ public class Trip {
 
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
-
-    public long getDeposit() { return deposit; }
-    public void setDeposit(long deposit) { this.deposit = deposit; }
 
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }
