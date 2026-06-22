@@ -33,8 +33,8 @@ import java.util.List;
 public class AdminOverviewFragment extends Fragment {
 
     private TextView tvTotalRevenue, tvMonthRevenue, tvConfirmedCount, tvSaleRevenue, tvRentalRevenue;
-    private TextView tvPostingFeeRevenue, tvPostingCarCount;
-    private View btnViewUsers, btnViewCars;
+    private TextView tvPostingFeeRevenue, tvPostingCarCount, tvDriverPendingCount;
+    private View btnViewUsers, btnViewCars, btnViewDriverApproval;
     private BarChart barChart;
     private FirebaseFirestore db;
 
@@ -53,16 +53,19 @@ public class AdminOverviewFragment extends Fragment {
         tvConfirmedCount    = view.findViewById(R.id.tv_confirmed_count);
         tvSaleRevenue       = view.findViewById(R.id.tv_sale_revenue);
         tvRentalRevenue     = view.findViewById(R.id.tv_rental_revenue);
-        tvPostingFeeRevenue = view.findViewById(R.id.tv_posting_fee_revenue);
-        tvPostingCarCount   = view.findViewById(R.id.tv_posting_car_count);
+        tvPostingFeeRevenue  = view.findViewById(R.id.tv_posting_fee_revenue);
+        tvPostingCarCount    = view.findViewById(R.id.tv_posting_car_count);
+        tvDriverPendingCount = view.findViewById(R.id.tv_driver_pending_count);
 
-        btnViewUsers = view.findViewById(R.id.btn_view_users);
-        btnViewCars  = view.findViewById(R.id.btn_view_cars);
-        View btnViewOrders = view.findViewById(R.id.btn_view_orders);
+        btnViewUsers         = view.findViewById(R.id.btn_view_users);
+        btnViewCars          = view.findViewById(R.id.btn_view_cars);
+        btnViewDriverApproval = view.findViewById(R.id.btn_view_driver_approval);
+        View btnViewOrders   = view.findViewById(R.id.btn_view_orders);
         barChart = view.findViewById(R.id.bar_chart_revenue);
 
         setupChart();
         loadRevenue();
+        loadDriverPendingCount();
 
         view.findViewById(R.id.tv_view_revenue_detail).setOnClickListener(v ->
                 startActivity(new Intent(getActivity(), AdminRevenueDetailActivity.class)));
@@ -70,6 +73,7 @@ public class AdminOverviewFragment extends Fragment {
         btnViewUsers.setOnClickListener(v -> navigate(R.id.nav_admin_users));
         btnViewCars.setOnClickListener(v -> navigate(R.id.nav_admin_cars));
         btnViewOrders.setOnClickListener(v -> navigate(R.id.nav_admin_orders));
+        btnViewDriverApproval.setOnClickListener(v -> navigate(R.id.nav_admin_driver_approval));
 
         return view;
     }
@@ -206,6 +210,20 @@ public class AdminOverviewFragment extends Fragment {
         barChart.getAxisRight().setEnabled(false);
 
         loadChartData();
+    }
+
+    private void loadDriverPendingCount() {
+        db.collection("users").whereEqualTo("driverStatus", "pending").get()
+                .addOnSuccessListener(snap -> {
+                    if (!isAdded() || tvDriverPendingCount == null) return;
+                    int count = snap.size();
+                    if (count == 0) {
+                        tvDriverPendingCount.setText("Không có hồ sơ đang chờ");
+                    } else {
+                        tvDriverPendingCount.setText(count + " hồ sơ đang chờ duyệt");
+                        tvDriverPendingCount.setTextColor(0xFFC62828);
+                    }
+                });
     }
 
     private void loadChartData() {

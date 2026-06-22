@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.doanmb.R;
 import com.example.doanmb.ui.fragment.AdminCarsFragment;
+import com.example.doanmb.ui.fragment.AdminDriverApprovalFragment;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.example.doanmb.ui.fragment.AdminOrdersFragment;
 import com.example.doanmb.ui.fragment.AdminOverviewFragment;
@@ -54,6 +55,10 @@ public class AdminDashboardActivity extends AppCompatActivity implements AdminOv
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
+                if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                    getSupportFragmentManager().popBackStack();
+                    return;
+                }
                 if (bottomNav.getSelectedItemId() != R.id.nav_admin_overview) {
                     bottomNav.setSelectedItemId(R.id.nav_admin_overview);
                 } else {
@@ -92,17 +97,22 @@ public class AdminDashboardActivity extends AppCompatActivity implements AdminOv
             fragment = new AdminReportsFragment();
         } else if (itemId == R.id.nav_admin_profile) {
             fragment = new AdminProfileFragment();
+        } else if (itemId == R.id.nav_admin_driver_approval) {
+            fragment = new AdminDriverApprovalFragment();
         } else {
             fragment = new AdminOverviewFragment();
         }
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.admin_fragment_container, fragment)
-                .commit();
+
+        boolean addToBackStack = (itemId == R.id.nav_admin_driver_approval);
+        androidx.fragment.app.FragmentTransaction tx = getSupportFragmentManager().beginTransaction()
+                .replace(R.id.admin_fragment_container, fragment);
+        if (addToBackStack) tx.addToBackStack(null);
+        tx.commit();
     }
 
     @Override
     public void navigateTo(int itemId) {
-        bottomNav.setSelectedItemId(itemId);
+        switchFragment(itemId);
     }
 
     private void logout() {

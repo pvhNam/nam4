@@ -1,5 +1,7 @@
 package com.example.doanmb.model;
 
+import com.google.firebase.Timestamp;
+
 public class User {
     private String uid;
     private String name;
@@ -16,6 +18,7 @@ public class User {
     private String licenseImageUrl;// Ảnh bằng lái (Cloudinary)
     private String driverCarType;  // Loại xe tài xế có thể lái, vd "4 chỗ"
     private boolean driverOnline;  // Tài xế đang online hay offline
+    private Timestamp appliedAt;   // Thời điểm gửi đăng ký tài xế
 
     // ----- Ví trong app -----
     private double balance;        // Số dư ví (VNĐ). Mặc định 0 nếu Firestore thiếu field.
@@ -49,6 +52,8 @@ public class User {
     public void setDriverCarType(String driverCarType) { this.driverCarType = driverCarType; }
     public boolean isDriverOnline() { return driverOnline; }
     public void setDriverOnline(boolean driverOnline) { this.driverOnline = driverOnline; }
+    public Timestamp getAppliedAt() { return appliedAt; }
+    public void setAppliedAt(Timestamp appliedAt) { this.appliedAt = appliedAt; }
 
     public double getBalance() { return balance; }
     public void setBalance(double balance) { this.balance = balance; }

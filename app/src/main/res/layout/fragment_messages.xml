@@ -295,29 +295,30 @@
 
                 </LinearLayout>
 
-                <LinearLayout
+                <FrameLayout
                     android:id="@+id/layout_notification_tab_content"
                     android:layout_width="match_parent"
-                    android:layout_height="300dp"
-                    android:gravity="center"
-                    android:orientation="vertical"
+                    android:layout_height="wrap_content"
                     android:visibility="gone"
                     android:background="#FFFFFF">
 
-                    <ImageView
-                        android:layout_width="150dp"
-                        android:layout_height="150dp"
-                        android:src="@drawable/ic_nav_message"
-                        android:alpha="0.3" />
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rv_notifications"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="200dp" />
 
                     <TextView
+                        android:id="@+id/tv_notif_empty"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
+                        android:layout_gravity="center"
+                        android:layout_marginTop="60dp"
                         android:text="Chưa có thông báo nào"
                         android:textColor="#9CA3AF"
-                        android:textSize="15sp" />
-                </LinearLayout>
+                        android:textSize="15sp"
+                        android:visibility="gone" />
+                </FrameLayout>
 
             </FrameLayout>
         </androidx.core.widget.NestedScrollView>

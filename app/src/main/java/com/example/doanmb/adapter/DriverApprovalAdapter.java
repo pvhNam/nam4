@@ -3,20 +3,18 @@ package com.example.doanmb.adapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.example.doanmb.R;
 import com.example.doanmb.model.User;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 
-/** Danh sách hồ sơ tài xế chờ duyệt cho Admin/Staff. */
 public class DriverApprovalAdapter extends RecyclerView.Adapter<DriverApprovalAdapter.VH> {
 
     public interface OnDecisionListener {
@@ -24,12 +22,24 @@ public class DriverApprovalAdapter extends RecyclerView.Adapter<DriverApprovalAd
         void onReject(User u);
     }
 
-    private final List<User> pending;
-    private final OnDecisionListener listener;
+    public interface OnItemClickListener {
+        void onClick(User u);
+    }
 
-    public DriverApprovalAdapter(List<User> pending, OnDecisionListener listener) {
+    private final List<User> pending;
+    private final OnDecisionListener decisionListener;
+    private OnItemClickListener clickListener;
+
+    private static final SimpleDateFormat SDF =
+            new SimpleDateFormat("HH:mm  dd/MM/yyyy", Locale.getDefault());
+
+    public DriverApprovalAdapter(List<User> pending, OnDecisionListener decisionListener) {
         this.pending = pending;
-        this.listener = listener;
+        this.decisionListener = decisionListener;
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.clickListener = listener;
     }
 
     @NonNull
@@ -43,43 +53,28 @@ public class DriverApprovalAdapter extends RecyclerView.Adapter<DriverApprovalAd
     public void onBindViewHolder(@NonNull VH h, int position) {
         User u = pending.get(position);
         h.tvName.setText(u.getName() != null ? u.getName() : "(không tên)");
-        h.tvInfo.setText("CCCD: " + safe(u.getCccd())
-                + "\nGPLX: " + safe(u.getLicenseNumber())
-                + "\nLoại xe: " + safe(u.getDriverCarType()));
 
-        loadImg(h.ivCccd, u.getCccdImageUrl());
-        loadImg(h.ivLicense, u.getLicenseImageUrl());
-
-        h.btnApprove.setOnClickListener(v -> { if (listener != null) listener.onApprove(u); });
-        h.btnReject.setOnClickListener(v -> { if (listener != null) listener.onReject(u); });
-    }
-
-    private void loadImg(ImageView iv, String url) {
-        if (url != null && !url.isEmpty()) {
-            Glide.with(iv.getContext()).load(url).into(iv);
+        if (u.getAppliedAt() != null) {
+            h.tvAppliedAt.setText("Gửi lúc: " + SDF.format(u.getAppliedAt().toDate()));
         } else {
-            iv.setImageResource(android.R.drawable.ic_menu_report_image);
+            h.tvAppliedAt.setText("Gửi lúc: --");
         }
-    }
 
-    private String safe(String s) { return s != null && !s.isEmpty() ? s : "--"; }
+        h.itemView.setOnClickListener(v -> {
+            if (clickListener != null) clickListener.onClick(u);
+        });
+    }
 
     @Override
     public int getItemCount() { return pending.size(); }
 
     static class VH extends RecyclerView.ViewHolder {
-        TextView tvName, tvInfo;
-        ImageView ivCccd, ivLicense;
-        Button btnApprove, btnReject;
+        TextView tvName, tvAppliedAt;
 
         VH(@NonNull View v) {
             super(v);
-            tvName = v.findViewById(R.id.tv_dp_name);
-            tvInfo = v.findViewById(R.id.tv_dp_info);
-            ivCccd = v.findViewById(R.id.iv_dp_cccd);
-            ivLicense = v.findViewById(R.id.iv_dp_license);
-            btnApprove = v.findViewById(R.id.btn_dp_approve);
-            btnReject = v.findViewById(R.id.btn_dp_reject);
+            tvName      = v.findViewById(R.id.tv_dp_name);
+            tvAppliedAt = v.findViewById(R.id.tv_dp_applied_at);
         }
     }
 }
