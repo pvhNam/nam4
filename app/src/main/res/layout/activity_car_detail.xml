@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/color_background">
@@ -206,6 +207,33 @@
                     android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="vertical" android:visibility="gone">
 
+                    <!-- Chọn hình thức đặt (chỉ hiện với xe có tài xế) -->
+                    <com.google.android.material.button.MaterialButtonToggleGroup
+                        android:id="@+id/toggle_book_mode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="14dp"
+                        android:visibility="gone"
+                        app:selectionRequired="true"
+                        app:singleSelection="true">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_book_day"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="46dp"
+                            android:layout_weight="1"
+                            android:text="Theo ngày" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_book_trip"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="46dp"
+                            android:layout_weight="1"
+                            android:text="Theo chuyến" />
+                    </com.google.android.material.button.MaterialButtonToggleGroup>
+
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="Thông tin người thuê" android:textColor="@color/color_on_surface" android:textSize="15sp"
                         android:textStyle="bold" android:layout_marginBottom="12dp"/>
@@ -232,19 +260,48 @@
                         android:padding="10dp" android:hint="Nhập số CCCD 12 số"
                         android:inputType="number" android:maxLength="12"/>
 
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="Ngày bắt đầu thuê *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
-                    <EditText android:id="@+id/etRentStartDate"
-                        android:layout_width="match_parent" android:layout_height="50dp"
-                        android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
-                        android:padding="10dp" android:hint="Ví dụ: 20/05/2026"/>
+                    <!-- ===== Nhóm field THEO NGÀY ===== -->
+                    <LinearLayout android:id="@+id/layout_day_fields"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="vertical">
 
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="Số ngày thuê *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
-                    <EditText android:id="@+id/etRentDays"
-                        android:layout_width="match_parent" android:layout_height="50dp"
-                        android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
-                        android:padding="10dp" android:hint="Nhập số ngày muốn thuê" android:inputType="number"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Ngày bắt đầu thuê *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
+                        <EditText android:id="@+id/etRentStartDate"
+                            android:layout_width="match_parent" android:layout_height="50dp"
+                            android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
+                            android:padding="10dp" android:hint="Ví dụ: 20/05/2026"/>
+
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Số ngày thuê *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
+                        <EditText android:id="@+id/etRentDays"
+                            android:layout_width="match_parent" android:layout_height="50dp"
+                            android:layout_marginBottom="12dp" android:background="@drawable/bg_search"
+                            android:padding="10dp" android:hint="Nhập số ngày muốn thuê" android:inputType="number"/>
+                    </LinearLayout>
+
+                    <!-- ===== Nhóm field THEO CHUYẾN ===== -->
+                    <LinearLayout android:id="@+id/layout_trip_fields"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="vertical" android:visibility="gone">
+
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Điểm đón &amp; điểm đến *" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>
+
+                        <Button android:id="@+id/btnPickOnMap"
+                            android:layout_width="match_parent" android:layout_height="50dp"
+                            android:layout_marginBottom="8dp"
+                            android:text="🗺  Chọn điểm trên bản đồ"
+                            android:textColor="#1976D2" android:backgroundTint="#E3F2FD"
+                            android:textSize="14sp" android:textStyle="bold"/>
+
+                        <TextView android:id="@+id/tvTripSummary"
+                            android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:background="@drawable/bg_info_card" android:padding="12dp"
+                            android:layout_marginBottom="12dp" android:textSize="13sp"
+                            android:textColor="@color/color_on_surface" android:lineSpacingExtra="4dp"
+                            android:text="Chưa chọn điểm đón/đến."/>
+                    </LinearLayout>
 
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="Ghi chú thêm" android:textColor="@color/color_on_surface_secondary" android:textSize="13sp" android:layout_marginBottom="4dp"/>

@@ -219,10 +219,6 @@ public class DriverTripsFragment extends Fragment implements TripAdapter.OnTripA
         db.collection("trips").document(trip.getId())
                 .update("status", Trip.STATUS_COMPLETED, "completedAt", Timestamp.now())
                 .addOnSuccessListener(x -> {
-                    // Đơn có giữ cọc qua ví: trả phần còn lại của cọc về ví tài xế, app giữ hoa hồng
-                    if (trip.getDeposit() > 0) {
-                        com.example.doanmb.util.WalletHelper.settle(uid, trip.getDeposit(), trip.getId(), null);
-                    }
                     if (!isAdded()) return;
                     Toast.makeText(getContext(), "✅ Đã hoàn thành chuyến!", Toast.LENGTH_SHORT).show();
                     loadTrips();

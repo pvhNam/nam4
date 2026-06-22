@@ -39,7 +39,7 @@ import java.util.Map;
 public class DriverPostFragment extends Fragment {
 
     private RadioGroup rgPostType;
-    private EditText etTitle, etCarType, etPrice, etLocation, etInfo;
+    private EditText etTitle, etCarType, etPrice, etPriceKm, etLocation, etInfo;
     private View scrollPreviews;
     private LinearLayout layoutPreviews;
     private Button btnPickImage, btnSubmit;
@@ -68,6 +68,7 @@ public class DriverPostFragment extends Fragment {
         etTitle = view.findViewById(R.id.et_post_title);
         etCarType = view.findViewById(R.id.et_post_cartype);
         etPrice = view.findViewById(R.id.et_post_price);
+        etPriceKm = view.findViewById(R.id.et_post_price_km);
         etLocation = view.findViewById(R.id.et_post_location);
         etInfo = view.findViewById(R.id.et_post_info);
         scrollPreviews = view.findViewById(R.id.scroll_post_previews);
@@ -170,9 +171,17 @@ public class DriverPostFragment extends Fragment {
         String location = etLocation.getText().toString().trim();
         String desc = etInfo.getText().toString().trim();
 
+        // Giá theo ngày (bắt buộc) + giá theo km (tuỳ chọn, cho đặt theo chuyến)
+        long pricePerDay = parseMoney(price);
+        long pricePerKm  = parseMoney(etPriceKm.getText().toString());
+        // Chuỗi giá hiển thị ngoài danh sách
+        String priceDisplay = formatMoney(pricePerDay) + " đ/ngày"
+                + (pricePerKm > 0 ? "  ·  " + formatMoney(pricePerKm) + " đ/km" : "");
+
         String info = (withCar ? "Xe có tài xế" : "Lái thuê")
                 + (carType.isEmpty() ? "" : " • " + carType)
                 + (location.isEmpty() ? "" : " • " + location)
+                + (pricePerKm > 0 ? "\nNhận đặt theo chuyến: " + formatMoney(pricePerKm) + " đ/km" : "")
                 + (desc.isEmpty() ? "" : "\n" + desc);
 
         db.collection("users").document(uid).get()
@@ -186,7 +195,9 @@ public class DriverPostFragment extends Fragment {
 
                     Map<String, Object> post = new HashMap<>();
                     post.put("name", title);
-                    post.put("price", price + " đ/ngày");
+                    post.put("price", priceDisplay);
+                    post.put("pricePerDay", pricePerDay);
+                    post.put("pricePerKm", pricePerKm);
                     post.put("info", info);
                     post.put("type", withCar ? "driver" : "driver_only");
                     post.put("brand", "");
@@ -219,9 +230,22 @@ public class DriverPostFragment extends Fragment {
                 });
     }
 
+    /** Lấy số tiền từ chuỗi nhập (bỏ mọi ký tự không phải số). */
+    private static long parseMoney(String s) {
+        if (s == null) return 0;
+        String d = s.replaceAll("[^0-9]", "");
+        if (d.isEmpty()) return 0;
+        try { return Long.parseLong(d); } catch (NumberFormatException e) { return 0; }
+    }
+
+    private static String formatMoney(long amount) {
+        return java.text.NumberFormat.getInstance(new java.util.Locale("vi", "VN")).format(amount);
+    }
+
     private void clearForm() {
         etTitle.setText("");
         etPrice.setText("");
+        etPriceKm.setText("");
         etLocation.setText("");
         etInfo.setText("");
         selectedImages.clear();

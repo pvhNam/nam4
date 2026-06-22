@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_driver_header"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingTop="16dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="18dp">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/iv_dh_avatar"
+        android:layout_width="46dp"
+        android:layout_height="46dp"
+        android:src="@drawable/ic_driver_avatar_placeholder"
+        app:civ_border_color="#80FFFFFF"
+        app:civ_border_width="2dp" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Xin chào,"
+            android:textColor="#D6E2FF"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tv_dh_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tài xế"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_dh_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_pill_round"
+            android:backgroundTint="#33FFFFFF"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="2dp"
+            android:text="● Đang online"
+            android:textColor="#FFFFFF"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="40dp"
+        android:layout_height="40dp">
+
+        <ImageView
+            android:id="@+id/btn_dh_bell"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_bell"
+            app:tint="#FFFFFF" />
+
+        <View
+            android:layout_width="9dp"
+            android:layout_height="9dp"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="6dp"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_dot"
+            android:backgroundTint="#FF5252" />
+    </FrameLayout>
+</LinearLayout>

@@ -4,6 +4,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:name="com.example.doanmb.MyApplication"
@@ -16,6 +18,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.DOANMB">
+
+        <!-- Google Maps API key (lấy từ local.properties → MAPS_API_KEY) -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
 
         <activity
             android:name="com.example.doanmb.ui.activity.SplashActivity"
@@ -34,9 +41,8 @@
 
         <activity android:name="com.example.doanmb.ui.activity.CarDetailActivity" android:exported="false" />
         <activity
-            android:name="com.example.doanmb.ui.activity.BookDriverActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
+            android:name="com.example.doanmb.ui.activity.MapPickerActivity"
+            android:exported="false" />
         <activity android:name="com.example.doanmb.ui.activity.FavoriteCarsActivity" android:exported="false" />
         <activity android:name="com.example.doanmb.ui.activity.LoginActivity" />
         <activity android:name="com.example.doanmb.ui.activity.RegisterActivity" />
