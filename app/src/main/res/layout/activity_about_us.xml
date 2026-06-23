@@ -102,7 +102,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:lineSpacingExtra="4dp"
-                android:text="CARVIA là nền tảng hỗ trợ đăng bán xe, cho thuê xe và đăng ký trở thành tài xế, được phát triển nhằm kết nối chủ xe, tài xế và khách hàng trên cùng một hệ thống. Ứng dụng mang đến trải nghiệm nhanh chóng, thuận tiện, minh bạch và an toàn trong việc tìm kiếm, giao dịch và quản lý phương tiện."
+                android:text="CARVIA là nền tảng hỗ trợ đăng bán xe, cho thuê xe và đăng ký làm tài xế, được phát triển nhằm kết nối chủ xe, tài xế và khách hàng trên cùng một hệ thống. Ứng dụng mang đến trải nghiệm nhanh chóng, thuận tiện, minh bạch và an toàn trong việc tìm kiếm, giao dịch và quản lý phương tiện."
                 android:textColor="#444444"
                 android:textSize="15sp"/>
 
