@@ -1,6 +1,7 @@
 package com.example.doanmb.model;
 
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.PropertyName;
 
 public class User {
     private String uid;
@@ -17,6 +18,7 @@ public class User {
     private String cccdImageUrl;   // Ảnh CCCD (Cloudinary)
     private String licenseImageUrl;// Ảnh bằng lái (Cloudinary)
     private String driverCarType;  // Loại xe tài xế có thể lái, vd "4 chỗ"
+    private boolean isDriver;      // true nếu user đã được duyệt làm tài xế
     private boolean driverOnline;  // Tài xế đang online hay offline
     private Timestamp appliedAt;   // Thời điểm gửi đăng ký tài xế
 
@@ -50,6 +52,10 @@ public class User {
     public void setLicenseImageUrl(String licenseImageUrl) { this.licenseImageUrl = licenseImageUrl; }
     public String getDriverCarType() { return driverCarType; }
     public void setDriverCarType(String driverCarType) { this.driverCarType = driverCarType; }
+    @PropertyName("isDriver")
+    public boolean isDriver() { return isDriver; }
+    @PropertyName("isDriver")
+    public void setDriver(boolean isDriver) { this.isDriver = isDriver; }
     public boolean isDriverOnline() { return driverOnline; }
     public void setDriverOnline(boolean driverOnline) { this.driverOnline = driverOnline; }
     public Timestamp getAppliedAt() { return appliedAt; }
