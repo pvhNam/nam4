@@ -33,7 +33,9 @@ import com.example.doanmb.adapter.ChatAdapter;
 import com.example.doanmb.adapter.MediaPickerAdapter;
 import com.example.doanmb.model.Car;
 import com.example.doanmb.model.ChatMessage;
+import com.example.doanmb.util.ChatNotificationHelper;
 import com.example.doanmb.util.CloudinaryHelper;
+import android.os.Build;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
@@ -41,6 +43,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.WriteBatch;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.example.doanmb.service.CarviaMessagingService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -138,6 +142,56 @@ public class ChatDetailActivity extends AppCompatActivity {
         listenForMessages();
         updateReadStatus();
         listenForBlockStatus(); // thay checkBlockStatus cũ
+
+        // ── Lưu FCM token (đảm bảo token mới nhất được lưu lên Firestore) ──
+        refreshFcmToken();
+
+        // ── Xin quyền POST_NOTIFICATIONS (Android 13+) ───────────────────
+        requestNotificationPermission();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  FCM token + notification permission
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /** Launcher xin quyền POST_NOTIFICATIONS – phải khai báo trước onCreate */
+    private final androidx.activity.result.ActivityResultLauncher<String>
+            notificationPermissionLauncher = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(),
+            granted -> {
+                if (!granted) {
+                    Toast.makeText(this,
+                            "Cần bật thông báo để nhận tin nhắn mới",
+                            Toast.LENGTH_LONG).show();
+                }
+            });
+
+    /**
+     * Lấy FCM token hiện tại và lưu vào Firestore.
+     * Gọi mỗi lần vào ChatDetailActivity để đảm bảo token không lỗi thời.
+     */
+    private void refreshFcmToken() {
+        FirebaseMessaging.getInstance().getToken()
+                .addOnSuccessListener(token -> {
+                    android.util.Log.d("ChatDetail", "FCM token: " + token);
+                    CarviaMessagingService.saveFcmToken(this, token);
+                })
+                .addOnFailureListener(e ->
+                        android.util.Log.w("ChatDetail", "Lấy FCM token thất bại", e));
+    }
+
+    /**
+     * Xin runtime permission POST_NOTIFICATIONS cho Android 13+.
+     */
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this,
+                    android.Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                notificationPermissionLauncher.launch(
+                        android.Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -779,6 +833,32 @@ public class ChatDetailActivity extends AppCompatActivity {
                     db.collection("chat_rooms").document(roomId)
                             .update("lastMessage", last,
                                     "lastTimestamp", FieldValue.serverTimestamp());
+
+                    // ── Gửi thông báo cho người nhận ──────────────────────────
+                    String cName = (carData != null && carData.getName() != null)
+                            ? carData.getName() : "";
+                    String cType = (carData != null && carData.getType() != null)
+                            ? carData.getType() : "sale";
+                    String preview = last != null ? last : "";
+                    db.collection("users").document(currentUserId).get()
+                            .addOnSuccessListener(senderDoc -> {
+                                String sName = senderDoc.exists()
+                                        ? senderDoc.getString("name") : "";
+                                if (sName == null) sName = "";
+
+                                // ✅ partnerId = người nhận, currentUserId = người gửi
+                                // → chỉ người nhận mới có thông báo, người gửi không bao giờ tự nhận thông báo của mình
+                                ChatNotificationHelper.sendChatNotification(
+                                        ChatDetailActivity.this,  // context để đọc service-account.json
+                                        partnerId,                // người NHẬN thông báo
+                                        currentUserId,            // người GỬI tin nhắn
+                                        sName,
+                                        cName,
+                                        cType,
+                                        preview,
+                                        roomId
+                                );
+                            });
                 });
     }
 

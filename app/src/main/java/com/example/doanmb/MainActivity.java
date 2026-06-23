@@ -49,6 +49,12 @@ import java.util.Deque;
 import java.util.List;
 import com.cloudinary.android.MediaManager;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView rvFeaturedSales, rvRentalCars, rvBanners;
@@ -96,6 +102,8 @@ public class MainActivity extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
 
+        requestNotificationPermission();
+
         initViews();
         setupBanners();
         loadUserGreeting();
@@ -106,6 +114,17 @@ public class MainActivity extends AppCompatActivity {
         setupSwipeRefresh();
         setupQuickActions();
         setupBackNavigation();
+    }
+
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // API 33+
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        1001);
+            }
+        }
     }
 
     @Override

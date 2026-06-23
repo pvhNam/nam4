@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Sửa 3 lỗi:
+  1. Frame bo góc cố định (không cuộn theo nội dung) → dùng layout_height="0dp" + weight
+  2. NestedScrollView nằm BÊN TRONG khung → khung đứng yên, nội dung cuộn trong đó
+  3. Thông báo mới nhất lên đầu → xử lý ở Java (orderBy createdAt DESC)
+-->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -7,6 +13,7 @@
     android:orientation="vertical"
     android:background="#F5F7FA">
 
+    <!-- ── HEADER (cố định, không cuộn) ── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -120,7 +127,8 @@
                             android:layout_width="28dp"
                             android:layout_height="28dp"
                             android:layout_gravity="center"
-                            android:src="@drawable/ic_nav_message" app:tint="#2F54D4" />
+                            android:src="@drawable/ic_nav_message"
+                            app:tint="#2F54D4" />
                     </FrameLayout>
 
                     <TextView
@@ -167,7 +175,8 @@
                             android:layout_height="28dp"
                             android:layout_gravity="center"
                             android:src="@drawable/ic_notification"
-                            app:tint="#2F54D4" /> </FrameLayout>
+                            app:tint="#2F54D4" />
+                    </FrameLayout>
 
                     <TextView
                         android:id="@+id/tv_tab_notification"
@@ -180,31 +189,41 @@
                         android:textStyle="bold" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-
         </LinearLayout>
     </LinearLayout>
 
+    <!--
+      ── KHUNG NỘI DUNG CỐ ĐỊNH (bo góc, không cuộn theo header) ──
+      layout_height="0dp" + layout_weight="1" → chiếm hết phần còn lại,
+      marginTop="-40dp" chồng lên header tạo hiệu ứng, bo góc LUÔN hiển thị
+    -->
     <LinearLayout
         android:id="@+id/layout_msg_content_panel"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:layout_marginStart="12dp"
         android:layout_marginEnd="12dp"
         android:layout_marginTop="-40dp"
         android:background="@drawable/bg_category_content_panel"
+        android:clipToOutline="true"
         android:orientation="vertical">
 
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
+            android:clipChildren="false"
             android:paddingBottom="100dp">
 
             <FrameLayout
                 android:id="@+id/frame_msg_content"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:paddingTop="16dp">
 
+                <!-- Tab Trò chuyện -->
                 <LinearLayout
                     android:id="@+id/layout_chat_tab_content"
                     android:layout_width="match_parent"
@@ -292,9 +311,9 @@
                             android:textColor="#9CA3AF"
                             android:textSize="14sp"/>
                     </LinearLayout>
-
                 </LinearLayout>
 
+                <!-- Tab Thông báo -->
                 <FrameLayout
                     android:id="@+id/layout_notification_tab_content"
                     android:layout_width="match_parent"
