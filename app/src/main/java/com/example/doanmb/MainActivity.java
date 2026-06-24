@@ -54,7 +54,16 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
-import com.cloudinary.android.MediaManager;
+import com.example.doanmb.service.CarviaMessagingService;
+import com.example.doanmb.util.ChatNotificationHelper;
+import com.google.firebase.messaging.FirebaseMessaging;
+
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -99,10 +108,22 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         db = FirebaseFirestore.getInstance();
+
+        requestNotificationPermission();
+
+        // Warm up FCM access token ngay khi mở app → tránh delay lần đầu gửi notification
+        ChatNotificationHelper.warmUpAccessToken(this);
+
+        // Cập nhật FCM token lên Firestore ngay khi mở app
+        // → đảm bảo token luôn mới nhất, không cần chờ vào ChatDetailActivity
+        FirebaseMessaging.getInstance().getToken().addOnSuccessListener(token -> {
+            if (token != null) CarviaMessagingService.saveFcmToken(this, token);
+        });
 
         initViews();
         setupBanners();
@@ -142,6 +163,17 @@ public class MainActivity extends AppCompatActivity {
             v.setLayoutParams(lp);
             return insets;
         });
+    }
+
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // API 33+
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        1001);
+            }
+        }
     }
 
     @Override

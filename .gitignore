@@ -13,3 +13,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+service-account.json
+app/src/main/assets/service-account.json

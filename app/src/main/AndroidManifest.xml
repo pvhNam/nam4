@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:name="com.example.doanmb.MyApplication"
         android:allowBackup="true"
@@ -19,11 +21,29 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DOANMB">
 
-        <!-- Google Maps API key (lấy từ local.properties → MAPS_API_KEY) -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
 
+        <service
+            android:name=".service.CarviaMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="carvia_chat" />
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher" />
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/colorPrimary" />
         <activity
             android:name="com.example.doanmb.ui.activity.SplashActivity"
             android:exported="true"
@@ -40,9 +60,7 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity android:name="com.example.doanmb.ui.activity.CarDetailActivity" android:exported="false" />
-        <activity
-            android:name="com.example.doanmb.ui.activity.MapPickerActivity"
-            android:exported="false" />
+        <activity android:name="com.example.doanmb.ui.activity.MapPickerActivity" android:exported="false" />
         <activity android:name="com.example.doanmb.ui.activity.FavoriteCarsActivity" android:exported="false" />
         <activity android:name="com.example.doanmb.ui.activity.LoginActivity" />
         <activity android:name="com.example.doanmb.ui.activity.RegisterActivity" />
@@ -58,14 +76,18 @@
         <activity
             android:name="com.example.doanmb.ui.activity.ChatDetailActivity"
             android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".ui.activity.FullscreenImageActivity"
-               android:screenOrientation="fullSensor"
-               android:theme="@style/Theme.MaterialComponents.NoActionBar" />
 
-           <activity android:name=".ui.activity.VideoPlayerActivity"
-               android:screenOrientation="fullSensor"
-               android:configChanges="orientation|screenSize"
-               android:theme="@style/Theme.MaterialComponents.NoActionBar" />
+        <activity
+            android:name=".ui.activity.FullscreenImageActivity"
+            android:screenOrientation="fullSensor"
+            android:theme="@style/Theme.MaterialComponents.NoActionBar" />
+
+        <activity
+            android:name=".ui.activity.VideoPlayerActivity"
+            android:screenOrientation="fullSensor"
+            android:configChanges="orientation|screenSize"
+            android:theme="@style/Theme.MaterialComponents.NoActionBar" />
+
         <activity
             android:name=".ui.activity.FullscreenMediaActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar"

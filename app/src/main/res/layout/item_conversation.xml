@@ -79,10 +79,15 @@
                 android:ellipsize="end"/>
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvConvStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"/>
+        <!-- Chấm xanh chưa đọc (giống Messenger) -->
+        <View
+            android:id="@+id/viewConvUnreadDot"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/bg_dot"
+            android:backgroundTint="#0084FF"
+            android:visibility="gone" />
+
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

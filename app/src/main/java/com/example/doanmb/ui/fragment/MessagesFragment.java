@@ -18,6 +18,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.cardview.widget.CardView;
 
 import com.bumptech.glide.Glide;
 import com.example.doanmb.util.ImageLoader;
@@ -33,17 +34,14 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import androidx.transition.AutoTransition;
-import androidx.transition.TransitionManager;
-import androidx.transition.TransitionSet;
-import androidx.transition.Slide;
-import android.view.Gravity;
 import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class MessagesFragment extends Fragment {
@@ -56,6 +54,7 @@ public class MessagesFragment extends Fragment {
 
     private FirebaseFirestore db;
     private ListenerRegistration listener;
+    private ListenerRegistration notifListener; // Lắng nghe thông báo real-time
     private ConversationAdapter adapter;
     private ShortcutAdapter shortcutAdapter;
 
@@ -170,12 +169,6 @@ public class MessagesFragment extends Fragment {
         });
     }
 
-    /**
-     * Tìm kiếm đa năng:
-     * 1. Lọc hội thoại theo tên xe hoặc tên đối phương (instant, local)
-     * 2. Tìm trong nội dung tin nhắn của từng phòng chat (Firestore query)
-     * Kết quả 2 loại gộp lại không trùng, hiển thị cùng một danh sách.
-     */
     private void searchEverything(String query) {
         String lower = query.toLowerCase();
 
@@ -190,12 +183,10 @@ public class MessagesFragment extends Fragment {
         }
 
         // ── Bước 2: tìm trong nội dung tin nhắn Firestore ─────────────────
-        // Chạy song song cho tất cả roomId
         messageSearchResults.clear();
         isSearchingMessages = true;
 
         if (convList.isEmpty()) {
-            // Chưa có hội thoại nào → chỉ hiện kết quả tên
             mergeAndShow(nameMatches);
             return;
         }
@@ -213,24 +204,19 @@ public class MessagesFragment extends Fragment {
             db.collection("chat_rooms").document(roomId)
                     .collection("messages")
                     .orderBy("timestamp", Query.Direction.DESCENDING)
-                    .limit(200) // giới hạn để không quá nặng
+                    .limit(200)
                     .get()
                     .addOnSuccessListener(snapshots -> {
                         if (!isAdded()) return;
                         for (QueryDocumentSnapshot doc : snapshots) {
-                            // Bỏ qua tin bị thu hồi
                             Boolean recalled = doc.getBoolean("recalled");
                             if (Boolean.TRUE.equals(recalled)) continue;
 
                             String content = doc.getString("content");
                             if (content != null && content.toLowerCase().contains(lower)) {
-                                // Tìm thấy tin nhắn khớp trong phòng này
-                                // Thêm conv vào kết quả nếu chưa có (tránh trùng)
                                 Map<String, Object> resultItem = new HashMap<>(conv);
-                                // Gắn đoạn tin nhắn khớp để hiển thị preview
                                 resultItem.put("matchedMessage", content);
                                 synchronized (msgMatches) {
-                                    // Kiểm tra trùng roomId
                                     boolean alreadyAdded = false;
                                     for (Map<String, Object> m : msgMatches) {
                                         if (roomId.equals(m.get("roomId"))) {
@@ -240,7 +226,7 @@ public class MessagesFragment extends Fragment {
                                     }
                                     if (!alreadyAdded) msgMatches.add(resultItem);
                                 }
-                                break; // chỉ cần 1 tin khớp mỗi phòng
+                                break;
                             }
                         }
                         decrementAndMerge(remaining, nameMatches, msgMatches);
@@ -262,7 +248,6 @@ public class MessagesFragment extends Fragment {
         }
     }
 
-    /** Gộp kết quả tên + kết quả tin nhắn (không trùng roomId) rồi hiển thị */
     private void mergeAndShow(List<Map<String, Object>> nameMatches,
                               List<Map<String, Object>> msgMatches) {
         List<Map<String, Object>> merged = new ArrayList<>(nameMatches);
@@ -277,7 +262,6 @@ public class MessagesFragment extends Fragment {
         showFiltered(merged, etSearch.getText().toString().trim());
     }
 
-    /** Overload cho khi chỉ có nameMatches (convList rỗng) */
     private void mergeAndShow(List<Map<String, Object>> nameMatches) {
         showFiltered(nameMatches, etSearch.getText().toString().trim());
     }
@@ -357,12 +341,16 @@ public class MessagesFragment extends Fragment {
                     for (QueryDocumentSnapshot doc : snapshots) {
                         Map<String, Object> data = new HashMap<>(doc.getData());
                         data.put("roomId", doc.getId());
+                        android.util.Log.d("SNAPSHOT_DEBUG",
+                                "RAW doc=" + doc.getId() +
+                                        " unreadBy='" + doc.getString("unreadBy") + "'" +
+                                        " lastMsg='" + doc.getString("lastMessage") + "'");
 
                         String buyerId   = (String) data.get("buyerId");
                         String sellerId  = (String) data.get("sellerId");
                         String partnerId = uid.equals(buyerId) ? sellerId : buyerId;
                         data.put("partnerId", partnerId);
-                        // Load tên + avatar đối phương
+
                         if (partnerId != null) {
                             db.collection("users").document(partnerId)
                                     .get().addOnSuccessListener(userDoc -> {
@@ -379,7 +367,6 @@ public class MessagesFragment extends Fragment {
                                                 shortcutAdapter.notifyDataSetChanged();
                                             }
 
-                                            // Nếu đang tìm kiếm thì re-run search
                                             String q = etSearch != null
                                                     ? etSearch.getText().toString().trim() : "";
                                             if (!q.isEmpty()) {
@@ -394,7 +381,6 @@ public class MessagesFragment extends Fragment {
                         convList.add(data);
                     }
 
-                    // Hiển thị ngay với dữ liệu hiện có
                     String q = etSearch != null ? etSearch.getText().toString().trim() : "";
                     if (q.isEmpty()) showAllConversations();
                     else searchEverything(q);
@@ -405,24 +391,30 @@ public class MessagesFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         if (listener != null) listener.remove();
+        if (notifListener != null) {
+            notifListener.remove();
+            notifListener = null;
+        }
     }
 
     // ══════════════════════════════════════════════════════════════════════════
-    //  ConversationAdapter  —  hỗ trợ highlight từ khoá + preview tin nhắn khớp
+    //  ConversationAdapter
     // ══════════════════════════════════════════════════════════════════════════
     static class ConversationAdapter
             extends RecyclerView.Adapter<ConversationAdapter.VH> {
 
         private final List<Map<String, Object>> list;
         private final FirebaseFirestore db;
-        private final String currentUid;
         private String searchQuery = "";
 
         ConversationAdapter(List<Map<String, Object>> list, FirebaseFirestore db) {
-            this.list       = list;
-            this.db         = db;
-            this.currentUid = FirebaseAuth.getInstance().getCurrentUser() != null
-                    ? FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
+            this.list = list;
+            this.db   = db;
+        }
+
+        private String getCurrentUid() {
+            FirebaseUser u = FirebaseAuth.getInstance().getCurrentUser();
+            return u != null ? u.getUid() : "";
         }
 
         void setSearchQuery(String q) { this.searchQuery = q != null ? q : ""; }
@@ -442,18 +434,30 @@ public class MessagesFragment extends Fragment {
             String carName      = String.valueOf(item.getOrDefault("carName",      ""));
             String partnerName  = String.valueOf(item.getOrDefault("partnerName",  "Đang tải..."));
             String partnerAvatar= String.valueOf(item.getOrDefault("partnerAvatar",""));
-            String matchedMsg   = (String) item.get("matchedMessage"); // null nếu tìm theo tên
+            String matchedMsg   = (String) item.get("matchedMessage");
             String lastMsg      = matchedMsg != null ? matchedMsg
                     : String.valueOf(item.getOrDefault("lastMessage", ""));
 
             h.tvCarName.setText(carName);
             h.tvName.setText(partnerName);
 
-            // Preview: nếu có tin nhắn khớp → hiện nó, ngược lại hiện lastMessage
             if (lastMsg.isEmpty()) lastMsg = "Bắt đầu trò chuyện...";
             h.tvLastMsg.setText(lastMsg);
 
-            // Avatar
+            // ── Hiển thị chấm xanh nếu currentUser chưa đọc tin nhắn cuối ──
+            String unreadBy = String.valueOf(item.getOrDefault("unreadBy", ""));
+            boolean hasUnread = getCurrentUid().equals(unreadBy);
+            android.util.Log.d("UNREAD_DEBUG",
+                    "roomId=" + item.getOrDefault("roomId","?") +
+                            " unreadBy='" + unreadBy + "'"+
+                            " currentUid='" + getCurrentUid() + "'"+
+                            " hasUnread=" + hasUnread);
+            if (h.viewUnreadDot != null)
+                h.viewUnreadDot.setVisibility(hasUnread ? View.VISIBLE : View.GONE);
+            h.tvLastMsg.setTypeface(null,
+                    hasUnread ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+            h.tvLastMsg.setTextColor(hasUnread ? 0xFF1A1A2E : 0xFF6B7280);
+
             if (!partnerAvatar.isEmpty() && !"null".equals(partnerAvatar)) {
                 h.tvAvatar.setVisibility(View.GONE);
                 h.ivAvatar.setVisibility(View.VISIBLE);
@@ -468,16 +472,27 @@ public class MessagesFragment extends Fragment {
                 h.tvAvatar.setText("?");
             }
 
-            // Click → mở ChatDetailActivity
             h.itemView.setOnClickListener(v -> {
                 String roomId    = String.valueOf(item.getOrDefault("roomId",   ""));
                 String buyerId   = String.valueOf(item.getOrDefault("buyerId",  ""));
                 String sellerId  = String.valueOf(item.getOrDefault("sellerId", ""));
-                String partnerId = currentUid.equals(buyerId) ? sellerId : buyerId;
+                String partnerId = getCurrentUid().equals(buyerId) ? sellerId : buyerId;
                 String carPrice  = String.valueOf(item.getOrDefault("carPrice", ""));
                 String carImage  = String.valueOf(item.getOrDefault("carImage", ""));
                 String carId     = String.valueOf(item.getOrDefault("carId",    ""));
                 String carType   = String.valueOf(item.getOrDefault("carType",  "sale"));
+
+                // Ẩn chấm xanh ngay lập tức + cập nhật Firestore
+                String unreadByNow = String.valueOf(item.getOrDefault("unreadBy", ""));
+                if (getCurrentUid().equals(unreadByNow)) {
+                    item.put("unreadBy", "");
+                    if (h.viewUnreadDot != null) h.viewUnreadDot.setVisibility(View.GONE);
+                    h.tvLastMsg.setTypeface(null, android.graphics.Typeface.NORMAL);
+                    h.tvLastMsg.setTextColor(0xFF6B7280);
+                    if (!roomId.isEmpty()) {
+                        db.collection("chat_rooms").document(roomId).update("unreadBy", "");
+                    }
+                }
 
                 Intent intent = new Intent(v.getContext(), ChatDetailActivity.class);
                 intent.putExtra("ROOM_ID",      roomId);
@@ -499,17 +514,20 @@ public class MessagesFragment extends Fragment {
         static class VH extends RecyclerView.ViewHolder {
             TextView  tvAvatar, tvName, tvCarName, tvLastMsg;
             ImageView ivAvatar;
+            View      viewUnreadDot;
 
             VH(@NonNull View v) {
                 super(v);
-                tvAvatar  = v.findViewById(R.id.tvConvAvatar);
-                ivAvatar  = v.findViewById(R.id.ivConvAvatar);
-                tvName    = v.findViewById(R.id.tvConvName);
-                tvCarName = v.findViewById(R.id.tvConvCarName);
-                tvLastMsg = v.findViewById(R.id.tvConvLastMsg);
+                tvAvatar      = v.findViewById(R.id.tvConvAvatar);
+                ivAvatar      = v.findViewById(R.id.ivConvAvatar);
+                tvName        = v.findViewById(R.id.tvConvName);
+                tvCarName     = v.findViewById(R.id.tvConvCarName);
+                tvLastMsg     = v.findViewById(R.id.tvConvLastMsg);
+                viewUnreadDot = v.findViewById(R.id.viewConvUnreadDot);
             }
         }
     }
+
     // ══════════════════════════════════════════════════════════════════════════
     //  Xử lý chuyển Tab: Trò chuyện / Thông báo
     // ══════════════════════════════════════════════════════════════════════════
@@ -517,194 +535,285 @@ public class MessagesFragment extends Fragment {
         if (chatSelected == isChatTabActive) return;
         isChatTabActive = chatSelected;
 
-        // ── 1. ANIMATION TRƯỢT NGANG (NỘI DUNG) ──
-        TransitionSet transitionSet = new TransitionSet();
-        transitionSet.setOrdering(TransitionSet.ORDERING_TOGETHER);
-        transitionSet.setDuration(250);
-
-        Slide slideChat = new Slide();
-        slideChat.addTarget(layoutChatTabContent);
-
-        Slide slideNotif = new Slide();
-        slideNotif.addTarget(layoutNotificationTabContent);
-
-        if (chatSelected) {
-            slideChat.setSlideEdge(Gravity.START);
-            slideNotif.setSlideEdge(Gravity.END);
-        } else {
-            slideChat.setSlideEdge(Gravity.START);
-            slideNotif.setSlideEdge(Gravity.END);
-        }
-
-        transitionSet.addTransition(slideChat);
-        transitionSet.addTransition(slideNotif);
-        TransitionManager.beginDelayedTransition(frameMsgContent, transitionSet);
-
-        // ── 2. ĐỔI TRẠNG THÁI HIỂN THỊ NỘI DUNG ──
-        layoutChatTabContent.setVisibility(chatSelected ? View.VISIBLE : View.GONE);
-        layoutNotificationTabContent.setVisibility(chatSelected ? View.GONE : View.VISIBLE);
         if (!chatSelected) loadNotifications();
 
-        // ── 3. ANIMATION CHUYỂN MÀU (TAB HEADER) ──
-        int activeColor   = android.graphics.Color.parseColor("#2F54D4"); // Xanh
-        int inactiveColor = android.graphics.Color.WHITE; // Trắng (sẽ tiệp màu với background xung quanh, tạo cảm giác "mất chữ")
+        View incoming = chatSelected
+                ? layoutChatTabContent
+                : (View) layoutNotificationTabContent;
+        View outgoing = chatSelected
+                ? (View) layoutNotificationTabContent
+                : layoutChatTabContent;
+
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        int slideIn  = chatSelected ? -screenWidth :  screenWidth;
+        int slideOut = chatSelected ?  screenWidth : -screenWidth;
+
+        long DURATION = 300L;
+        android.view.animation.DecelerateInterpolator interpolator =
+                new android.view.animation.DecelerateInterpolator(1.5f);
+
+        incoming.setTranslationX(slideIn);
+        incoming.setVisibility(View.VISIBLE);
+
+        outgoing.animate()
+                .translationX(slideOut)
+                .setDuration(DURATION)
+                .setInterpolator(interpolator)
+                .withEndAction(() -> {
+                    outgoing.setVisibility(View.GONE);
+                    outgoing.setTranslationX(0f);
+                })
+                .start();
+
+        incoming.animate()
+                .translationX(0f)
+                .setDuration(DURATION)
+                .setInterpolator(interpolator)
+                .start();
+
+        int activeColor   = android.graphics.Color.parseColor("#2F54D4");
+        int inactiveColor = android.graphics.Color.WHITE;
 
         if (chatSelected) {
-            // Tab Chat được chọn
             contentTabChat.setBackgroundResource(R.drawable.bg_tab_active_pill);
-            tvTabChat.setTextColor(activeColor);
-
-            // Tab Thông báo bị bỏ chọn
             contentTabNotification.setBackground(null);
-            tvTabNotification.setTextColor(inactiveColor); // Chữ lập tức thành trắng (biến mất)
         } else {
-            // Tab Thông báo được chọn
             contentTabNotification.setBackgroundResource(R.drawable.bg_tab_active_pill);
-            tvTabNotification.setTextColor(activeColor);
-
-            // Tab Chat bị bỏ chọn
             contentTabChat.setBackground(null);
-            tvTabChat.setTextColor(inactiveColor); // Chữ lập tức thành trắng (biến mất)
         }
 
-        // Animator cho chữ Tab Trò chuyện
         ValueAnimator colorAnimChat = ValueAnimator.ofObject(new ArgbEvaluator(),
                 chatSelected ? inactiveColor : activeColor,
-                chatSelected ? activeColor : inactiveColor);
-        colorAnimChat.setDuration(250);
-        colorAnimChat.addUpdateListener(animator ->
-                tvTabChat.setTextColor((int) animator.getAnimatedValue()));
+                chatSelected ? activeColor   : inactiveColor);
+        colorAnimChat.setDuration(DURATION);
+        colorAnimChat.addUpdateListener(a ->
+                tvTabChat.setTextColor((int) a.getAnimatedValue()));
         colorAnimChat.start();
 
-        // Animator cho chữ Tab Thông báo
         ValueAnimator colorAnimNotif = ValueAnimator.ofObject(new ArgbEvaluator(),
-                chatSelected ? activeColor : inactiveColor,
+                chatSelected ? activeColor   : inactiveColor,
                 chatSelected ? inactiveColor : activeColor);
-        colorAnimNotif.setDuration(250);
-        colorAnimNotif.addUpdateListener(animator ->
-                tvTabNotification.setTextColor((int) animator.getAnimatedValue()));
+        colorAnimNotif.setDuration(DURATION);
+        colorAnimNotif.addUpdateListener(a ->
+                tvTabNotification.setTextColor((int) a.getAnimatedValue()));
         colorAnimNotif.start();
-
-        // (Lưu ý: Không đổi màu icon của 2 tab ở đây để chúng luôn giữ màu xanh mặc định)
     }
 
+    // ══════════════════════════════════════════════════════════════════════════════
+    //  loadNotifications() — THAY THẾ
+    // ══════════════════════════════════════════════════════════════════════════════
     private void loadNotifications() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null || rvNotifications == null) return;
-        // Không dùng orderBy chung với whereEqualTo để tránh phải tạo composite index
-        // trên Firestore (nếu thiếu index, query sẽ lỗi âm thầm và customer không thấy
-        // thông báo duyệt/từ chối đăng ký tài xế). Sắp xếp ở phía client.
-        FirebaseFirestore.getInstance()
+
+        if (notifListener != null) {
+            notifListener.remove();
+            notifListener = null;
+        }
+
+        notifListener = FirebaseFirestore.getInstance()
                 .collection("notifications")
                 .whereEqualTo("userId", user.getUid())
-                .get()
-                .addOnSuccessListener(snap -> {
-                    if (!isAdded()) return;
-                    List<QueryDocumentSnapshot> docs = new ArrayList<>();
-                    for (QueryDocumentSnapshot doc : snap) {
-                        docs.add(doc);
-                    }
-                    docs.sort((a, b) -> {
-                        Timestamp ta = a.getTimestamp("createdAt");
-                        Timestamp tb = b.getTimestamp("createdAt");
-                        if (ta == null && tb == null) return 0;
-                        if (ta == null) return 1;
-                        if (tb == null) return -1;
-                        return tb.compareTo(ta);
-                    });
+                // ✅ FIX: Sắp xếp mới nhất lên đầu trực tiếp từ Firestore
+                .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null || snapshots == null || !isAdded()) return;
 
                     notifList.clear();
-                    for (QueryDocumentSnapshot doc : docs) {
-                        notifList.add(doc.getData());
-                        // đánh dấu đã đọc
-                        if (!Boolean.TRUE.equals(doc.getBoolean("read"))) {
-                            doc.getReference().update("read", true);
-                        }
+                    for (QueryDocumentSnapshot doc : snapshots) {
+                        Map<String, Object> data = new HashMap<>(doc.getData());
+                        data.put("docId", doc.getId());
+                        notifList.add(data);
+                        // ✅ FIX: KHÔNG tự động đánh dấu read ở đây
+                        // → chỉ đánh dấu khi user BẤM vào từng thông báo (xem onBindViewHolder)
                     }
+
                     notifAdapter.notifyDataSetChanged();
                     boolean empty = notifList.isEmpty();
-                    if (tvNotifEmpty != null) tvNotifEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
-                    rvNotifications.setVisibility(empty ? View.GONE : View.VISIBLE);
-                })
-                .addOnFailureListener(e -> {
-                    if (!isAdded()) return;
-                    boolean empty = notifList.isEmpty();
-                    if (tvNotifEmpty != null) tvNotifEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
-                    rvNotifications.setVisibility(empty ? View.GONE : View.VISIBLE);
+                    if (tvNotifEmpty != null)
+                        tvNotifEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+                    if (rvNotifications != null)
+                        rvNotifications.setVisibility(empty ? View.GONE : View.VISIBLE);
                 });
     }
 
-    // ── Adapter thông báo ──────────────────────────────────────────────────────
+    // ══════════════════════════════════════════════════════════════════════════════
+    //  NotifAdapter — THAY THẾ
+    // ══════════════════════════════════════════════════════════════════════════════
     private class NotifAdapter extends RecyclerView.Adapter<NotifAdapter.VH> {
-        private final java.text.SimpleDateFormat SDF =
-                new java.text.SimpleDateFormat("HH:mm  dd/MM/yyyy", java.util.Locale.getDefault());
+
+        private final SimpleDateFormat SDF =
+                new SimpleDateFormat("HH:mm  dd/MM/yyyy", Locale.getDefault());
 
         @NonNull
         @Override
         public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View v = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_notification, parent, false);
+                    .inflate(R.layout.item_chat_notification, parent, false);
             return new VH(v);
         }
 
         @Override
         public void onBindViewHolder(@NonNull VH h, int position) {
             Map<String, Object> item = notifList.get(position);
-            h.tvTitle.setText(str(item, "title"));
-            h.tvBody.setText(str(item, "body"));
+
+            String title      = str(item, "title");
+            String body       = str(item, "body");
+            String type       = str(item, "type");
+            String senderId   = str(item, "senderId");
+            String senderName = str(item, "senderName");
+            String roomId     = str(item, "roomId");
+            String docId      = str(item, "docId"); // ✅ lấy docId để update
+
+            // Tên người gửi làm title (giống Messenger)
+            h.tvTitle.setText(senderName.isEmpty() ? (title.isEmpty() ? "Thông báo" : title) : senderName);
+            // Nội dung tin nhắn thực tế — nếu body là dạng "X muốn mua xe Y" thì hiện nguyên,
+            // nếu là tin nhắn thật thì hiện trực tiếp
+            h.tvBody.setText(body.isEmpty() ? "Đã gửi một tin nhắn" : body);
+            h.tvTypeIcon.setText("chat".equals(type) ? "💬" : "🔔");
+
             Object createdAt = item.get("createdAt");
-            if (createdAt instanceof Timestamp) {
-                h.tvTime.setText(SDF.format(((Timestamp) createdAt).toDate()));
+            if (createdAt instanceof com.google.firebase.Timestamp) {
+                h.tvTime.setText(SDF.format(
+                        ((com.google.firebase.Timestamp) createdAt).toDate()));
             } else {
                 h.tvTime.setText("");
             }
-            // chấm đỏ nếu chưa đọc (khi vừa load xong chưa kịp update)
+
+            // Hiển thị chấm xanh nếu chưa đọc
             Object read = item.get("read");
-            h.tvDot.setVisibility(Boolean.FALSE.equals(read) ? View.VISIBLE : View.GONE);
+            h.viewUnreadDot.setVisibility(
+                    Boolean.FALSE.equals(read) ? View.VISIBLE : View.GONE);
+
+            // Avatar
+            String initial = (!senderName.isEmpty())
+                    ? String.valueOf(senderName.charAt(0)).toUpperCase()
+                    : "?";
+            h.tvAvatar.setText(initial);
+            h.tvAvatar.setVisibility(View.VISIBLE);
+            h.ivAvatar.setVisibility(View.GONE);
+
+            if (!senderId.isEmpty()) {
+                FirebaseFirestore.getInstance()
+                        .collection("users").document(senderId).get()
+                        .addOnSuccessListener(doc -> {
+                            if (doc == null || !doc.exists() || !isAdded()) return;
+                            String avatarUrl = doc.getString("avatarUrl");
+                            if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                                h.ivAvatar.setVisibility(View.VISIBLE);
+                                h.tvAvatar.setVisibility(View.GONE);
+                                ImageLoader.loadAvatar(h.ivAvatar, avatarUrl);
+                            } else {
+                                String name = doc.getString("name");
+                                if (name != null && !name.isEmpty()) {
+                                    h.tvAvatar.setText(
+                                            String.valueOf(name.charAt(0)).toUpperCase());
+                                }
+                            }
+                        });
+            }
+
+            if ("chat".equals(type) && !roomId.isEmpty()) {
+                h.itemView.setOnClickListener(v -> {
+                    int pos = h.getAdapterPosition();
+                    if (pos == RecyclerView.NO_ID) return;
+
+                    // Đánh dấu đã đọc (ẩn chấm xanh)
+                    notifList.get(pos).put("read", true);
+                    notifyItemChanged(pos);
+                    if (!docId.isEmpty()) {
+                        FirebaseFirestore.getInstance()
+                                .collection("notifications")
+                                .document(docId)
+                                .update("read", true);
+                    }
+
+                    // Lấy thông tin xe từ chat_rooms để truyền CAR_DATA đầy đủ
+                    FirebaseFirestore.getInstance()
+                            .collection("chat_rooms")
+                            .document(roomId)
+                            .get()
+                            .addOnSuccessListener(roomDoc -> {
+                                Intent intent = new Intent(v.getContext(), ChatDetailActivity.class);
+                                intent.putExtra("ROOM_ID",      roomId);
+                                intent.putExtra("PARTNER_ID",   senderId);
+                                intent.putExtra("PARTNER_NAME",
+                                        senderName.isEmpty() ? "Người dùng" : senderName);
+
+                                if (roomDoc.exists()) {
+                                    String carName2  = roomDoc.getString("carName");
+                                    String carPrice2 = roomDoc.getString("carPrice");
+                                    String carImage2 = roomDoc.getString("carImage");
+                                    String carId2    = roomDoc.getString("carId");
+                                    String carType2  = roomDoc.getString("carType");
+                                    String sellerId2 = roomDoc.getString("sellerId");
+
+                                    com.example.doanmb.model.Car car =
+                                            new com.example.doanmb.model.Car(
+                                                    carName2  != null ? carName2  : "",
+                                                    carPrice2 != null ? carPrice2 : "",
+                                                    "", 0);
+                                    car.setId(carId2         != null ? carId2    : "");
+                                    car.setImageUrl(carImage2 != null ? carImage2 : "");
+                                    car.setSellerId(sellerId2 != null ? sellerId2 : "");
+                                    car.setType(carType2     != null ? carType2  : "sale");
+                                    intent.putExtra("CAR_DATA", car);
+                                }
+                                v.getContext().startActivity(intent);
+                            })
+                            .addOnFailureListener(e -> {
+                                Intent intent = new Intent(v.getContext(), ChatDetailActivity.class);
+                                intent.putExtra("ROOM_ID",      roomId);
+                                intent.putExtra("PARTNER_ID",   senderId);
+                                intent.putExtra("PARTNER_NAME",
+                                        senderName.isEmpty() ? "Người dùng" : senderName);
+                                v.getContext().startActivity(intent);
+                            });
+                });
+            } else {
+                h.itemView.setOnClickListener(null);
+            }
         }
 
-        @Override public int getItemCount() { return notifList.size(); }
+        @Override
+        public int getItemCount() { return notifList.size(); }
 
         private String str(Map<String, Object> m, String key) {
-            Object v = m.get(key); return v != null ? v.toString() : "";
+            Object v = m.get(key);
+            return v != null ? v.toString() : "";
         }
 
         class VH extends RecyclerView.ViewHolder {
-            TextView tvTitle, tvBody, tvTime, tvDot;
+            TextView  tvTitle, tvBody, tvTime, tvAvatar, tvTypeIcon;
+            ImageView ivAvatar;
+            View      viewUnreadDot;
+
             VH(@NonNull View v) {
                 super(v);
-                tvTitle = v.findViewById(R.id.tv_notif_title);
-                tvBody  = v.findViewById(R.id.tv_notif_body);
-                tvTime  = v.findViewById(R.id.tv_notif_time);
-                tvDot   = v.findViewById(R.id.tv_notif_dot);
+                tvTitle      = v.findViewById(R.id.tv_notif_title);
+                tvBody       = v.findViewById(R.id.tv_notif_body);
+                tvTime       = v.findViewById(R.id.tv_notif_time);
+                tvAvatar     = v.findViewById(R.id.tv_notif_avatar);
+                ivAvatar     = v.findViewById(R.id.iv_notif_avatar);
+                tvTypeIcon   = v.findViewById(R.id.tv_notif_type_icon);
+                viewUnreadDot= v.findViewById(R.id.view_unread_dot);
             }
         }
     }
 
     public void onShortcutClicked(String partnerId) {
         if (partnerId.equals(selectedShortcutPartnerId)) {
-            // Trạng thái: Bấm lại lần 2 vào cùng 1 người -> TẮT LỌC
             selectedShortcutPartnerId = null;
-
-            // Cập nhật lại UI Adapter của phần "Gần đây" để tắt viền sáng (nếu có)
             shortcutAdapter.setSelectedPartnerId(null);
-
-            // Hiển thị lại toàn bộ danh sách (có tính đến việc thanh Search có đang gõ chữ không)
             String currentSearch = etSearch.getText().toString().trim();
             if (currentSearch.isEmpty()) {
                 showAllConversations();
             } else {
                 searchEverything(currentSearch);
             }
-
         } else {
-            // Trạng thái: Bấm vào 1 người mới -> BẬT LỌC
             selectedShortcutPartnerId = partnerId;
-
-            // Cập nhật UI cho ShortcutAdapter biết ai đang được chọn
             shortcutAdapter.setSelectedPartnerId(partnerId);
-
-            // Tiến hành lọc convList
             List<Map<String, Object>> userSpecificList = new ArrayList<>();
             for (Map<String, Object> conv : convList) {
                 String pId = (String) conv.get("partnerId");
@@ -712,10 +821,7 @@ public class MessagesFragment extends Fragment {
                     userSpecificList.add(conv);
                 }
             }
-
-            // Ép danh sách dưới hiển thị kết quả đã lọc
             showFiltered(userSpecificList, "");
         }
     }
-
 }
