@@ -67,5 +67,6 @@
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:screenOrientation="portrait"
             android:exported="false" />
+        <activity android:name=".ui.activity.AboutUsActivity" />
     </application>
 </manifest>

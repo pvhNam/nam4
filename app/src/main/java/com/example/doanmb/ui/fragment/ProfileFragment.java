@@ -24,6 +24,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.example.doanmb.ui.activity.AboutUsActivity;
 import com.example.doanmb.util.ImageLoader;
 import com.example.doanmb.R;
 import com.example.doanmb.ui.activity.FavoriteCarsActivity;
@@ -39,6 +40,7 @@ import java.util.Map;
 import android.app.DatePickerDialog;
 import android.widget.EditText;
 import java.util.Calendar;
+
 public class ProfileFragment extends Fragment {
 
     private LinearLayout layoutNotLoggedIn;
@@ -54,7 +56,7 @@ public class ProfileFragment extends Fragment {
     private TextView tvProfileNameMain, tvPhoneVerifiedBadge, tvWalletBalance;
     private ImageView ivAvatarMain,ivVerifiedIcon,ivFavouriteCar,ivRegRentCar,ivLocation;
     private Button btnLogin, btnRegister, btnLogout, btnSwitchDriver;
-
+    private RelativeLayout menuAboutUs;
     // Views màn 2
     private ImageView ivAvatarSettings;
     private CardView ivChangeAvatarTrigger;
@@ -125,6 +127,7 @@ public class ProfileFragment extends Fragment {
         edtInfoPhone = view.findViewById(R.id.edt_info_phone);
         btnSavePersonalInfo = view.findViewById(R.id.btn_save_personal_info);
         ivVerifiedIcon = view.findViewById(R.id.iv_verified_icon);
+        menuAboutUs = view.findViewById(R.id.menu_about_us);
     }
 
     private void setupListeners() {
@@ -174,6 +177,12 @@ public class ProfileFragment extends Fragment {
             );
             datePickerDialog.show();
         });
+        if (menuAboutUs != null) {
+            menuAboutUs.setOnClickListener(v -> {
+                Intent intent = new Intent(getActivity(), AboutUsActivity.class);
+                startActivity(intent);
+            });
+        }
     }
 
     private void openDriverDashboard() {
