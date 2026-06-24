@@ -149,6 +149,12 @@ public class PostCarFragment extends Fragment {
         if (layoutUploadMedia != null) layoutUploadMedia.setOnClickListener(v -> pickImage());
         btnRemoveImage.setOnClickListener(v -> clearSelectedImage());
         btnSubmitPost.setOnClickListener(v -> submitPost());
+
+        // Ô "Khu vực" hoạt động như nút chọn địa chỉ (Tỉnh/Thành → Phường/Xã) lấy từ API,
+        // không cho gõ tay để tránh nhập sai định dạng.
+        etCarLocation.setFocusable(false);
+        etCarLocation.setClickable(true);
+        etCarLocation.setOnClickListener(v -> pickProvince());
     }
 
     /**

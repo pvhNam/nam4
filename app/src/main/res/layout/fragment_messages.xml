@@ -11,15 +11,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F7FA">
+    android:background="@android:color/transparent">
 
     <!-- ── HEADER (cố định, không cuộn) ── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_header_rounded"
+        android:background="@drawable/bg_search_filter_panel"
         android:orientation="vertical"
-        android:paddingBottom="34dp">
+        android:paddingBottom="0dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -59,7 +59,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="40dp"
-                    android:background="@drawable/bg_search"
+                    android:background="@drawable/bg_glass_search"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
                     android:paddingStart="16dp"
@@ -69,7 +69,7 @@
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@android:drawable/ic_menu_search"
-                        app:tint="#2563EB"
+                        app:tint="@color/lg_accent"
                         android:layout_marginEnd="8dp" />
 
                     <EditText
@@ -127,8 +127,7 @@
                             android:layout_width="28dp"
                             android:layout_height="28dp"
                             android:layout_gravity="center"
-                            android:src="@drawable/ic_nav_message"
-                            app:tint="#2F54D4" />
+                            android:src="@drawable/ic_nav_message" app:tint="@color/lg_accent" />
                     </FrameLayout>
 
                     <TextView
@@ -137,7 +136,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="7dp"
                         android:text="Trò chuyện"
-                        android:textColor="#2F54D4"
+                        android:textColor="@color/lg_accent"
                         android:textSize="14sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -175,8 +174,7 @@
                             android:layout_height="28dp"
                             android:layout_gravity="center"
                             android:src="@drawable/ic_notification"
-                            app:tint="#2F54D4" />
-                    </FrameLayout>
+                            app:tint="@color/lg_accent" /> </FrameLayout>
 
                     <TextView
                         android:id="@+id/tv_tab_notification"
@@ -200,11 +198,11 @@
     <LinearLayout
         android:id="@+id/layout_msg_content_panel"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginStart="12dp"
-        android:layout_marginEnd="12dp"
-        android:layout_marginTop="-40dp"
+        android:layout_height="match_parent"
+        android:layout_marginStart="0dp"
+        android:layout_marginEnd="0dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginBottom="0dp"
         android:background="@drawable/bg_category_content_panel"
         android:clipToOutline="true"
         android:orientation="vertical">
@@ -230,7 +228,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:visibility="visible"
-                    android:background="#FFFFFF">
+                    android:background="@android:color/transparent">
 
                     <LinearLayout
                         android:id="@+id/layout_msg_not_logged_in"
@@ -319,7 +317,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:visibility="gone"
-                    android:background="#FFFFFF">
+                    android:background="@android:color/transparent">
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rv_notifications"

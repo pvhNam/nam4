@@ -38,6 +38,13 @@ import com.example.doanmb.model.Car;
 import com.example.doanmb.util.FavoriteHelper;
 import com.example.doanmb.util.ImageLoader;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import android.os.Build;
+import android.view.ViewGroup;
+import android.view.ViewOutlineProvider;
+import eightbitlab.com.blurview.BlurView;
+import eightbitlab.com.blurview.BlurAlgorithm;
+import eightbitlab.com.blurview.RenderEffectBlur;
+import eightbitlab.com.blurview.RenderScriptBlur;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -64,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
     private AutoCompleteTextView etSearch;
     private TextView tvGreeting;
     private BottomNavigationView bottomNavigationView;
+    private BlurView blurNav;
     private FrameLayout fragmentContainer;
     private View homeLayout;
     private SwipeRefreshLayout swipeRefreshLayout;
@@ -127,6 +135,34 @@ public class MainActivity extends AppCompatActivity {
         setupSwipeRefresh();
         setupQuickActions();
         setupBackNavigation();
+        setupGlassNav();
+    }
+
+    /**
+     * Thanh menu Liquid Glass: BlurView blur thật nội dung cuộn phía sau, bo viên thuốc,
+     * nổi trên thanh điều hướng hệ thống (vị trí ban đầu).
+     */
+    private void setupGlassNav() {
+        if (blurNav == null) return;
+        ViewGroup root = findViewById(R.id.main_root);
+        BlurAlgorithm algorithm = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                ? new RenderEffectBlur()
+                : new RenderScriptBlur(this);
+        blurNav.setupWith(root, algorithm)
+                .setFrameClearDrawable(root.getBackground())
+                .setBlurRadius(18f);
+        blurNav.setOutlineProvider(ViewOutlineProvider.BACKGROUND);
+        blurNav.setClipToOutline(true);
+
+        // Nâng viên thuốc lên trên thanh điều hướng hệ thống (gesture/3 nút)
+        final int baseMarginBottom = ((ViewGroup.MarginLayoutParams) blurNav.getLayoutParams()).bottomMargin;
+        ViewCompat.setOnApplyWindowInsetsListener(blurNav, (v, insets) -> {
+            int navBarHeight = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+            ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+            lp.bottomMargin = baseMarginBottom + navBarHeight;
+            v.setLayoutParams(lp);
+            return insets;
+        });
     }
 
     private void requestNotificationPermission() {
@@ -195,6 +231,7 @@ public class MainActivity extends AppCompatActivity {
         etSearch             = findViewById(R.id.et_search);
         tvGreeting           = findViewById(R.id.tv_greeting);
         bottomNavigationView = findViewById(R.id.bottom_navigation);
+        blurNav              = findViewById(R.id.blur_nav);
         fragmentContainer    = findViewById(R.id.fragment_container);
         homeLayout           = findViewById(R.id.home_layout);
         swipeRefreshLayout   = findViewById(R.id.swipe_refresh);

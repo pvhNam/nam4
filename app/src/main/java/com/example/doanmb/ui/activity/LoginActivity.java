@@ -105,10 +105,11 @@ public class LoginActivity extends AppCompatActivity {
                     db.collection("users").document(user.getUid()).get()
                             .addOnSuccessListener(doc -> {
                                 String role = doc.getString("role");
+                                boolean isDriver = Boolean.TRUE.equals(doc.getBoolean("isDriver"));
                                 Toast.makeText(this, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show();
                                 if ("ADMIN".equals(role)) {
                                     startActivity(new Intent(this, AdminDashboardActivity.class));
-                                } else if ("DRIVER".equals(role)) {
+                                } else if (isDriver) {
                                     startActivity(new Intent(this, DriverDashboardActivity.class));
                                 } else {
                                     startActivity(new Intent(this, MainActivity.class));

@@ -136,7 +136,7 @@ public class UserAdminAdapter extends RecyclerView.Adapter<UserAdminAdapter.View
 
     private void showRoleDialog(Context ctx, String userId, String currentRole) {
         currentRole = normalizeRole(currentRole);
-        String[] roles = {"ADMIN", "DRIVER", "CUSTOMER"};
+        String[] roles = {"ADMIN", "CUSTOMER"};
         int currentIndex = 0;
         for (int i = 0; i < roles.length; i++) {
             if (roles[i].equals(currentRole)) { currentIndex = i; break; }

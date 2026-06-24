@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Tab đang chọn: bo TRÊN, đáy phẳng → nối liền xuống panel nội dung (cùng màu kính) -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="@color/color_surface" />
+    <solid android:color="@color/lg_glass_fill_strong" />
     <corners
-        android:topLeftRadius="56dp"
-        android:topRightRadius="56dp"
+        android:topLeftRadius="22dp"
+        android:topRightRadius="22dp"
         android:bottomLeftRadius="0dp"
         android:bottomRightRadius="0dp" />
 </shape>

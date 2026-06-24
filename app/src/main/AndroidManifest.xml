@@ -65,10 +65,14 @@
         <activity android:name="com.example.doanmb.ui.activity.LoginActivity" />
         <activity android:name="com.example.doanmb.ui.activity.RegisterActivity" />
         <activity android:name="com.example.doanmb.ui.activity.ForgotPassActivity" />
-        <activity android:name="com.example.doanmb.ui.activity.AdminDashboardActivity" />
-        <activity android:name="com.example.doanmb.ui.activity.DriverDashboardActivity" />
-        <activity android:name="com.example.doanmb.ui.activity.DriverRegisterActivity" />
-        <activity android:name="com.example.doanmb.ui.activity.AdminRevenueDetailActivity" />
+        <activity android:name="com.example.doanmb.ui.activity.AdminDashboardActivity"
+            android:theme="@style/Theme.DOANMB.Admin" />
+        <activity android:name="com.example.doanmb.ui.activity.DriverDashboardActivity"
+            android:theme="@style/Theme.DOANMB.Driver" />
+        <activity android:name="com.example.doanmb.ui.activity.DriverRegisterActivity"
+            android:theme="@style/Theme.DOANMB.Driver" />
+        <activity android:name="com.example.doanmb.ui.activity.AdminRevenueDetailActivity"
+            android:theme="@style/Theme.DOANMB.Admin" />
         <activity
             android:name="com.example.doanmb.ui.activity.ChatDetailActivity"
             android:windowSoftInputMode="adjustResize" />
@@ -89,6 +93,6 @@
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:screenOrientation="portrait"
             android:exported="false" />
-
+        <activity android:name=".ui.activity.AboutUsActivity" />
     </application>
 </manifest>

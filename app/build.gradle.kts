@@ -69,6 +69,8 @@ dependencies {
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.2.0")
     implementation("com.google.android.material:material:1.12.0")
     implementation("de.hdodenhof:circleimageview:3.1.0")
+    // Liquid Glass: blur thật nội dung phía sau (frosted glass) cho thanh menu + card
+    implementation("com.github.Dimezis:BlurView:version-2.0.6")
     implementation("com.github.chrisbanes:PhotoView:2.3.0")
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     implementation("com.google.android.exoplayer:exoplayer:2.19.1")

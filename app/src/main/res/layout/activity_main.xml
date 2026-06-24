@@ -1,9 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F7FA"
+    android:background="@drawable/bg_liquid_glass"
     tools:context=".MainActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -24,15 +26,14 @@
                 android:layout_height="match_parent"
                 android:overScrollMode="never"
                 android:clipToPadding="false"
-                android:paddingBottom="76dp">
+                android:paddingBottom="110dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="#F5F7FA">
+                    android:orientation="vertical">
 
-                    <!-- HEADER: cuộn cùng nội dung (không còn ghim/lơ lửng) -->
+                    <!-- HEADER: trong suốt trên nền pastel -->
                     <LinearLayout
                         android:id="@+id/header_layout"
                         android:layout_width="match_parent"
@@ -42,18 +43,19 @@
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="@drawable/bg_header_rounded"
                             android:orientation="horizontal"
                             android:gravity="center_vertical"
                             android:paddingStart="20dp"
                             android:paddingEnd="20dp"
-                            android:paddingTop="40dp"
-                            android:paddingBottom="50dp">
+                            android:paddingTop="44dp"
+                            android:paddingBottom="12dp">
 
                             <de.hdodenhof.circleimageview.CircleImageView
                                 android:id="@+id/img_avatar"
-                                android:layout_width="72dp"
-                                android:layout_height="72dp"
+                                android:layout_width="64dp"
+                                android:layout_height="64dp"
+                                app:civ_border_width="2dp"
+                                app:civ_border_color="@color/lg_glass_stroke"
                                 android:src="@mipmap/ic_launcher_round" />
 
                             <LinearLayout
@@ -67,15 +69,15 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="Hi, Nam"
-                                    android:textColor="#1A1A2E"
+                                    android:textColor="@color/lg_text"
                                     android:textSize="22sp"
                                     android:textStyle="bold"
-                                    android:layout_marginBottom="8dp" />
+                                    android:layout_marginBottom="10dp" />
 
                                 <LinearLayout
                                     android:layout_width="match_parent"
-                                    android:layout_height="40dp"
-                                    android:background="@drawable/bg_search"
+                                    android:layout_height="46dp"
+                                    android:background="@drawable/bg_glass_search"
                                     android:orientation="horizontal"
                                     android:gravity="center_vertical"
                                     android:paddingStart="16dp"
@@ -85,7 +87,7 @@
                                         android:layout_width="20dp"
                                         android:layout_height="20dp"
                                         android:src="@android:drawable/ic_menu_search"
-                                        app:tint="#2563EB"
+                                        app:tint="@color/lg_accent"
                                         android:layout_marginEnd="8dp" />
 
                                     <AutoCompleteTextView
@@ -94,10 +96,10 @@
                                         android:layout_height="match_parent"
                                         android:layout_weight="1"
                                         android:background="@null"
-                                        android:hint="Tìm kiếm"
+                                        android:hint="Bạn muốn tìm xe gì?"
                                         android:inputType="text"
-                                        android:textColorHint="#2563EB"
-                                        android:textColor="#1A1A2E"
+                                        android:textColorHint="@color/lg_text_secondary"
+                                        android:textColor="@color/lg_text"
                                         android:textSize="14sp"
                                         android:completionThreshold="1" />
                                 </LinearLayout>
@@ -109,7 +111,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
-                            android:layout_marginTop="-35dp"
+                            android:layout_marginTop="8dp"
                             android:gravity="center"
                             android:weightSum="4"
                             android:paddingStart="8dp"
@@ -126,12 +128,10 @@
                                 android:focusable="true"
                                 android:background="?android:attr/selectableItemBackgroundBorderless">
 
-                                <androidx.cardview.widget.CardView
+                                <FrameLayout
                                     android:layout_width="60dp"
                                     android:layout_height="60dp"
-                                    app:cardCornerRadius="30dp"
-                                    app:cardElevation="6dp"
-                                    app:cardBackgroundColor="#FFFFFF"
+                                    android:background="@drawable/bg_glass_circle"
                                     android:layout_marginBottom="8dp">
 
                                     <ImageView
@@ -139,13 +139,13 @@
                                         android:layout_height="30dp"
                                         android:layout_gravity="center"
                                         android:src="@drawable/taxi_payment" />
-                                </androidx.cardview.widget.CardView>
+                                </FrameLayout>
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="Mua xe"
-                                    android:textColor="#1A1A2E"
+                                    android:textColor="@color/lg_text"
                                     android:textSize="12sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
@@ -161,12 +161,10 @@
                                 android:focusable="true"
                                 android:background="?android:attr/selectableItemBackgroundBorderless">
 
-                                <androidx.cardview.widget.CardView
+                                <FrameLayout
                                     android:layout_width="60dp"
                                     android:layout_height="60dp"
-                                    app:cardCornerRadius="30dp"
-                                    app:cardElevation="6dp"
-                                    app:cardBackgroundColor="#FFFFFF"
+                                    android:background="@drawable/bg_glass_circle"
                                     android:layout_marginBottom="8dp">
 
                                     <ImageView
@@ -174,13 +172,13 @@
                                         android:layout_height="30dp"
                                         android:layout_gravity="center"
                                         android:src="@drawable/icons8_car_sale" />
-                                </androidx.cardview.widget.CardView>
+                                </FrameLayout>
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="Bán xe"
-                                    android:textColor="#1A1A2E"
+                                    android:textColor="@color/lg_text"
                                     android:textSize="12sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
@@ -196,12 +194,10 @@
                                 android:focusable="true"
                                 android:background="?android:attr/selectableItemBackgroundBorderless">
 
-                                <androidx.cardview.widget.CardView
+                                <FrameLayout
                                     android:layout_width="60dp"
                                     android:layout_height="60dp"
-                                    app:cardCornerRadius="30dp"
-                                    app:cardElevation="6dp"
-                                    app:cardBackgroundColor="#FFFFFF"
+                                    android:background="@drawable/bg_glass_circle"
                                     android:layout_marginBottom="8dp">
 
                                     <ImageView
@@ -209,13 +205,13 @@
                                         android:layout_height="30dp"
                                         android:layout_gravity="center"
                                         android:src="@drawable/self_driver" />
-                                </androidx.cardview.widget.CardView>
+                                </FrameLayout>
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="Xe tự lái"
-                                    android:textColor="#1A1A2E"
+                                    android:textColor="@color/lg_text"
                                     android:textSize="12sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
@@ -231,12 +227,10 @@
                                 android:focusable="true"
                                 android:background="?android:attr/selectableItemBackgroundBorderless">
 
-                                <androidx.cardview.widget.CardView
+                                <FrameLayout
                                     android:layout_width="60dp"
                                     android:layout_height="60dp"
-                                    app:cardCornerRadius="30dp"
-                                    app:cardElevation="6dp"
-                                    app:cardBackgroundColor="#FFFFFF"
+                                    android:background="@drawable/bg_glass_circle"
                                     android:layout_marginBottom="8dp">
 
                                     <ImageView
@@ -244,43 +238,46 @@
                                         android:layout_height="30dp"
                                         android:layout_gravity="center"
                                         android:src="@drawable/driver" />
-                                </androidx.cardview.widget.CardView>
+                                </FrameLayout>
 
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="Xe có tài xế"
-                                    android:textColor="#1A1A2E"
+                                    android:textColor="@color/lg_text"
                                     android:textSize="12sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
                         </LinearLayout>
                     </LinearLayout>
 
-                    <androidx.cardview.widget.CardView
+                    <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_marginEnd="16dp"
-                        android:layout_marginTop="8dp"
-                        app:cardCornerRadius="16dp"
-                        app:cardElevation="0dp">
+                        android:layout_marginTop="16dp"
+                        app:cardCornerRadius="24dp"
+                        app:cardElevation="0dp"
+                        app:cardBackgroundColor="@color/lg_glass_fill_strong"
+                        app:strokeColor="@color/lg_glass_stroke"
+                        app:strokeWidth="1dp">
 
                         <ImageView
                             android:layout_width="match_parent"
                             android:layout_height="200dp"
                             android:scaleType="centerCrop"
                             android:src="@drawable/img_car" />
-                    </androidx.cardview.widget.CardView>
+                    </com.google.android.material.card.MaterialCardView>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="20dp"
                         android:layout_marginBottom="8dp"
                         android:text="Chương trình khuyến mãi"
-                        android:textColor="#1A1A2E"
+                        android:textColor="@color/lg_text"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -301,7 +298,7 @@
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="8dp"
                         android:text="Xe nổi bật"
-                        android:textColor="#1A1A2E"
+                        android:textColor="@color/lg_text"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -323,7 +320,7 @@
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="16dp"
                         android:text="Xe cho thuê mới nhất"
-                        android:textColor="#1A1A2E"
+                        android:textColor="@color/lg_text"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -332,8 +329,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:orientation="horizontal"
                         android:clipToPadding="false"
+                        android:orientation="horizontal"
                         android:paddingStart="16dp"
                         android:paddingEnd="16dp"
                         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
@@ -349,18 +346,38 @@
         android:layout_height="match_parent"
         android:visibility="gone" />
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottom_navigation"
+    <!-- Thanh menu Liquid Glass: BlurView nổi (viên thuốc) blur nội dung phía sau.
+         Pill cao 56dp. Để icon hiện FULL (không bị clip) và nằm GIỮA pill:
+         - unlabeled (bỏ nhãn) để dành đủ chỗ cho icon
+         - itemGravity=center + padding trên/dưới = 0 để icon căn giữa dọc
+         - itemIconSize vừa phải để không chạm mép pill -->
+    <eightbitlab.com.blurview.BlurView
+        android:id="@+id/blur_nav"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="64dp"
         android:layout_gravity="bottom"
-        android:background="@android:color/white"
-        android:elevation="12dp"
-        app:elevation="12dp"
-        app:itemIconSize="26dp"
-        app:itemIconTint="@color/nav_icon_selector"
-        app:itemRippleColor="@color/ripple_nav"
-        app:itemTextColor="@color/nav_icon_selector"
-        app:labelVisibilityMode="labeled"
-        app:menu="@menu/bottom_nav_menu" />
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="14dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/bg_glass_pill"
+        android:clipToOutline="true"
+        android:elevation="8dp">
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottom_navigation"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:minHeight="0dp"
+            app:itemActiveIndicatorStyle="@null"
+            app:itemGravity="center"
+            app:itemPaddingTop="10dp"
+            app:itemPaddingBottom="0dp"
+            app:itemIconSize="24dp"
+            app:itemIconTint="@color/nav_icon_selector"
+            app:itemRippleColor="@color/ripple_nav"
+            app:itemTextColor="@color/nav_icon_selector"
+            app:labelVisibilityMode="unlabeled"
+            app:menu="@menu/bottom_nav_menu" />
+    </eightbitlab.com.blurview.BlurView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

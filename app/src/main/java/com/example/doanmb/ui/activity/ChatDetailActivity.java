@@ -25,7 +25,13 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import android.os.Build;
+import android.view.ViewGroup;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import eightbitlab.com.blurview.BlurView;
+import eightbitlab.com.blurview.BlurAlgorithm;
+import eightbitlab.com.blurview.RenderEffectBlur;
+import eightbitlab.com.blurview.RenderScriptBlur;
 
 import com.bumptech.glide.Glide;
 import com.example.doanmb.R;
@@ -195,6 +201,13 @@ public class ChatDetailActivity extends AppCompatActivity {
         }
     }
 
+    /** Thuật toán blur theo API: RenderEffect (>=31) hoặc RenderScript (cũ). */
+    private BlurAlgorithm newBlurAlgorithm() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                ? new RenderEffectBlur()
+                : new RenderScriptBlur(this);
+    }
+
     // ══════════════════════════════════════════════════════════════════════════
     //  Init Views
     // ══════════════════════════════════════════════════════════════════════════
@@ -216,6 +229,31 @@ public class ChatDetailActivity extends AppCompatActivity {
         tvPickerClose     = findViewById(R.id.tv_picker_close);
         rvMediaPicker     = findViewById(R.id.rv_media_picker);
         btnPickerSend     = findViewById(R.id.btn_picker_send);
+
+        // Thanh nhập + Header Liquid Glass: blur thật tin nhắn cuộn phía sau
+        ViewGroup rootVg = (rootLayout instanceof ViewGroup) ? (ViewGroup) rootLayout : null;
+        BlurView blurInput  = findViewById(R.id.blur_input);
+        BlurView blurHeader = findViewById(R.id.blur_header);
+        if (rootVg != null) {
+            if (blurInput != null) {
+                blurInput.setupWith(rootVg, newBlurAlgorithm())
+                        .setFrameClearDrawable(rootLayout.getBackground())
+                        .setBlurRadius(22f);
+            }
+            if (blurHeader != null) {
+                blurHeader.setupWith(rootVg, newBlurAlgorithm())
+                        .setFrameClearDrawable(rootLayout.getBackground())
+                        .setBlurRadius(22f);
+                // Đệm trên của list = chiều cao header → tin nhắn cuộn phía sau header (mới blur thật)
+                blurHeader.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+                    int h = b - t;
+                    if (rvMessages != null && h > 0 && rvMessages.getPaddingTop() != h) {
+                        rvMessages.setPadding(rvMessages.getPaddingLeft(), h,
+                                rvMessages.getPaddingRight(), rvMessages.getPaddingBottom());
+                    }
+                });
+            }
+        }
 
         // Search
         btnSearchToggle   = findViewById(R.id.btn_search_toggle);

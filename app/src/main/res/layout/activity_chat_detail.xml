@@ -4,20 +4,25 @@
     android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/color_background"
+    android:background="@drawable/bg_liquid_glass"
     android:fitsSystemWindows="true">
 
     <!-- ══════════════════════════════════════════════════════════════
          HEADER  (tên đối phương + icon tìm kiếm + menu)
     ══════════════════════════════════════════════════════════════ -->
+    <eightbitlab.com.blurview.BlurView
+        android:id="@+id/blur_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:background="@color/lg_glass_fill_strong"
+        android:elevation="4dp">
+
     <LinearLayout
         android:id="@+id/layout_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#1976D2"
-        android:orientation="vertical"
-        android:elevation="4dp"
-        android:layout_alignParentTop="true">
+        android:orientation="vertical">
 
         <!-- Hàng chính: back | tên | search-icon + menu -->
         <RelativeLayout
@@ -33,7 +38,7 @@
                 android:layout_centerVertical="true"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_back"
-                app:tint="#FFFFFF" />
+                app:tint="@color/lg_text" />
 
             <TextView
                 android:id="@+id/tv_partner_name"
@@ -41,7 +46,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
                 android:text="Người dùng"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/lg_text"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -58,7 +63,7 @@
                     android:layout_height="48dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@android:drawable/ic_menu_search"
-                    app:tint="#FFFFFF" />
+                    app:tint="@color/lg_text" />
 
                 <ImageButton
                     android:id="@+id/btn_menu_more"
@@ -66,7 +71,7 @@
                     android:layout_height="48dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@android:drawable/ic_menu_more"
-                    app:tint="#FFFFFF" />
+                    app:tint="@color/lg_text" />
             </LinearLayout>
         </RelativeLayout>
 
@@ -75,7 +80,7 @@
             android:id="@+id/layout_search_bar"
             android:layout_width="match_parent"
             android:layout_height="52dp"
-            android:background="#1565C0"
+            android:background="@color/lg_glass_fill"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="12dp"
@@ -87,10 +92,10 @@
                 android:layout_width="0dp"
                 android:layout_height="38dp"
                 android:layout_weight="1"
-                android:background="@drawable/bg_search"
+                android:background="@drawable/bg_glass_input"
                 android:hint="Tìm tên hoặc nội dung tin nhắn..."
-                android:textColorHint="#80FFFFFF"
-                android:textColor="#1A1A2E"
+                android:textColorHint="@color/lg_text_secondary"
+                android:textColor="@color/lg_text"
                 android:textSize="14sp"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
@@ -105,7 +110,7 @@
                 android:layout_marginStart="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_close_clear_cancel"
-                app:tint="#FFFFFF" />
+                app:tint="@color/lg_text" />
         </LinearLayout>
 
         <!-- Thanh điều hướng kết quả tìm kiếm (ẩn mặc định) -->
@@ -113,7 +118,7 @@
             android:id="@+id/layout_search_nav"
             android:layout_width="match_parent"
             android:layout_height="36dp"
-            android:background="#0D47A1"
+            android:background="@color/lg_glass_fill"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="16dp"
@@ -126,7 +131,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="0 kết quả"
-                android:textColor="#BBDEFB"
+                android:textColor="@color/lg_text_secondary"
                 android:textSize="13sp" />
 
             <ImageButton
@@ -135,7 +140,7 @@
                 android:layout_height="36dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/arrow_up_float"
-                app:tint="#FFFFFF" />
+                app:tint="@color/lg_text" />
 
             <ImageButton
                 android:id="@+id/btn_search_next"
@@ -143,7 +148,7 @@
                 android:layout_height="36dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/arrow_down_float"
-                app:tint="#FFFFFF" />
+                app:tint="@color/lg_text" />
         </LinearLayout>
 
         <!-- Car info widget -->
@@ -153,8 +158,9 @@
             android:layout_marginStart="12dp"
             android:layout_marginEnd="12dp"
             android:layout_marginBottom="12dp"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="2dp">
+            app:cardBackgroundColor="@color/lg_glass_fill_strong"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp">
 
             <RelativeLayout
                 android:layout_width="match_parent"
@@ -210,6 +216,7 @@
             </RelativeLayout>
         </androidx.cardview.widget.CardView>
     </LinearLayout>
+    </eightbitlab.com.blurview.BlurView>
 
     <!-- ══════════════════════════════════════════════════════════════
          BANNER BỊ CHẶN — đặt DƯỚI header, TRÊN rv_messages
@@ -219,7 +226,7 @@
         android:id="@+id/tv_blocked_banner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/layout_header"
+        android:layout_below="@id/blur_header"
         android:background="#FFCDD2"
         android:gravity="center"
         android:paddingTop="10dp"
@@ -241,7 +248,7 @@
         android:layout_width="match_parent"
         android:layout_height="320dp"
         android:layout_alignParentBottom="true"
-        android:background="#FFFFFF"
+        android:background="@color/lg_glass_fill_strong"
         android:elevation="12dp"
         android:orientation="vertical"
         android:visibility="gone">
@@ -277,7 +284,7 @@
                     android:layout_width="3dp"
                     android:layout_height="16dp"
                     android:layout_marginStart="4dp"
-                    android:background="#1976D2"
+                    android:background="@color/lg_accent"
                     android:visibility="visible" />
             </LinearLayout>
 
@@ -307,7 +314,7 @@
                     android:layout_width="3dp"
                     android:layout_height="16dp"
                     android:layout_marginStart="4dp"
-                    android:background="#1976D2"
+                    android:background="@color/lg_accent"
                     android:visibility="invisible" />
             </LinearLayout>
 
@@ -339,7 +346,7 @@
             android:layout_marginEnd="16dp"
             android:layout_marginTop="6dp"
             android:layout_marginBottom="8dp"
-            android:backgroundTint="#1976D2"
+            android:backgroundTint="@color/lg_accent"
             android:text="Gửi"
             android:textColor="#FFFFFF"
             android:textSize="15sp"
@@ -352,22 +359,21 @@
     <!-- ══════════════════════════════════════════════════════════════
          INPUT AREA  (phía trên media picker)
     ══════════════════════════════════════════════════════════════ -->
-    <LinearLayout
-        android:id="@+id/layout_input_area"
+    <eightbitlab.com.blurview.BlurView
+        android:id="@+id/blur_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_above="@id/layout_media_picker"
-        android:background="#FFFFFF"
+        android:background="@color/lg_glass_fill_soft"
         android:elevation="12dp"
         android:paddingHorizontal="12dp"
-        android:paddingVertical="8dp"
-        android:orientation="vertical">
+        android:paddingVertical="8dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_search" android:gravity="center_vertical"
+            android:background="@drawable/bg_glass_input" android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingEnd="4dp">
 
@@ -397,7 +403,7 @@
             <FrameLayout
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:background="@drawable/bg_circle_blue"
+                android:background="@drawable/bg_circle_accent"
                 android:layout_margin="4dp">
 
                 <ImageButton
@@ -412,7 +418,7 @@
                     app:tint="#FFFFFF" />
             </FrameLayout>
         </LinearLayout>
-    </LinearLayout>
+    </eightbitlab.com.blurview.BlurView>
 
     <!-- ══════════════════════════════════════════════════════════════
          DANH SÁCH TIN NHẮN
@@ -422,10 +428,12 @@
         android:id="@+id/rv_messages"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/layout_input_area"
-        android:layout_below="@id/tv_blocked_banner"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentBottom="true"
         android:clipToPadding="false"
-        android:padding="12dp" />
+        android:paddingHorizontal="12dp"
+        android:paddingTop="96dp"
+        android:paddingBottom="84dp" />
 
     <!-- ══════════════════════════════════════════════════════════════
          LOADING OVERLAY
