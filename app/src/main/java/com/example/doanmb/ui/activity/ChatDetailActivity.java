@@ -827,19 +827,24 @@ public class ChatDetailActivity extends AppCompatActivity {
         db.collection("chat_rooms").document(roomId)
                 .collection("messages").add(msg)
                 .addOnSuccessListener(ref -> {
-                    String last = videoUrl != null ? "[Video]"
+                    // Xác định nội dung preview tin nhắn (text thật / [Hình ảnh] / [Video])
+                    final String msgPreview = videoUrl != null ? "[Video]"
                             : imageUrl != null ? "[Hình ảnh]"
-                            : content;
+                            : (content != null && !content.isEmpty() ? content : "");
+
                     db.collection("chat_rooms").document(roomId)
-                            .update("lastMessage", last,
+                            .update("lastMessage", msgPreview,
                                     "lastTimestamp", FieldValue.serverTimestamp());
 
                     // ── Gửi thông báo cho người nhận ──────────────────────────
-                    String cName = (carData != null && carData.getName() != null)
+                    final String cName = (carData != null && carData.getName() != null)
                             ? carData.getName() : "";
-                    String cType = (carData != null && carData.getType() != null)
+                    final String cType = (carData != null && carData.getType() != null)
                             ? carData.getType() : "sale";
-                    String preview = last != null ? last : "";
+
+                    android.util.Log.d("ChatDetail",
+                            "Sending notification: preview='" + msgPreview + "'");
+
                     db.collection("users").document(currentUserId).get()
                             .addOnSuccessListener(senderDoc -> {
                                 String sName = senderDoc.exists()
@@ -847,15 +852,29 @@ public class ChatDetailActivity extends AppCompatActivity {
                                 if (sName == null) sName = "";
 
                                 // ✅ partnerId = người nhận, currentUserId = người gửi
-                                // → chỉ người nhận mới có thông báo, người gửi không bao giờ tự nhận thông báo của mình
                                 ChatNotificationHelper.sendChatNotification(
-                                        ChatDetailActivity.this,  // context để đọc service-account.json
-                                        partnerId,                // người NHẬN thông báo
-                                        currentUserId,            // người GỬI tin nhắn
+                                        ChatDetailActivity.this,
+                                        partnerId,
+                                        currentUserId,
                                         sName,
                                         cName,
                                         cType,
-                                        preview,
+                                        msgPreview,   // ← nội dung tin nhắn thật
+                                        roomId
+                                );
+                            })
+                            .addOnFailureListener(e -> {
+                                // Fallback: gửi notification dù không lấy được tên người gửi
+                                android.util.Log.w("ChatDetail",
+                                        "Không lấy được tên người gửi: " + e.getMessage());
+                                ChatNotificationHelper.sendChatNotification(
+                                        ChatDetailActivity.this,
+                                        partnerId,
+                                        currentUserId,
+                                        partnerName != null ? "" : "",
+                                        cName,
+                                        cType,
+                                        msgPreview,
                                         roomId
                                 );
                             });

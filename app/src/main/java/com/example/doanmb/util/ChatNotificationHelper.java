@@ -51,6 +51,14 @@ public final class ChatNotificationHelper {
 
     private ChatNotificationHelper() {}
 
+    /**
+     * Gọi khi app khởi động để cache access token sẵn.
+     * Tránh delay lần đầu gửi notification (do phải đọc file + tạo JWT + gọi OAuth2).
+     */
+    public static void warmUpAccessToken(Context context) {
+        executor.execute(() -> getAccessToken(context));
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // API CHÍNH (có carType)
     // ─────────────────────────────────────────────────────────────────────────
@@ -358,15 +366,18 @@ public final class ChatNotificationHelper {
 
     public static String buildBody(String senderName, String carName,
                                    String carType, String messagePreview) {
-        String who = (senderName != null && !senderName.isEmpty()) ? senderName : "Ai đó";
-        if (carName != null && !carName.isEmpty()) {
-            String action = "rental".equalsIgnoreCase(carType) ? "thuê" : "mua";
-            return who + " muốn " + action + " xe " + carName;
-        }
+        // Ưu tiên nội dung tin nhắn thật — chỉ fallback về "muốn mua xe X"
+        // nếu không có tin nhắn (lần đầu mở chat, chưa nhắn gì)
         if (messagePreview != null && !messagePreview.isEmpty()) {
             return messagePreview.length() > 70
                     ? messagePreview.substring(0, 70) + "…"
                     : messagePreview;
+        }
+        // Fallback: chưa có tin nhắn → hiện "muốn mua/thuê xe X"
+        if (carName != null && !carName.isEmpty()) {
+            String who    = (senderName != null && !senderName.isEmpty()) ? senderName : "Ai đó";
+            String action = "rental".equalsIgnoreCase(carType) ? "thuê" : "mua";
+            return who + " muốn " + action + " xe " + carName;
         }
         return "Bạn có tin nhắn mới";
     }

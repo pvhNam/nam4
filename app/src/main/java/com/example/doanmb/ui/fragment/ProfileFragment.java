@@ -131,9 +131,25 @@ public class ProfileFragment extends Fragment {
         btnLogin.setOnClickListener(v -> startActivity(new Intent(getActivity(), LoginActivity.class)));
         btnRegister.setOnClickListener(v -> startActivity(new Intent(getActivity(), RegisterActivity.class)));
         btnLogout.setOnClickListener(v -> {
-            FirebaseAuth.getInstance().signOut();
-            switchSubScreen(1);
-            checkLoginStatus();
+            // Xóa FCM token khỏi Firestore trước khi logout
+            // → tránh máy này nhận thông báo của tài khoản cũ khi đã đổi tài khoản
+            com.google.firebase.auth.FirebaseUser currentUser =
+                    FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser != null) {
+                FirebaseFirestore.getInstance()
+                        .collection("users")
+                        .document(currentUser.getUid())
+                        .update("fcmToken", "")
+                        .addOnCompleteListener(task -> {
+                            FirebaseAuth.getInstance().signOut();
+                            switchSubScreen(1);
+                            checkLoginStatus();
+                        });
+            } else {
+                FirebaseAuth.getInstance().signOut();
+                switchSubScreen(1);
+                checkLoginStatus();
+            }
         });
 
         cardUserProfile.setOnClickListener(v -> switchSubScreen(2));

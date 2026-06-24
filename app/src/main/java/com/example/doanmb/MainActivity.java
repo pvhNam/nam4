@@ -47,13 +47,16 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
-import com.cloudinary.android.MediaManager;
+import com.example.doanmb.service.CarviaMessagingService;
+import com.example.doanmb.util.ChatNotificationHelper;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -97,12 +100,22 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         db = FirebaseFirestore.getInstance();
 
         requestNotificationPermission();
+
+        // Warm up FCM access token ngay khi mở app → tránh delay lần đầu gửi notification
+        ChatNotificationHelper.warmUpAccessToken(this);
+
+        // Cập nhật FCM token lên Firestore ngay khi mở app
+        // → đảm bảo token luôn mới nhất, không cần chờ vào ChatDetailActivity
+        FirebaseMessaging.getInstance().getToken().addOnSuccessListener(token -> {
+            if (token != null) CarviaMessagingService.saveFcmToken(this, token);
+        });
 
         initViews();
         setupBanners();

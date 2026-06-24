@@ -631,8 +631,11 @@ public class MessagesFragment extends Fragment {
             String roomId     = str(item, "roomId");
             String docId      = str(item, "docId"); // ✅ lấy docId để update
 
-            h.tvTitle.setText(title.isEmpty() ? "Thông báo" : title);
-            h.tvBody.setText(body);
+            // Tên người gửi làm title (giống Messenger)
+            h.tvTitle.setText(senderName.isEmpty() ? (title.isEmpty() ? "Thông báo" : title) : senderName);
+            // Nội dung tin nhắn thực tế — nếu body là dạng "X muốn mua xe Y" thì hiện nguyên,
+            // nếu là tin nhắn thật thì hiện trực tiếp
+            h.tvBody.setText(body.isEmpty() ? "Đã gửi một tin nhắn" : body);
             h.tvTypeIcon.setText("chat".equals(type) ? "💬" : "🔔");
 
             Object createdAt = item.get("createdAt");

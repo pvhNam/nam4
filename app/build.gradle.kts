@@ -16,6 +16,7 @@ android {
     namespace = "com.example.doanmb"
     compileSdk = 36
 
+
     defaultConfig {
         applicationId = "com.example.doanmb"
         minSdk = 29
