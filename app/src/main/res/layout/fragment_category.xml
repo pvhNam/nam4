@@ -324,6 +324,7 @@
             </LinearLayout>
 
             <TextView
+                android:id="@+id/tv_brand_label"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingHorizontal="16dp"
@@ -334,6 +335,7 @@
                 android:textStyle="bold" />
 
             <HorizontalScrollView
+                android:id="@+id/scroll_brand_filters"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:clipToPadding="false"

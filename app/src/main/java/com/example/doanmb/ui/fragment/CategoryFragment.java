@@ -66,6 +66,10 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
     private LinearLayout layoutBrandFilters;
     private FrameLayout postCarFragmentContainer;
     private RecyclerView rvCategoryCars;
+    private LinearLayout cardSearchForm;
+    private TextView tvBrandLabel;
+    private View scrollBrandFilters;
+    private boolean filtersCollapsed = false;
 
     private final List<Car> allCars = new ArrayList<>();
     private final List<String> brandFilters = new ArrayList<>();
@@ -112,8 +116,12 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         layoutBrandFilters = view.findViewById(R.id.layout_brand_filters);
         postCarFragmentContainer = view.findViewById(R.id.post_car_fragment_container);
         rvCategoryCars = view.findViewById(R.id.rv_category_cars);
+        cardSearchForm = view.findViewById(R.id.card_search_form);
+        tvBrandLabel = view.findViewById(R.id.tv_brand_label);
+        scrollBrandFilters = view.findViewById(R.id.scroll_brand_filters);
 
         rvCategoryCars.setLayoutManager(new LinearLayoutManager(getContext()));
+        setupCollapseOnScroll();
         carAdapter = new ProfileCarAdapter(new ArrayList<>(), car -> {
             Intent intent = new Intent(getActivity(), CarDetailActivity.class);
             intent.putExtra("CAR_DATA", car);
@@ -152,6 +160,36 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         return view;
     }
 
+    /**
+     * Khi cuộn danh sách xe xuống thì thu gọn ô địa điểm/thời gian và hàng "Hãng xe"
+     * để chừa thêm chỗ cho danh sách; cuộn về đầu thì bung lại.
+     */
+    private void setupCollapseOnScroll() {
+        rvCategoryCars.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (dy > 6) {
+                    setFiltersCollapsed(true);
+                } else if (dy < -6 || !recyclerView.canScrollVertically(-1)) {
+                    setFiltersCollapsed(false);
+                }
+            }
+        });
+    }
+
+    private void setFiltersCollapsed(boolean collapse) {
+        if (filtersCollapsed == collapse) return;
+        filtersCollapsed = collapse;
+
+        ViewGroup parent = (ViewGroup) layoutCategoryBrowseContent;
+        if (parent != null) {
+            androidx.transition.TransitionManager.beginDelayedTransition(parent);
+        }
+        int visibility = collapse ? View.GONE : View.VISIBLE;
+        if (cardSearchForm != null) cardSearchForm.setVisibility(visibility);
+        if (tvBrandLabel != null) tvBrandLabel.setVisibility(visibility);
+        if (scrollBrandFilters != null) scrollBrandFilters.setVisibility(visibility);
+    }
     private void setupCategoryActions() {
         cardBuyCar.setOnClickListener(v -> selectCategory(CATEGORY_SALE, "Xe đang bán"));
         cardSelfDrive.setOnClickListener(v -> selectCategory(CATEGORY_RENTAL, "Xe thuê tự lái"));
@@ -289,7 +327,7 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
                 .collection("cars")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    // PHÒNG HỘ: Nếu người dùng đã thoát Fragment, dừng xử lý ngay lập tức
+                    // Nếu người dùng đã thoát Fragment, dừng xử lý ngay lập tức
                     if (!isAdded() || getActivity() == null) return;
 
                     allCars.clear();
@@ -321,7 +359,7 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
                     applyFilter();
                 })
                 .addOnFailureListener(e -> {
-                    // PHÒNG HỘ: Đảm bảo an toàn khi thất bại
+                    // Đảm bảo an toàn khi thất bại
                     if (!isAdded() || getActivity() == null) return;
                     allCars.clear();
                     loadSampleCars();
@@ -542,7 +580,7 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
 
     private void renderBrandFilters() {
         if (layoutBrandFilters == null) return;
-        // PHÒNG HỘ TRỰC TIẾP LỖI LINE 238 LOGCAT:
+
         if (!isAdded() || getContext() == null) return;
 
         layoutBrandFilters.removeAllViews();
