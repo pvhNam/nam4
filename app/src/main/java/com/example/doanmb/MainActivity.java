@@ -1,5 +1,6 @@
 package com.example.doanmb;
 
+import com.example.doanmb.ui.customer.ChatDetailActivity;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
@@ -27,11 +28,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.doanmb.adapter.BannerAdapter;
-import com.example.doanmb.ui.activity.CarDetailActivity;
-import com.example.doanmb.ui.fragment.CategoryFragment;
-import com.example.doanmb.ui.fragment.ManageFragment;
-import com.example.doanmb.ui.fragment.MessagesFragment;
-import com.example.doanmb.ui.fragment.ProfileFragment;
+import com.example.doanmb.ui.customer.CarDetailActivity;
+import com.example.doanmb.ui.customer.CategoryFragment;
+import com.example.doanmb.ui.customer.ManageFragment;
+import com.example.doanmb.ui.customer.MessagesFragment;
+import com.example.doanmb.ui.customer.ProfileFragment;
 import com.example.doanmb.adapter.CarRentalAdapter;
 import com.example.doanmb.adapter.CarSaleAdapter;
 import com.example.doanmb.model.Car;

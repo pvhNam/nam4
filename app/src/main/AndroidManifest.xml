@@ -45,7 +45,7 @@
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/colorPrimary" />
         <activity
-            android:name="com.example.doanmb.ui.activity.SplashActivity"
+            android:name="com.example.doanmb.ui.auth.SplashActivity"
             android:exported="true"
             android:theme="@style/Theme.DOANMB">
             <intent-filter>
@@ -59,37 +59,37 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
-        <activity android:name="com.example.doanmb.ui.activity.CarDetailActivity" android:exported="false" />
-        <activity android:name="com.example.doanmb.ui.activity.MapPickerActivity" android:exported="false" />
-        <activity android:name="com.example.doanmb.ui.activity.FavoriteCarsActivity" android:exported="false" />
-        <activity android:name="com.example.doanmb.ui.activity.LoginActivity" />
-        <activity android:name="com.example.doanmb.ui.activity.RegisterActivity" />
-        <activity android:name="com.example.doanmb.ui.activity.ForgotPassActivity" />
-        <activity android:name="com.example.doanmb.ui.activity.AdminDashboardActivity"
+        <activity android:name="com.example.doanmb.ui.customer.CarDetailActivity" android:exported="false" />
+        <activity android:name="com.example.doanmb.ui.customer.MapPickerActivity" android:exported="false" />
+        <activity android:name="com.example.doanmb.ui.customer.FavoriteCarsActivity" android:exported="false" />
+        <activity android:name="com.example.doanmb.ui.auth.LoginActivity" />
+        <activity android:name="com.example.doanmb.ui.auth.RegisterActivity" />
+        <activity android:name="com.example.doanmb.ui.auth.ForgotPassActivity" />
+        <activity android:name="com.example.doanmb.ui.admin.AdminDashboardActivity"
             android:theme="@style/Theme.DOANMB.Admin" />
-        <activity android:name="com.example.doanmb.ui.activity.DriverDashboardActivity"
+        <activity android:name="com.example.doanmb.ui.driver.DriverDashboardActivity"
             android:theme="@style/Theme.DOANMB.Driver" />
-        <activity android:name="com.example.doanmb.ui.activity.DriverRegisterActivity"
+        <activity android:name="com.example.doanmb.ui.driver.DriverRegisterActivity"
             android:theme="@style/Theme.DOANMB.Driver" />
-        <activity android:name="com.example.doanmb.ui.activity.AdminRevenueDetailActivity"
+        <activity android:name="com.example.doanmb.ui.admin.AdminRevenueDetailActivity"
             android:theme="@style/Theme.DOANMB.Admin" />
         <activity
-            android:name="com.example.doanmb.ui.activity.ChatDetailActivity"
+            android:name="com.example.doanmb.ui.customer.ChatDetailActivity"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name=".ui.activity.FullscreenImageActivity"
+            android:name=".ui.customer.FullscreenImageActivity"
             android:screenOrientation="fullSensor"
             android:theme="@style/Theme.MaterialComponents.NoActionBar" />
 
         <activity
-            android:name=".ui.activity.VideoPlayerActivity"
+            android:name=".ui.customer.VideoPlayerActivity"
             android:screenOrientation="fullSensor"
             android:configChanges="orientation|screenSize"
             android:theme="@style/Theme.MaterialComponents.NoActionBar" />
 
         <activity
-            android:name=".ui.activity.FullscreenMediaActivity"
+            android:name=".ui.customer.FullscreenMediaActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:screenOrientation="portrait"
             android:exported="false" />

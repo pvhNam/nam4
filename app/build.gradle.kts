@@ -50,6 +50,24 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    buildFeatures {
+        viewBinding = true
+    }
+
+    // Tách layout theo vai trò: mỗi res-* có thư mục layout/ riêng (chung 1 namespace
+    // tài nguyên nên KHÔNG phải đổi R.layout hay tên binding).
+    sourceSets {
+        getByName("main") {
+            res.setSrcDirs(listOf(
+                "src/main/res",
+                "src/main/res-admin",
+                "src/main/res-driver",
+                "src/main/res-customer",
+                "src/main/res-auth"
+            ))
+        }
+    }
 }
 
 dependencies {
