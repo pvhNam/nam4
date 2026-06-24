@@ -16,8 +16,12 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class RegisterActivity extends AppCompatActivity {
+
+    private static final Pattern STRONG_PASSWORD_PATTERN =
+            Pattern.compile("^(?=.*\\p{Lu})(?=.*[^\\p{L}\\p{Nd}\\s]).{8,}$");
 
     private EditText etName, etPhone, etEmail, etPassword, etConfirm;
     private Button btnRegister;
@@ -52,6 +56,8 @@ public class RegisterActivity extends AppCompatActivity {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
         String confirm = etConfirm.getText().toString().trim();
+        etPassword.setError(null);
+        etConfirm.setError(null);
 
         if (name.isEmpty() || phone.isEmpty() || email.isEmpty() || password.isEmpty() || confirm.isEmpty()) {
             Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin!", Toast.LENGTH_SHORT).show();
@@ -63,6 +69,11 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
+        if (!isStrongPassword(password)) {
+            etPassword.setError("Mật khẩu phải có ít nhất 8 ký tự, 1 chữ hoa và 1 ký tự đặc biệt.");
+            etPassword.requestFocus();
+            return;
+        }
         if (!password.equals(confirm)) {
             Toast.makeText(this, "Mật khẩu không hợp lệ!", Toast.LENGTH_SHORT).show();
             return;
@@ -91,5 +102,8 @@ public class RegisterActivity extends AppCompatActivity {
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Loi dang ky: " + e.getMessage(), Toast.LENGTH_LONG).show()
                 );
+    }
+    private boolean isStrongPassword(String password) {
+        return STRONG_PASSWORD_PATTERN.matcher(password).matches();
     }
 }
