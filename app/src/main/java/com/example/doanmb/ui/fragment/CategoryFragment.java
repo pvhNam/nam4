@@ -44,6 +44,9 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
     private static final String CATEGORY_RENTAL = "rental";
     private static final String CATEGORY_DRIVER = "driver";
     private static final String BRAND_ALL = "all";
+    private static final int SORT_NONE = 0;
+    private static final int SORT_PRICE_ASC = 1;
+    private static final int SORT_PRICE_DESC = 2;
     private static final String[] KNOWN_BRANDS = {"Toyota", "Honda", "Mazda", "Kia", "Ford", "Hyundai", "VinFast", "Khác"};
     private static final String LOCATION_ALL = "Tất cả khu vực";
 
@@ -82,6 +85,8 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
     private String currentTitle = "Xe đang bán";
     private String selectedBrand = BRAND_ALL;
     private String selectedLocation = ""; // rỗng = tất cả khu vực
+    private int sortMode = SORT_NONE;
+    private TextView tvSortPrice;
     private Calendar pickupTime;  // null = chưa chọn giờ đón
     private Calendar returnTime;  // null = chưa chọn giờ trả
     private final SimpleDateFormat timeFmt = new SimpleDateFormat("dd/MM/yyyy", new Locale("vi"));
@@ -151,6 +156,12 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         tvSearchTime = view.findViewById(R.id.tv_search_time);
         if (tvSearchTime != null) {
             tvSearchTime.setOnClickListener(v -> showTimePicker());
+        }
+
+        tvSortPrice = view.findViewById(R.id.tv_sort_price);
+        if (tvSortPrice != null) {
+            tvSortPrice.setOnClickListener(v -> showSortDialog());
+            updateSortLabel();
         }
 
         setupCategoryActions();
@@ -512,6 +523,47 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
         return false;
     }
 
+    /** Hộp thoại chọn cách sắp xếp theo giá. */
+    private void showSortDialog() {
+        if (getContext() == null) return;
+        final String[] items = {"Mặc định", "Giá: thấp → cao", "Giá: cao → thấp"};
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Sắp xếp")
+                .setSingleChoiceItems(items, sortMode, (dialog, which) -> {
+                    sortMode = which;
+                    updateSortLabel();
+                    applyFilter();
+                    dialog.dismiss();
+                })
+                .show();
+    }
+
+    private void updateSortLabel() {
+        if (tvSortPrice == null) return;
+        switch (sortMode) {
+            case SORT_PRICE_ASC:
+                tvSortPrice.setText("Giá thấp → cao");
+                break;
+            case SORT_PRICE_DESC:
+                tvSortPrice.setText("Giá cao → thấp");
+                break;
+            default:
+                tvSortPrice.setText("Sắp xếp");
+        }
+    }
+
+    /** Lấy phần số trong chuỗi giá (vd "450.000.000 VNĐ" → 450000000). */
+    private long parsePrice(String price) {
+        if (price == null) return 0L;
+        String digits = price.replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) return 0L;
+        try {
+            return Long.parseLong(digits);
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
+    }
+
     private void applyFilter() {
         List<Car> filteredCars = new ArrayList<>();
 
@@ -525,6 +577,14 @@ public class CategoryFragment extends Fragment implements PostCarFragment.OnPost
             if (matchesCategory && matchesSelectedBrand(car) && matchesSelectedLocation(car)) {
                 filteredCars.add(car);
             }
+        }
+
+        if (sortMode == SORT_PRICE_ASC) {
+            java.util.Collections.sort(filteredCars,
+                    (a, b) -> Long.compare(parsePrice(a.getPrice()), parsePrice(b.getPrice())));
+        } else if (sortMode == SORT_PRICE_DESC) {
+            java.util.Collections.sort(filteredCars,
+                    (a, b) -> Long.compare(parsePrice(b.getPrice()), parsePrice(a.getPrice())));
         }
 
         carAdapter.updateList(filteredCars);

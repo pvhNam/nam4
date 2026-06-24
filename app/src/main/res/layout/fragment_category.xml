@@ -353,16 +353,40 @@
                     android:orientation="horizontal" />
             </HorizontalScrollView>
 
-            <TextView
-                android:id="@+id/tv_category_result_title"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:paddingHorizontal="16dp"
-                android:paddingTop="4dp"
-                android:text="Xe đang bán"
-                android:textColor="@color/color_on_background"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:paddingTop="4dp">
+
+                <TextView
+                    android:id="@+id/tv_category_result_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Xe đang bán"
+                    android:textColor="@color/color_on_background"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_sort_price"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:drawablePadding="4dp"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="4dp"
+                    android:text="Sắp xếp"
+                    android:textColor="#2F54D4"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tv_category_count"
