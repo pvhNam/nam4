@@ -105,7 +105,7 @@ public class AdminDriverDetailFragment extends Fragment {
         btnApprove.setEnabled(false);
         btnReject.setEnabled(false);
         db.collection("users").document(uid)
-                .update("driverStatus", "approved", "role", "DRIVER")
+                .update("driverStatus", "approved", "isDriver", true)
                 .addOnSuccessListener(v -> {
                     if (!isAdded()) return;
                     sendNotification(uid,
@@ -129,7 +129,7 @@ public class AdminDriverDetailFragment extends Fragment {
         btnApprove.setEnabled(false);
         btnReject.setEnabled(false);
         db.collection("users").document(uid)
-                .update("driverStatus", "rejected")
+                .update("driverStatus", "rejected", "isDriver", false)
                 .addOnSuccessListener(v -> {
                     if (!isAdded()) return;
                     sendNotification(uid,

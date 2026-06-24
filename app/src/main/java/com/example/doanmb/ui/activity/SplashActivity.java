@@ -53,10 +53,11 @@ public class SplashActivity extends AppCompatActivity {
         db.collection("users").document(uid).get()
                 .addOnSuccessListener((DocumentSnapshot doc) -> {
                     String role = doc.getString("role");
+                    boolean isDriver = Boolean.TRUE.equals(doc.getBoolean("isDriver"));
                     Intent intent;
-                    if ("ADMIN".equals(role))       intent = new Intent(this, AdminDashboardActivity.class);
-                    else if ("DRIVER".equals(role)) intent = new Intent(this, DriverDashboardActivity.class);
-                    else                            intent = new Intent(this, MainActivity.class);
+                    if ("ADMIN".equals(role)) intent = new Intent(this, AdminDashboardActivity.class);
+                    else if (isDriver)        intent = new Intent(this, DriverDashboardActivity.class);
+                    else                      intent = new Intent(this, MainActivity.class);
                     startActivity(intent);
                     finish();
                 })
