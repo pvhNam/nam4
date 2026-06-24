@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nút chính Liquid Glass: gradient teal bóng + sheen sáng cạnh trên -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="26dp" />
+            <gradient
+                android:type="linear"
+                android:angle="270"
+                android:startColor="#46D9DF"
+                android:centerColor="@color/lg_accent"
+                android:endColor="@color/lg_accent_dark" />
+            <stroke
+                android:width="1dp"
+                android:color="@color/lg_glass_stroke" />
+        </shape>
+    </item>
+    <!-- Sheen: vạch sáng mảnh ở cạnh trên cho cảm giác bóng kính -->
+    <item android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="26dp" />
+            <solid android:color="@android:color/transparent" />
+            <stroke
+                android:width="1dp"
+                android:color="#66FFFFFF" />
+        </shape>
+    </item>
+</layer-list>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Thẻ kính mờ (iOS 26): nền kính gradient chéo (sáng góc trên-trái) +
+     viền highlight sáng để bắt sáng cạnh, tạo chiều sâu "liquid glass". -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Lớp nền kính: ánh sáng đổ từ trên-trái xuống dưới-phải -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="24dp" />
+            <gradient
+                android:type="linear"
+                android:angle="315"
+                android:startColor="@color/lg_glass_fill_strong"
+                android:centerColor="@color/lg_glass_fill"
+                android:endColor="@color/lg_glass_fill_soft" />
+            <stroke
+                android:width="1dp"
+                android:color="@color/lg_glass_stroke_dim" />
+        </shape>
+    </item>
+    <!-- Highlight cạnh trên: vạch sáng mảnh mô phỏng ánh sáng bắt vào mép kính -->
+    <item android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="24dp" />
+            <solid android:color="@android:color/transparent" />
+            <stroke
+                android:width="1dp"
+                android:color="@color/lg_glass_stroke" />
+        </shape>
+    </item>
+</layer-list>

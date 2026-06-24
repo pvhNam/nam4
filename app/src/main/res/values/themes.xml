@@ -2,9 +2,12 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme -->
     <style name="Base.Theme.DOANMB" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">#1976D2</item>
-        <item name="colorPrimaryVariant">#1565C0</item>
+        <!-- Màu nhấn teal Liquid Glass (đồng nhất toàn app khách hàng) -->
+        <item name="colorPrimary">@color/lg_accent</item>
+        <item name="colorPrimaryVariant">@color/lg_accent_dark</item>
         <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">@color/lg_accent</item>
+        <item name="colorControlActivated">@color/lg_accent</item>
         <item name="android:windowBackground">@color/color_background</item>
         <item name="android:textColorHint">@color/color_hint</item>
         <!-- Tắt ripple mặc định của BottomNav để dùng background tùy chỉnh -->
@@ -13,18 +16,35 @@
 
     <style name="Theme.DOANMB" parent="Base.Theme.DOANMB" />
 
+    <!-- Tài xế: giữ tông xanh riêng (không theo teal) -->
+    <style name="Theme.DOANMB.Driver" parent="Base.Theme.DOANMB">
+        <item name="colorPrimary">@color/driver_primary</item>
+        <item name="colorPrimaryVariant">@color/driver_dark</item>
+        <item name="colorControlActivated">@color/driver_primary</item>
+    </style>
+
+    <!-- Admin: giữ tông đỏ riêng -->
+    <style name="Theme.DOANMB.Admin" parent="Base.Theme.DOANMB">
+        <item name="colorPrimary">@color/admin_primary</item>
+        <item name="colorPrimaryVariant">@color/admin_dark</item>
+        <item name="colorControlActivated">@color/admin_primary</item>
+    </style>
+
     <!-- Style cho BottomNavigation pill bo tròn -->
-    <style name="BottomNavPill" parent="Widget.MaterialComponents.BottomNavigationView">
-        <item name="android:background">@drawable/bg_bottom_nav</item>
-        <item name="elevation">12dp</item>
+    <style name="BottomNavPill" parent="Widget.Material3.BottomNavigationView">
+        <!-- Nền trong suốt: lớp kính do BlurView phía dưới đảm nhiệm -->
+        <item name="android:background">@android:color/transparent</item>
+        <item name="elevation">0dp</item>
         <item name="itemHorizontalTranslationEnabled">false</item>
         <item name="itemRippleColor">@color/ripple_nav</item>
         <item name="itemActiveIndicatorStyle">@style/NavActiveIndicator</item>
     </style>
 
-    <!-- Indicator màu xanh nhạt cho item đang chọn -->
+    <!-- Indicator kính sáng cho item đang chọn (bong bóng trắng mờ) -->
     <style name="NavActiveIndicator" parent="@style/Widget.Material3.BottomNavigationView.ActiveIndicator">
-        <item name="android:color">@android:color/transparent</item>
+        <item name="android:color">@color/lg_glass_fill_strong</item>
+        <item name="android:width">44dp</item>
+        <item name="android:height">32dp</item>
         <item name="shapeAppearance">@style/NavIndicatorShape</item>
     </style>
 

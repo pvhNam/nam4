@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Panel nội dung: kính trong (frosted). Bo góc DƯỚI, đỉnh PHẲNG để
+     nối liền lên header phía trên (cùng cột bo tròn). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="@color/color_surface" />
-    <corners android:radius="24dp" />
+    <solid android:color="@color/lg_glass_fill_strong" />
+    <corners
+        android:topLeftRadius="0dp"
+        android:topRightRadius="0dp"
+        android:bottomLeftRadius="28dp"
+        android:bottomRightRadius="28dp" />
 </shape>

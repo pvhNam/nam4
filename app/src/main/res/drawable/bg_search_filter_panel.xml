@@ -1,7 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Header lọc (Liquid Glass): gradient teal. Bo góc TRÊN, đáy PHẲNG để
+     nối liền xuống panel nội dung bên dưới (cùng cột bo tròn). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="#2F7BD7" />
     <corners
-        android:bottomLeftRadius="28dp"
-        android:bottomRightRadius="28dp" />
+        android:topLeftRadius="28dp"
+        android:topRightRadius="28dp"
+        android:bottomLeftRadius="0dp"
+        android:bottomRightRadius="0dp" />
+    <gradient
+        android:type="linear"
+        android:angle="270"
+        android:startColor="@color/lg_accent"
+        android:endColor="@color/lg_accent_soft" />
 </shape>

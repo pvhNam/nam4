@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:background="@drawable/bg_liquid_glass">
 
     <!-- Logo CARVIA — giống mẫu: icon + chữ nằm ngang -->
 
@@ -65,8 +65,10 @@
         android:textSize="17sp"
         android:textColor="#FFFFFF"
         android:textStyle="bold"
-        android:backgroundTint="#2563EB"
-        style="@style/Widget.MaterialComponents.Button"
+        app:backgroundTint="@color/lg_accent"
+        app:cornerRadius="28dp"
+        app:strokeColor="@color/lg_glass_stroke"
+        app:strokeWidth="1dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
