@@ -141,6 +141,7 @@ public class ChatDetailActivity extends AppCompatActivity {
         setupSearch();
         listenForMessages();
         updateReadStatus();
+        markRoomAsRead();   // Đánh dấu đã đọc khi mở chat → ẩn chấm xanh
         listenForBlockStatus(); // thay checkBlockStatus cũ
 
         // ── Lưu FCM token (đảm bảo token mới nhất được lưu lên Firestore) ──
@@ -613,6 +614,7 @@ public class ChatDetailActivity extends AppCompatActivity {
                     }
                     chatAdapter.submitList(new ArrayList<>(allMessages), this::scrollToBottom);
                     updateReadStatus();
+                    markRoomAsRead(); // auto-clear unreadBy khi đang xem chat
 
                     // Refresh highlight nếu đang tìm kiếm
                     if (layoutSearchBar != null
@@ -827,24 +829,46 @@ public class ChatDetailActivity extends AppCompatActivity {
         db.collection("chat_rooms").document(roomId)
                 .collection("messages").add(msg)
                 .addOnSuccessListener(ref -> {
-                    // Xác định nội dung preview tin nhắn (text thật / [Hình ảnh] / [Video])
                     final String msgPreview = videoUrl != null ? "[Video]"
                             : imageUrl != null ? "[Hình ảnh]"
-                            : (content != null && !content.isEmpty() ? content : "");
-
-                    db.collection("chat_rooms").document(roomId)
-                            .update("lastMessage", msgPreview,
-                                    "lastTimestamp", FieldValue.serverTimestamp());
+                            : (content != null ? content : "");
+                    // Lưu lastSenderId để receiver biết ai gửi tin cuối → hiện chấm xanh
+                    // Đảm bảo partnerId luôn có giá trị trước khi update unreadBy
+                    String resolvedPartnerId = (partnerId != null && !partnerId.isEmpty())
+                            ? partnerId : null;
+                    // Luôn dùng set+merge để đảm bảo field unreadBy được tạo kể cả khi chưa tồn tại
+                    String finalPartnerId = resolvedPartnerId;
+                    if (finalPartnerId == null) {
+                        // Fallback: lấy buyerId/sellerId từ Firestore
+                        db.collection("chat_rooms").document(roomId).get()
+                                .addOnSuccessListener(roomDoc -> {
+                                    String buyerId2  = roomDoc.getString("buyerId");
+                                    String sellerId2 = roomDoc.getString("sellerId");
+                                    String pid = currentUserId.equals(buyerId2) ? sellerId2 : buyerId2;
+                                    Map<String, Object> roomUpdate = new HashMap<>();
+                                    roomUpdate.put("lastMessage",   msgPreview);
+                                    roomUpdate.put("lastTimestamp", FieldValue.serverTimestamp());
+                                    roomUpdate.put("lastSenderId",  currentUserId);
+                                    roomUpdate.put("unreadBy",      pid != null ? pid : "");
+                                    db.collection("chat_rooms").document(roomId)
+                                            .set(roomUpdate, com.google.firebase.firestore.SetOptions.merge());
+                                });
+                    } else {
+                        Map<String, Object> roomUpdate = new HashMap<>();
+                        roomUpdate.put("lastMessage",   msgPreview);
+                        roomUpdate.put("lastTimestamp", FieldValue.serverTimestamp());
+                        roomUpdate.put("lastSenderId",  currentUserId);
+                        roomUpdate.put("unreadBy",      finalPartnerId);
+                        db.collection("chat_rooms").document(roomId)
+                                .set(roomUpdate, com.google.firebase.firestore.SetOptions.merge());
+                    }
 
                     // ── Gửi thông báo cho người nhận ──────────────────────────
-                    final String cName = (carData != null && carData.getName() != null)
+                    String cName = (carData != null && carData.getName() != null)
                             ? carData.getName() : "";
-                    final String cType = (carData != null && carData.getType() != null)
+                    String cType = (carData != null && carData.getType() != null)
                             ? carData.getType() : "sale";
-
-                    android.util.Log.d("ChatDetail",
-                            "Sending notification: preview='" + msgPreview + "'");
-
+                    String preview = msgPreview;
                     db.collection("users").document(currentUserId).get()
                             .addOnSuccessListener(senderDoc -> {
                                 String sName = senderDoc.exists()
@@ -852,29 +876,15 @@ public class ChatDetailActivity extends AppCompatActivity {
                                 if (sName == null) sName = "";
 
                                 // ✅ partnerId = người nhận, currentUserId = người gửi
+                                // → chỉ người nhận mới có thông báo, người gửi không bao giờ tự nhận thông báo của mình
                                 ChatNotificationHelper.sendChatNotification(
-                                        ChatDetailActivity.this,
-                                        partnerId,
-                                        currentUserId,
+                                        ChatDetailActivity.this,  // context để đọc service-account.json
+                                        partnerId,                // người NHẬN thông báo
+                                        currentUserId,            // người GỬI tin nhắn
                                         sName,
                                         cName,
                                         cType,
-                                        msgPreview,   // ← nội dung tin nhắn thật
-                                        roomId
-                                );
-                            })
-                            .addOnFailureListener(e -> {
-                                // Fallback: gửi notification dù không lấy được tên người gửi
-                                android.util.Log.w("ChatDetail",
-                                        "Không lấy được tên người gửi: " + e.getMessage());
-                                ChatNotificationHelper.sendChatNotification(
-                                        ChatDetailActivity.this,
-                                        partnerId,
-                                        currentUserId,
-                                        partnerName != null ? "" : "",
-                                        cName,
-                                        cType,
-                                        msgPreview,
+                                        preview,
                                         roomId
                                 );
                             });
@@ -896,6 +906,25 @@ public class ChatDetailActivity extends AppCompatActivity {
             rvMessages.postDelayed(
                     () -> rvMessages.smoothScrollToPosition(chatAdapter.getItemCount() - 1), 100);
         }
+    }
+
+    /** Đánh dấu đã đọc: xoá unreadBy khi currentUser mở phòng chat */
+    private void markRoomAsRead() {
+        if (roomId == null || currentUserId == null) return;
+        db.collection("chat_rooms").document(roomId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) return;
+                    String unreadBy = doc.getString("unreadBy");
+                    // Chỉ clear nếu chính mình là người chưa đọc
+                    if (currentUserId.equals(unreadBy)) {
+                        db.collection("chat_rooms").document(roomId)
+                                .update("unreadBy", "")
+                                .addOnFailureListener(e ->
+                                        android.util.Log.w("ChatDetail",
+                                                "markRoomAsRead failed: " + e.getMessage()));
+                    }
+                });
     }
 
     private void updateReadStatus() {

@@ -341,6 +341,10 @@ public class MessagesFragment extends Fragment {
                     for (QueryDocumentSnapshot doc : snapshots) {
                         Map<String, Object> data = new HashMap<>(doc.getData());
                         data.put("roomId", doc.getId());
+                        android.util.Log.d("SNAPSHOT_DEBUG",
+                                "RAW doc=" + doc.getId() +
+                                        " unreadBy='" + doc.getString("unreadBy") + "'" +
+                                        " lastMsg='" + doc.getString("lastMessage") + "'");
 
                         String buyerId   = (String) data.get("buyerId");
                         String sellerId  = (String) data.get("sellerId");
@@ -401,14 +405,16 @@ public class MessagesFragment extends Fragment {
 
         private final List<Map<String, Object>> list;
         private final FirebaseFirestore db;
-        private final String currentUid;
         private String searchQuery = "";
 
         ConversationAdapter(List<Map<String, Object>> list, FirebaseFirestore db) {
-            this.list       = list;
-            this.db         = db;
-            this.currentUid = FirebaseAuth.getInstance().getCurrentUser() != null
-                    ? FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
+            this.list = list;
+            this.db   = db;
+        }
+
+        private String getCurrentUid() {
+            FirebaseUser u = FirebaseAuth.getInstance().getCurrentUser();
+            return u != null ? u.getUid() : "";
         }
 
         void setSearchQuery(String q) { this.searchQuery = q != null ? q : ""; }
@@ -438,6 +444,20 @@ public class MessagesFragment extends Fragment {
             if (lastMsg.isEmpty()) lastMsg = "Bắt đầu trò chuyện...";
             h.tvLastMsg.setText(lastMsg);
 
+            // ── Hiển thị chấm xanh nếu currentUser chưa đọc tin nhắn cuối ──
+            String unreadBy = String.valueOf(item.getOrDefault("unreadBy", ""));
+            boolean hasUnread = getCurrentUid().equals(unreadBy);
+            android.util.Log.d("UNREAD_DEBUG",
+                    "roomId=" + item.getOrDefault("roomId","?") +
+                            " unreadBy='" + unreadBy + "'"+
+                            " currentUid='" + getCurrentUid() + "'"+
+                            " hasUnread=" + hasUnread);
+            if (h.viewUnreadDot != null)
+                h.viewUnreadDot.setVisibility(hasUnread ? View.VISIBLE : View.GONE);
+            h.tvLastMsg.setTypeface(null,
+                    hasUnread ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+            h.tvLastMsg.setTextColor(hasUnread ? 0xFF1A1A2E : 0xFF6B7280);
+
             if (!partnerAvatar.isEmpty() && !"null".equals(partnerAvatar)) {
                 h.tvAvatar.setVisibility(View.GONE);
                 h.ivAvatar.setVisibility(View.VISIBLE);
@@ -456,11 +476,23 @@ public class MessagesFragment extends Fragment {
                 String roomId    = String.valueOf(item.getOrDefault("roomId",   ""));
                 String buyerId   = String.valueOf(item.getOrDefault("buyerId",  ""));
                 String sellerId  = String.valueOf(item.getOrDefault("sellerId", ""));
-                String partnerId = currentUid.equals(buyerId) ? sellerId : buyerId;
+                String partnerId = getCurrentUid().equals(buyerId) ? sellerId : buyerId;
                 String carPrice  = String.valueOf(item.getOrDefault("carPrice", ""));
                 String carImage  = String.valueOf(item.getOrDefault("carImage", ""));
                 String carId     = String.valueOf(item.getOrDefault("carId",    ""));
                 String carType   = String.valueOf(item.getOrDefault("carType",  "sale"));
+
+                // Ẩn chấm xanh ngay lập tức + cập nhật Firestore
+                String unreadByNow = String.valueOf(item.getOrDefault("unreadBy", ""));
+                if (getCurrentUid().equals(unreadByNow)) {
+                    item.put("unreadBy", "");
+                    if (h.viewUnreadDot != null) h.viewUnreadDot.setVisibility(View.GONE);
+                    h.tvLastMsg.setTypeface(null, android.graphics.Typeface.NORMAL);
+                    h.tvLastMsg.setTextColor(0xFF6B7280);
+                    if (!roomId.isEmpty()) {
+                        db.collection("chat_rooms").document(roomId).update("unreadBy", "");
+                    }
+                }
 
                 Intent intent = new Intent(v.getContext(), ChatDetailActivity.class);
                 intent.putExtra("ROOM_ID",      roomId);
@@ -482,14 +514,16 @@ public class MessagesFragment extends Fragment {
         static class VH extends RecyclerView.ViewHolder {
             TextView  tvAvatar, tvName, tvCarName, tvLastMsg;
             ImageView ivAvatar;
+            View      viewUnreadDot;
 
             VH(@NonNull View v) {
                 super(v);
-                tvAvatar  = v.findViewById(R.id.tvConvAvatar);
-                ivAvatar  = v.findViewById(R.id.ivConvAvatar);
-                tvName    = v.findViewById(R.id.tvConvName);
-                tvCarName = v.findViewById(R.id.tvConvCarName);
-                tvLastMsg = v.findViewById(R.id.tvConvLastMsg);
+                tvAvatar      = v.findViewById(R.id.tvConvAvatar);
+                ivAvatar      = v.findViewById(R.id.ivConvAvatar);
+                tvName        = v.findViewById(R.id.tvConvName);
+                tvCarName     = v.findViewById(R.id.tvConvCarName);
+                tvLastMsg     = v.findViewById(R.id.tvConvLastMsg);
+                viewUnreadDot = v.findViewById(R.id.viewConvUnreadDot);
             }
         }
     }
