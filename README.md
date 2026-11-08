@@ -1,3 +1,5 @@
+<a id="top"></a>
+
 <div align="center">
 
 <img src="https://capsule-render.vercel.app/api?type=venom&color=0:0F2027,50:2E86DE,100:8E44AD&height=260&section=header&text=TMDT&fontSize=96&fontColor=ffffff&fontAlignY=42&animation=twinkling&desc=Tutor%20Marketplace%20%E2%80%A2%20Android%20%C3%97%20Firebase%20%C3%97%20VNPay&descSize=20&descAlignY=66" alt="TMDT banner" width="100%"/>
@@ -16,14 +18,16 @@
 
 ![Status](https://img.shields.io/badge/Status-Active%20Development-2E86DE?style=flat-square&logo=githubactions&logoColor=white)
 ![PRs](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=flat-square)
-![Made with](https://img.shields.io/badge/Made%20with-%E2%9D%A4%EF%B8%8F%20in%20Vietnam-E74C3C?style=flat-square)
 ![Stars](https://img.shields.io/github/stars/pvhNam/TMDT_CK?style=flat-square&logo=github&color=F1C40F)
+![Issues](https://img.shields.io/github/issues/pvhNam/TMDT_CK?style=flat-square&color=E74C3C)
 ![Last commit](https://img.shields.io/github/last-commit/pvhNam/TMDT_CK?style=flat-square&color=8E44AD)
+![Commit activity](https://img.shields.io/github/commit-activity/t/pvhNam/TMDT_CK?style=flat-square&color=2E86DE)
 ![Repo size](https://img.shields.io/github/repo-size/pvhNam/TMDT_CK?style=flat-square&color=27AE60)
+![Top language](https://img.shields.io/github/languages/top/pvhNam/TMDT_CK?style=flat-square&color=ED8B00)
 
 <br/>
 
-**[🚀 Bắt đầu](#-bắt-đầu-nhanh) &nbsp;•&nbsp; [✨ Tính năng](#-tính-năng) &nbsp;•&nbsp; [🏗️ Kiến trúc](#️-kiến-trúc) &nbsp;•&nbsp; [⚙️ Cấu hình](#️-cấu-hình-môi-trường) &nbsp;•&nbsp; [🤝 Phát triển](#-quy-trình-phát-triển) &nbsp;•&nbsp; [🩺 Sự cố](#-xử-lý-sự-cố)**
+**[🚀 Bắt đầu](#bat-dau) &nbsp;•&nbsp; [✨ Tính năng](#tinh-nang) &nbsp;•&nbsp; [🏗️ Kiến trúc](#kien-truc) &nbsp;•&nbsp; [🗃️ Dữ liệu](#du-lieu) &nbsp;•&nbsp; [⚙️ Cấu hình](#cau-hinh) &nbsp;•&nbsp; [🤝 Phát triển](#phat-trien) &nbsp;•&nbsp; [📦 Phát hành](#phat-hanh) &nbsp;•&nbsp; [🩺 Sự cố](#su-co) &nbsp;•&nbsp; [❓ FAQ](#faq)**
 
 </div>
 
@@ -42,6 +46,24 @@
     <img src="docs/screenshots/payment.png" width="22%" alt="Thanh toán"/>
   </div>
 -->
+
+<a id="tong-quan"></a>
+
+## 🧭 Tổng quan nhanh
+
+| Thuộc tính | Giá trị |
+| --- | --- |
+| 📦 Loại sản phẩm | Ứng dụng di động Android (Java, Fragment + XML) |
+| 📲 Nền tảng tối thiểu | Android 10 |
+| ☕ Môi trường build | JDK 21, Gradle (Kotlin DSL) |
+| 🔑 Xác thực | Firebase Authentication — Email/Password |
+| 🔥 Cơ sở dữ liệu | Cloud Firestore + Security Rules |
+| 💳 Thanh toán | VNPay TEST (WebView) |
+| ☁️ Firebase project | `tmdt-3e274` |
+| 🌿 Nhánh chính | `main` |
+| 🚦 Trạng thái | Đang phát triển tích cực |
+
+<a id="noi-bat"></a>
 
 ## 🌟 Điểm nổi bật
 
@@ -96,32 +118,43 @@ Auth và Rules chạy trên **Emulator localhost**, không ghi dữ liệu lên 
 <tr>
 <td valign="top">
 
-1. [🌟 Điểm nổi bật](#-điểm-nổi-bật)
-2. [✨ Tính năng](#-tính-năng)
-3. [👥 Vai trò](#-vai-trò-người-dùng)
-4. [🏗️ Kiến trúc](#️-kiến-trúc)
+1. [🧭 Tổng quan nhanh](#tong-quan)
+2. [🌟 Điểm nổi bật](#noi-bat)
+3. [✨ Tính năng](#tinh-nang)
+4. [👥 Vai trò và phân quyền](#vai-tro)
+5. [🏗️ Kiến trúc](#kien-truc)
+6. [🗃️ Mô hình dữ liệu](#du-lieu)
+7. [🚀 Bắt đầu nhanh](#bat-dau)
 
 </td>
 <td valign="top">
 
-5. [🚀 Bắt đầu nhanh](#-bắt-đầu-nhanh)
-6. [⚙️ Cấu hình môi trường](#️-cấu-hình-môi-trường)
-7. [🤝 Quy trình phát triển](#-quy-trình-phát-triển)
-8. [🧪 Kiểm thử](#-kiểm-thử)
+8. [⚙️ Cấu hình môi trường](#cau-hinh)
+9. [🤝 Quy trình phát triển](#phat-trien)
+10. [🧪 Kiểm thử](#kiem-thu)
+11. [📦 Phát hành](#phat-hanh)
+12. [🔐 Bảo mật](#bao-mat)
+13. [⚠️ Giới hạn đã biết](#gioi-han)
+14. [🩺 Xử lý sự cố](#su-co)
 
 </td>
 <td valign="top">
 
-9. [🔐 Bảo mật](#-bảo-mật)
-10. [🩺 Xử lý sự cố](#-xử-lý-sự-cố)
-11. [🗺️ Lộ trình](#️-lộ-trình)
-12. [💬 Liên hệ](#-đóng-góp-và-liên-hệ)
+15. [❓ Câu hỏi thường gặp](#faq)
+16. [📖 Thuật ngữ](#thuat-ngu)
+17. [🗺️ Lộ trình](#lo-trinh)
+18. [📚 Tài liệu](#tai-lieu)
+19. [📜 Giấy phép](#giay-phep)
+20. [💬 Đóng góp và liên hệ](#lien-he)
+21. [🙏 Ghi nhận](#ghi-nhan)
 
 </td>
 </tr>
 </table>
 
 ---
+
+<a id="tinh-nang"></a>
 
 ## ✨ Tính năng
 
@@ -190,13 +223,50 @@ Chi tiết: [FIRESTORE_SCHEMA.md](FIRESTORE_SCHEMA.md)
 
 </details>
 
-## 👥 Vai trò người dùng
+<p align="right"><a href="#top">⬆️ Về đầu trang</a></p>
+
+<a id="vai-tro"></a>
+
+## 👥 Vai trò và phân quyền
 
 | Vai trò | Có thể làm gì |
 | :-: | --- |
 | 🎒 **Học viên** | Tìm kiếm không dấu, lọc theo môn, xem hồ sơ gia sư, quản lý hồ sơ cá nhân, thanh toán học phí |
 | 🎓 **Gia sư** | Đăng ký hồ sơ gia sư, chờ duyệt, chuyển đổi vai trò, báo hoàn thành buổi học |
 | 🛠️ **Quản trị viên** | Duyệt hồ sơ gia sư, quản lý danh mục gia sư/môn dạy, lập bảng chi trả theo tháng |
+
+### 🔄 Vòng đời vai trò
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    state "🎒 Học viên" as HV
+    state "⏳ Hồ sơ PENDING" as PD
+    state "✅ Đã duyệt" as OK
+    state "🎓 Gia sư" as GS
+
+    [*] --> HV: Đăng ký tài khoản
+    HV --> PD: Gửi đăng ký làm gia sư
+    PD --> OK: Quản trị viên duyệt
+    OK --> GS: Chuyển qua gia sư
+    GS --> HV: Chuyển lại học viên
+```
+
+### 🛡️ Ma trận quyền truy cập dữ liệu
+
+| Hành động | Người dùng (client) | Cơ chế |
+| --- | :-: | --- |
+| Đọc/ghi hồ sơ `users/{UID}` của chính mình | ✅ | Firestore Rules theo UID |
+| Tự nâng cấp vai trò | ⛔ | Rules chặn thay đổi vai trò |
+| Sửa danh mục gia sư/môn dạy từ ứng dụng | ⛔ | Rules chặn; quản trị viên nhập theo [schema](FIRESTORE_SCHEMA.md) |
+| Xem danh sách gia sư trên trang chủ | ✅ | Đọc và lắng nghe thời gian thực |
+
+> [!NOTE]
+> Bảng trên tóm tắt hành vi được mô tả trong tài liệu dự án. Nguồn chính xác và đầy đủ là [`firestore.rules`](firestore.rules).
+
+<p align="right"><a href="#top">⬆️ Về đầu trang</a></p>
+
+<a id="kien-truc"></a>
 
 ## 🏗️ Kiến trúc
 
@@ -274,7 +344,30 @@ Mỗi màn hình có Fragment và XML riêng — xem [SCREEN_STRUCTURE.md](SCREE
 
 </details>
 
+<p align="right"><a href="#top">⬆️ Về đầu trang</a></p>
+
+<a id="du-lieu"></a>
+
+## 🗃️ Mô hình dữ liệu
+
+Cấu trúc dữ liệu là bản **rút gọn** từ `03_Thiet_ke_CSDL_v4.md`, chỉ giữ những gì các màn hình hiện tại cần.
+
+| Nhóm dữ liệu | Mô tả | Ai ghi |
+| --- | --- | --- |
+| `users/{UID}` | Hồ sơ người dùng (thông tin cá nhân, địa chỉ, cấp học, mục tiêu, vai trò); tạo khi đăng ký thành công | Chính người dùng, theo UID |
+| Danh mục gia sư | Thông tin gia sư: giới thiệu, kinh nghiệm, hình thức dạy | Quản trị viên |
+| Môn dạy và học phí | Môn dạy và học phí cho buổi 90 phút, được `CatalogState` nối với gia sư | Quản trị viên |
+| Hồ sơ đăng ký gia sư | Trạng thái `PENDING` chờ duyệt | Người dùng gửi, quản trị viên duyệt |
+| Giao dịch `sandbox_*` | Giao dịch nhận từ cổng VNPay TEST, tách khỏi sổ tiền thật | Luồng thanh toán TEST |
+
+> [!TIP]
+> Tên collection và danh sách trường chính thức nằm trong [FIRESTORE_SCHEMA.md](FIRESTORE_SCHEMA.md). Gia sư và môn dạy **phải** được nhập đúng schema thì trang chủ mới hiển thị.
+
+<p align="right"><a href="#top">⬆️ Về đầu trang</a></p>
+
 <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%" alt="divider"/>
+
+<a id="bat-dau"></a>
 
 ## 🚀 Bắt đầu nhanh
 
@@ -296,8 +389,8 @@ cd TMDT_CK
 ```
 
 1. Mở thư mục bằng Android Studio và đợi Gradle sync.
-2. Hoàn tất [cấu hình Firebase](#-firebase).
-3. Sao chép `vnpay.properties.example` thành `vnpay.properties`, điền thông tin TEST ([xem VNPay](#-vnpay-test)).
+2. Hoàn tất [cấu hình Firebase](#firebase).
+3. Sao chép `vnpay.properties.example` thành `vnpay.properties`, điền thông tin TEST ([xem VNPay](#vnpay)).
 4. Chọn thiết bị và nhấn **Run** ▶️.
 
 ### 🔨 Build bằng dòng lệnh
@@ -308,7 +401,23 @@ cd TMDT_CK
 
 📦 Đầu ra: `app/build/outputs/apk/debug/app-debug.apk`
 
+### ✅ Checklist thiết lập lần đầu
+
+- [ ] Cài JDK 21 và Android SDK, Gradle sync thành công
+- [ ] Bật **Email/Password** trên Firebase Console
+- [ ] **Publish Firestore Rules** từ `firestore.rules`
+- [ ] Có dữ liệu gia sư/môn dạy theo schema (nếu muốn thấy danh sách ở trang chủ)
+- [ ] Có `vnpay.properties` với thông tin TEST
+- [ ] `node scripts/check-vnpay-config.mjs` chạy không báo lỗi
+- [ ] Build debug thành công và cài lên thiết bị Android 10+
+
+<p align="right"><a href="#top">⬆️ Về đầu trang</a></p>
+
+<a id="cau-hinh"></a>
+
 ## ⚙️ Cấu hình môi trường
+
+<a id="firebase"></a>
 
 ### 🔥 Firebase
 
@@ -323,6 +432,8 @@ cd TMDT_CK
 
 Hồ sơ `users/{UID}` được tạo khi đăng ký thành công. Chi tiết: [FIREBASE_SETUP.md](FIREBASE_SETUP.md).
 
+<a id="vnpay"></a>
+
 ### 💳 VNPay TEST
 
 Tạo `vnpay.properties` ở thư mục gốc (cùng cấp `gradlew.bat`):
@@ -332,6 +443,12 @@ VNPAY_TMN_CODE=MA_WEBSITE_TEST
 VNPAY_HASH_SECRET=KHOA_CHECKSUM_TEST
 VNPAY_RETURN_URL=https://tmdt.example/vnpay/return
 ```
+
+| Khóa | Ý nghĩa | Ghi chú |
+| --- | --- | --- |
+| `VNPAY_TMN_CODE` | Mã website/terminal do VNPay cấp cho môi trường TEST | Thiếu khóa này, build debug sẽ báo rõ trường cần điền |
+| `VNPAY_HASH_SECRET` | Khóa checksum dùng ký và xác thực phản hồi | **Bí mật**, không commit |
+| `VNPAY_RETURN_URL` | Địa chỉ trả về sau thanh toán | WebView bắt ngay trong app, website không cần hoạt động |
 
 Kiểm tra cấu hình (không in secret):
 
@@ -343,6 +460,7 @@ node scripts/check-vnpay-config.mjs
 | | Nguyên tắc | Nội dung |
 | :-: | --- | --- |
 | 🔗 | Return URL | WebView bắt trực tiếp trong app, không cần website hoạt động ở địa chỉ này |
+| 🖥️ | Máy chủ | Luồng TEST trực tiếp **không** cần `payment-server`, Firebase Admin JSON hay `PAYMENT_API_BASE_URL` |
 | 🔄 | Thay đổi cấu hình | Cần build và cài lại ứng dụng |
 | 🧾 | Dữ liệu giao dịch | Collection `sandbox_` lưu giao dịch từ cổng TEST, tách khỏi sổ tiền thật |
 | 📦 | Bản release | Không chứa secret TEST, tắt nhánh ký trực tiếp trong app |
@@ -352,10 +470,14 @@ node scripts/check-vnpay-config.mjs
 
 Chi tiết: [PAYMENT_SETUP.md](PAYMENT_SETUP.md).
 
+<p align="right"><a href="#top">⬆️ Về đầu trang</a></p>
+
+<a id="phat-trien"></a>
+
 ## 🤝 Quy trình phát triển
 
 > [!IMPORTANT]
-> Các quy ước dưới đây là chuẩn làm việc đề xuất cho nhóm; điều chỉnh theo thực tế trước khi áp dụng.
+> Các quy ước dưới đây là chuẩn làm việc **đề xuất** cho nhóm; điều chỉnh theo thực tế trước khi áp dụng.
 
 ### 🌿 Nhánh
 
@@ -386,6 +508,15 @@ gitGraph
 
 Theo [Conventional Commits](https://www.conventionalcommits.org/):
 
+| Loại | Dùng khi |
+| --- | --- |
+| `feat` | Thêm tính năng mới |
+| `fix` | Sửa lỗi |
+| `docs` | Chỉ thay đổi tài liệu |
+| `refactor` | Tái cấu trúc, không đổi hành vi |
+| `test` | Thêm hoặc sửa kiểm thử |
+| `chore` | Việc vặt: build, cấu hình, phụ thuộc |
+
 ```text
 feat(auth): thêm kiểm tra mật khẩu xác nhận
 fix(home): sửa lọc theo môn khi không dấu
@@ -400,12 +531,99 @@ docs(readme): cập nhật hướng dẫn cấu hình VNPay
 4. Cần ít nhất một thành viên review và chấp thuận trước khi merge.
 5. Thay đổi `firestore.rules` phải kèm kiểm thử trong `scripts/test-firebase.mjs`.
 
+### ✔️ Definition of Done
+
+- [ ] Build debug thành công, không có cảnh báo lint mới
+- [ ] Unit test liên quan đã thêm hoặc cập nhật và đều qua
+- [ ] Đã kiểm tra thủ công trên thiết bị hoặc máy ảo Android 10+
+- [ ] Thay đổi Rules đã được kiểm thử trên Emulator
+- [ ] Không có secret, khóa ký hoặc dữ liệu thật trong commit
+- [ ] Tài liệu liên quan đã được cập nhật
+- [ ] Đã được ít nhất một người review
+
 ### 📐 Quy ước mã nguồn
 
 - Mỗi màn hình một Fragment và một file XML riêng.
 - Kiểm tra và chuẩn hóa đầu vào đặt trong `AccountValidation`, không rải trong Fragment.
 - Truy cập dữ liệu và trạng thái tập trung ở lớp `*State`; Fragment chỉ xử lý hiển thị.
 - Không thêm dữ liệu giả; trạng thái rỗng phải hiển thị đúng là rỗng.
+
+<details>
+<summary><b>📝 Mẫu Pull Request đề xuất (bấm để xem)</b></summary>
+
+<br/>
+
+Lưu thành `.github/pull_request_template.md`:
+
+```markdown
+## Mô tả
+<!-- Thay đổi gì và vì sao? -->
+
+## Loại thay đổi
+- [ ] feat — tính năng mới
+- [ ] fix — sửa lỗi
+- [ ] docs — tài liệu
+- [ ] refactor / test / chore
+
+## Cách kiểm tra
+<!-- Các bước để reviewer tự kiểm tra lại -->
+
+## Ảnh chụp màn hình
+<!-- Nếu có thay đổi giao diện -->
+
+## Checklist
+- [ ] Đã chạy `:app:testDebugUnitTest` và `:app:lintDebug`
+- [ ] Không commit secret (`vnpay.properties`, khóa ký, ...)
+- [ ] Nếu đổi `firestore.rules`: đã kiểm thử trên Emulator
+- [ ] Đã cập nhật tài liệu liên quan
+```
+
+</details>
+
+<details>
+<summary><b>⚙️ Ví dụ CI với GitHub Actions (bấm để xem)</b></summary>
+
+<br/>
+
+Lưu thành `.github/workflows/android-ci.yml`. Đây là **ví dụ tham khảo**, cần điều chỉnh theo thực tế repository.
+
+```yaml
+name: Android CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Build debug tự kiểm tra cấu hình VNPay nên CI cần một file cấu hình.
+      # Chỉ dùng giá trị mẫu, KHÔNG đưa secret thật vào repository.
+      - name: Tạo vnpay.properties cho CI
+        run: cp vnpay.properties.example vnpay.properties
+
+      - run: chmod +x gradlew
+      - run: ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+```
+
+> Nếu `google-services.json` không nằm trong repository, cần cung cấp qua GitHub Secrets trước bước build.
+
+</details>
+
+<p align="right"><a href="#top">⬆️ Về đầu trang</a></p>
+
+<a id="kiem-thu"></a>
 
 ## 🧪 Kiểm thử
 
@@ -414,18 +632,86 @@ docs(readme): cập nhật hướng dẫn cấu hình VNPay
 | ✅ | Unit test | `.\gradlew.bat :app:testDebugUnitTest` |
 | 🔍 | Lint | `.\gradlew.bat :app:lintDebug` |
 | 🛡️ | Auth và Rules | Firebase Emulator + `scripts/test-firebase.mjs` |
+| 💳 | Cấu hình VNPay | `node scripts/check-vnpay-config.mjs` |
+
+| Phạm vi | Có kiểm thử tự động | Cần xác nhận riêng |
+| --- | :-: | :-: |
+| Kiểm tra và chuẩn hóa đầu vào | ✅ | |
+| Đăng ký/đăng nhập và Rules (Emulator) | ✅ | |
+| OTP/SMS thật | | ✅ Cấu hình Console |
+| Email thật (quên mật khẩu) | | ✅ Cấu hình Console |
+| Thanh toán VNPay | | ✅ Merchant TEST được duyệt |
 
 > [!TIP]
-> Script kiểm thử chỉ dùng localhost và **không** ghi dữ liệu lên Firebase thật. OTP/SMS thật và email thật cần cấu hình Console và xác nhận riêng. Lệnh chạy Emulator: [FIREBASE_SETUP.md](FIREBASE_SETUP.md).
+> Script kiểm thử chỉ dùng localhost và **không** ghi dữ liệu lên Firebase thật. Lệnh chạy Emulator: [FIREBASE_SETUP.md](FIREBASE_SETUP.md).
+
+<a id="phat-hanh"></a>
+
+## 📦 Phát hành
+
+> [!IMPORTANT]
+> Quy trình dưới đây là **đề xuất**; điều chỉnh theo cách nhóm đang phát hành.
+
+```mermaid
+flowchart LR
+    A["🧪 Chạy kiểm thử"]:::s1 --> B["🔖 Nâng version"]:::s2
+    B --> C["📦 Build release"]:::s3
+    C --> D["🔏 Ký ứng dụng"]:::s4
+    D --> E["🏷️ Gắn tag vX.Y.Z"]:::s5
+    E --> F["📝 Ghi chú phát hành"]:::s6
+
+    classDef s1 fill:#E8F4FD,stroke:#2E86DE,color:#0B3D66,stroke-width:2px;
+    classDef s2 fill:#E9F9EF,stroke:#27AE60,color:#0F4D27,stroke-width:2px;
+    classDef s3 fill:#FFF8DC,stroke:#F1C40F,color:#5F4B00,stroke-width:2px;
+    classDef s4 fill:#FDEDEC,stroke:#E74C3C,color:#641E16,stroke-width:2px;
+    classDef s5 fill:#F3E8FD,stroke:#8E44AD,color:#3F1659,stroke-width:2px;
+    classDef s6 fill:#FFF4E0,stroke:#F39C12,color:#6B4400,stroke-width:2px;
+```
+
+| Bước | Việc cần làm |
+| --- | --- |
+| 🧪 Kiểm thử | Chạy unit test, lint và kiểm thử Rules trên Emulator |
+| 🔖 Version | Cập nhật `versionName`/`versionCode`, theo [Semantic Versioning](https://semver.org/lang/vi/) |
+| 📦 Build release | Bản release **không** chứa secret TEST và tắt nhánh ký trực tiếp của VNPay trong app |
+| 🔏 Ký | Dùng cấu hình trong `signing/`; không commit keystore hoặc mật khẩu |
+| 🏷️ Tag | Gắn tag dạng `vX.Y.Z` trên `main` |
+| 📝 Ghi chú | Tổng hợp thay đổi theo Conventional Commits trong mục Releases |
+
+APK debug nằm ở `app/build/outputs/apk/debug/app-debug.apk`. Khi xuất bản TEST, tệp có thể được đặt tên dạng `build/outputs/TMDT-<version>-VNPay-TEST.apk` (xem [PAYMENT_SETUP.md](PAYMENT_SETUP.md)).
+
+<p align="right"><a href="#top">⬆️ Về đầu trang</a></p>
+
+<a id="bao-mat"></a>
 
 ## 🔐 Bảo mật
 
-- 🔒 Không commit `vnpay.properties`, khóa ký ứng dụng hoặc file chứa secret — các file này đã nằm trong `.gitignore`.
-- 📤 Firestore Rules trong repository chỉ có hiệu lực sau khi được Publish trên Console.
-- 🛡️ Rules bảo vệ hồ sơ theo UID, chặn nâng vai trò và chặn client sửa danh mục gia sư.
-- 📮 Nếu phát hiện lỗ hổng, vui lòng báo riêng cho chủ repository thay vì mở issue công khai.
+| | Nguyên tắc | Chi tiết |
+| :-: | --- | --- |
+| 🔒 | Quản lý secret | Không commit `vnpay.properties`, khóa ký ứng dụng hoặc file chứa secret — đã nằm trong `.gitignore` |
+| 📤 | Rules phải được Publish | Rules trong repository chỉ có hiệu lực sau khi Publish trên Console |
+| 🛡️ | Phân quyền theo UID | Bảo vệ hồ sơ theo UID, chặn nâng vai trò, chặn client sửa danh mục gia sư |
+| 💳 | Xác thực thanh toán | Chỉ ghi nhận thành công khi phản hồi VNPay có chữ ký hợp lệ |
+| 🧪 | Tách dữ liệu thử | Giao dịch TEST nằm ở collection `sandbox_`, tách khỏi sổ tiền thật |
+| 📦 | Bản release | Không chứa secret TEST |
 
-<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%" alt="divider"/>
+### 📮 Báo cáo lỗ hổng
+
+Nếu phát hiện lỗ hổng bảo mật, vui lòng **báo riêng** cho chủ repository ([@pvhNam](https://github.com/pvhNam)) thay vì mở issue công khai. Nêu rõ các bước tái hiện và mức độ ảnh hưởng để được xử lý nhanh nhất.
+
+<a id="gioi-han"></a>
+
+## ⚠️ Giới hạn đã biết
+
+| Hạng mục | Hiện trạng |
+| --- | --- |
+| 📅 Lịch học | Mới có màn hình chờ, chưa kết nối nghiệp vụ |
+| 💬 Tin nhắn | Mới có màn hình chờ, chưa kết nối nghiệp vụ |
+| 💳 Thanh toán | Mới dùng VNPay **TEST**; thanh toán thật cần luồng backend/IPN riêng (`payment-server`, xem `VNPAY_SETUP.md`) |
+| 📱 OTP/SMS | Chức năng bổ sung; cần cấu hình Console và xác nhận riêng |
+| 🛠️ Quản trị | Duyệt hồ sơ gia sư và nhập danh mục thực hiện bên ngoài ứng dụng |
+| 🗄️ `legacy/` | Mã mô phỏng cũ, không thuộc build |
+
+<a id="su-co"></a>
 
 ## 🩺 Xử lý sự cố
 
@@ -465,7 +751,7 @@ docs(readme): cập nhật hướng dẫn cấu hình VNPay
 <br/>
 
 **Nguyên nhân:** chưa có `vnpay.properties`.
-**Cách xử lý:** sao chép từ `vnpay.properties.example` và điền thông tin TEST.
+**Cách xử lý:** sao chép từ `vnpay.properties.example` và điền thông tin TEST, rồi chạy `node scripts/check-vnpay-config.mjs`.
 
 </details>
 
@@ -489,6 +775,93 @@ docs(readme): cập nhật hướng dẫn cấu hình VNPay
 
 </details>
 
+<a id="faq"></a>
+
+## ❓ Câu hỏi thường gặp
+
+<details>
+<summary><b>Ứng dụng có chạy được khi database chưa có gia sư không?</b></summary>
+
+<br/>
+
+Có. Trang chủ sẽ hiển thị trạng thái trống; ứng dụng không chèn danh sách giả.
+
+</details>
+
+<details>
+<summary><b>Tôi đã có <code>google-services.json</code> nhưng vẫn không đăng nhập được?</b></summary>
+
+<br/>
+
+File này chỉ cấu hình ứng dụng. Cần bật **Email/Password** và **Publish Rules** trên Firebase Console.
+
+</details>
+
+<details>
+<summary><b>Thanh toán trong ứng dụng có phải thanh toán thật không?</b></summary>
+
+<br/>
+
+Không. Hiện dùng **VNPay TEST**. Thanh toán thật cần luồng backend/IPN riêng, được mô tả trong `VNPAY_SETUP.md`.
+
+</details>
+
+<details>
+<summary><b>Chạy thanh toán TEST có cần dựng máy chủ không?</b></summary>
+
+<br/>
+
+Không. Luồng TEST trực tiếp trong WebView không cần `payment-server`, Firebase Admin JSON hay `PAYMENT_API_BASE_URL`.
+
+</details>
+
+<details>
+<summary><b>Clone sang máy khác cần chuẩn bị gì?</b></summary>
+
+<br/>
+
+Cài JDK 21 và Android SDK, sao chép `vnpay.properties.example` thành `vnpay.properties` rồi điền thông tin TEST. File `vnpay.properties` không nằm trong Git nên không đi theo khi clone.
+
+</details>
+
+<details>
+<summary><b>Lịch học và Tin nhắn dùng được chưa?</b></summary>
+
+<br/>
+
+Chưa. Hai mục này mới có màn hình chờ theo Figma, chưa kết nối nghiệp vụ.
+
+</details>
+
+<details>
+<summary><b>Xác thực điện thoại có bắt buộc không?</b></summary>
+
+<br/>
+
+Không. Đây là chức năng bổ sung, tùy chọn.
+
+</details>
+
+<a id="thuat-ngu"></a>
+
+## 📖 Thuật ngữ
+
+| Thuật ngữ | Giải thích |
+| --- | --- |
+| **UID** | Mã định danh duy nhất của người dùng trong Firebase Authentication, dùng làm khóa hồ sơ `users/{UID}` |
+| **Security Rules** | Quy tắc phân quyền phía máy chủ của Firestore (`firestore.rules`) |
+| **Emulator** | Bộ giả lập Firebase chạy trên máy cục bộ, dùng để kiểm thử mà không đụng tới dữ liệu thật |
+| **PENDING** | Trạng thái hồ sơ đăng ký gia sư đang chờ quản trị viên duyệt |
+| **WebView** | Thành phần hiển thị trang web bên trong ứng dụng, dùng để mở cổng VNPay |
+| **`sandbox_`** | Tiền tố collection lưu giao dịch của cổng VNPay TEST |
+| **TMN Code** | Mã website/terminal VNPay cấp cho merchant |
+| **Hash Secret** | Khóa checksum VNPay dùng để ký và xác thực dữ liệu |
+| **IPN** | Instant Payment Notification — thông báo kết quả thanh toán từ VNPay tới máy chủ, dùng cho luồng thanh toán thật |
+
+<p align="right"><a href="#top">⬆️ Về đầu trang</a></p>
+
+<a id="lo-trinh"></a>
+
 ## 🗺️ Lộ trình
 
 ```mermaid
@@ -507,8 +880,11 @@ timeline
 - [x] 💳 Thanh toán VNPay TEST
 - [ ] 📅 Nghiệp vụ **Lịch học**
 - [ ] 💬 Nghiệp vụ **Tin nhắn**
+- [ ] 💳 Thanh toán thật qua backend/IPN *(chưa lên kế hoạch cụ thể)*
 
-## 📖 Tài liệu
+<a id="tai-lieu"></a>
+
+## 📚 Tài liệu
 
 | | Tài liệu | Nội dung |
 | :-: | --- | --- |
@@ -519,9 +895,27 @@ timeline
 | 🧩 | [SCREEN_STRUCTURE.md](SCREEN_STRUCTURE.md) | Cấu trúc màn hình và Fragment |
 | 💳 | [PAYMENT_SETUP.md](PAYMENT_SETUP.md) | Cấu hình thanh toán VNPay TEST |
 
+<a id="giay-phep"></a>
+
+## 📜 Giấy phép
+
+Repository **chưa khai báo giấy phép**. Khi chưa có file `LICENSE`, mặc định mọi quyền được bảo lưu cho tác giả và người khác không có quyền sử dụng lại mã nguồn.
+
+Nếu muốn cho phép sử dụng lại, hãy chọn một giấy phép (ví dụ MIT hoặc Apache-2.0) và thêm file `LICENSE` ở thư mục gốc, sau đó cập nhật mục này.
+
+<a id="lien-he"></a>
+
 ## 💬 Đóng góp và liên hệ
 
-Mọi đóng góp đều được hoan nghênh! Hãy đọc [Quy trình phát triển](#-quy-trình-phát-triển) trước khi mở Pull Request, và dùng [Issues](https://github.com/pvhNam/TMDT_CK/issues) để báo lỗi hoặc đề xuất tính năng.
+Mọi đóng góp đều được hoan nghênh! Quy trình gợi ý:
+
+1. 🍴 Fork repository hoặc tạo nhánh từ `main`.
+2. 🌿 Tạo nhánh `feature/...` hoặc `fix/...`.
+3. 💻 Phát triển theo [quy ước mã nguồn](#phat-trien) và chạy kiểm thử.
+4. 🔀 Mở Pull Request với mô tả rõ ràng.
+5. 👀 Chờ review và phản hồi.
+
+Dùng [Issues](https://github.com/pvhNam/TMDT_CK/issues) để báo lỗi hoặc đề xuất tính năng; khi báo lỗi, hãy kèm phiên bản Android, các bước tái hiện, kết quả mong đợi và kết quả thực tế.
 
 <div align="center">
 
@@ -535,9 +929,24 @@ Mọi đóng góp đều được hoan nghênh! Hãy đọc [Quy trình phát tr
 [![Contributors](https://img.shields.io/badge/Contributors-View%20all-2E86DE?style=for-the-badge)](https://github.com/pvhNam/TMDT_CK/graphs/contributors)
 [![Issues](https://img.shields.io/badge/Issues-Report%20a%20bug-E74C3C?style=for-the-badge)](https://github.com/pvhNam/TMDT_CK/issues)
 
+</div>
+
+<a id="ghi-nhan"></a>
+
+## 🙏 Ghi nhận
+
+- [Firebase](https://firebase.google.com/) — xác thực và cơ sở dữ liệu
+- [VNPay](https://vnpay.vn/) — cổng thanh toán
+- [Mermaid](https://mermaid.js.org/) — sơ đồ trong tài liệu
+- [Shields.io](https://shields.io/), [Skill Icons](https://skillicons.dev/), [Capsule Render](https://github.com/kyechan99/capsule-render), [readme-typing-svg](https://github.com/DenverCoder1/readme-typing-svg), [github-readme-stats](https://github.com/anuraghazra/github-readme-stats) — huy hiệu và hình minh họa
+
+<div align="center">
+
 <br/>
 
 ⭐ **Nếu thấy dự án hữu ích, hãy tặng một star nhé!** ⭐
+
+<a href="#top">⬆️ Về đầu trang</a>
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0F2027,50:2E86DE,100:8E44AD&height=120&section=footer" alt="footer" width="100%"/>
 
