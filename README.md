@@ -2,13 +2,17 @@
 
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=venom&color=0:0F2027,50:2E86DE,100:8E44AD&height=260&section=header&text=TMDT&fontSize=96&fontColor=ffffff&fontAlignY=42&animation=twinkling&desc=Tutor%20Marketplace%20%E2%80%A2%20Android%20%C3%97%20Firebase%20%C3%97%20VNPay&descSize=20&descAlignY=66" alt="TMDT banner" width="100%"/>
+<img src="docs/assets/banner.svg" alt="TMDT — Tutor Marketplace for Android" width="100%"/>
 
 <a href="https://github.com/pvhNam/TMDT_CK">
   <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=21&duration=3200&pause=900&color=36D1DC&center=true&vCenter=true&width=700&lines=T%C3%ACm+gia+s%C6%B0+ph%C3%B9+h%E1%BB%A3p+trong+v%C3%A0i+ch%E1%BA%A1m+%F0%9F%8E%93;%C4%90%C4%83ng+k%C3%BD+l%E1%BB%9Bp+%E2%80%A2+Thanh+to%C3%A1n+%E2%80%A2+Qu%E1%BA%A3n+l%C3%BD+h%E1%BB%93+s%C6%A1+%F0%9F%9A%80;Android+%C3%97+Firebase+%C3%97+VNPay+%F0%9F%94%A5" alt="Typing SVG" />
 </a>
 
-<br/><br/>
+<br/>
+
+<img src="docs/assets/ticker.svg" alt="Công nghệ sử dụng" width="100%"/>
+
+<br/>
 
 ![Android](https://img.shields.io/badge/Android-10%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)
 ![Java](https://img.shields.io/badge/Java-JDK%2021-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
@@ -31,7 +35,7 @@
 
 </div>
 
-<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%" alt="divider"/>
+<img src="docs/assets/divider.svg" width="100%" alt="divider"/>
 
 > [!NOTE]
 > **TMDT** là ứng dụng Android dành cho **học viên** và **gia sư**. Giao diện theo thiết kế Figma (`thiết kế giao diện mobile_1.docx`); dữ liệu rút gọn từ `03_Thiet_ke_CSDL_v4.md`, chỉ giữ các luồng nghiệp vụ đang dùng.
@@ -67,50 +71,13 @@
 
 ## 🌟 Điểm nổi bật
 
-<table>
-<tr>
-<td align="center" width="33%">
+<div align="center">
 
-### 🔎 Tìm kiếm thông minh
-Tìm **không dấu**, lọc theo môn, danh sách gia sư **cập nhật thời gian thực** từ Firestore.
+<img src="docs/assets/features.svg" alt="Điểm nổi bật: tìm kiếm không dấu và thời gian thực; chuyển vai trò học viên/gia sư; thanh toán VNPay có chữ ký; phân quyền Firestore theo UID; không dữ liệu giả; kiểm thử an toàn bằng Emulator" width="100%"/>
 
-</td>
-<td align="center" width="33%">
+</div>
 
-### 🎓 Chuyển vai trò linh hoạt
-Học viên đăng ký làm gia sư, chờ duyệt `PENDING`, rồi **chuyển qua lại** hai vai trò ngay trong app.
-
-</td>
-<td align="center" width="33%">
-
-### 💳 Thanh toán có chữ ký
-VNPay TEST trong WebView, chỉ ghi nhận thành công khi phản hồi có **chữ ký hợp lệ**.
-
-</td>
-</tr>
-<tr>
-<td align="center">
-
-### 🛡️ Phân quyền chặt chẽ
-Firestore Rules theo **UID**, chặn nâng quyền và chặn client sửa danh mục gia sư.
-
-</td>
-<td align="center">
-
-### 🧼 Không dữ liệu giả
-Database trống thì hiển thị trống — ứng dụng **không** chèn danh sách giả.
-
-</td>
-<td align="center">
-
-### 🧪 Kiểm thử an toàn
-Auth và Rules chạy trên **Emulator localhost**, không ghi dữ liệu lên Firebase thật.
-
-</td>
-</tr>
-</table>
-
-<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%" alt="divider"/>
+<img src="docs/assets/divider.svg" width="100%" alt="divider"/>
 
 ## 📚 Mục lục
 
@@ -189,6 +156,15 @@ journey
 
 ### 💸 Luồng thanh toán
 
+<div align="center">
+
+<img src="docs/assets/flow.svg" alt="Luồng thanh toán: học viên thanh toán, VNPay trả kết quả, gia sư báo hoàn thành, học viên xác nhận, quản trị viên lập chi trả tháng" width="100%"/>
+
+</div>
+
+<details>
+<summary><b>🔍 Xem sơ đồ tuần tự chi tiết (bấm để mở)</b></summary>
+
 ```mermaid
 sequenceDiagram
     autonumber
@@ -211,6 +187,8 @@ sequenceDiagram
     QT->>App: Lập bảng chi trả theo tháng
     end
 ```
+
+</details>
 
 <details>
 <summary><b>🗑️ Đã loại bỏ khỏi phạm vi (bấm để xem)</b></summary>
@@ -317,6 +295,7 @@ flowchart LR
 ├── ✉️  email-otp-server/         Máy chủ hỗ trợ gửi OTP qua email
 ├── 🧪 scripts/                  Kiểm thử Firebase, kiểm tra cấu hình VNPay
 ├── 🔏 signing/                  Cấu hình ký ứng dụng
+├── 🖼️  docs/assets/             Ảnh động SVG dùng trong README
 ├── 🗄️  legacy/                   Mã mô phỏng cũ (ngoài source set)
 ├── 🛡️  firestore.rules           Security Rules
 ├── 📇 firestore.indexes.json    Chỉ mục Firestore
@@ -365,7 +344,7 @@ Cấu trúc dữ liệu là bản **rút gọn** từ `03_Thiet_ke_CSDL_v4.md`, 
 
 <p align="right"><a href="#top">⬆️ Về đầu trang</a></p>
 
-<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png" width="100%" alt="divider"/>
+<img src="docs/assets/divider.svg" width="100%" alt="divider"/>
 
 <a id="bat-dau"></a>
 
